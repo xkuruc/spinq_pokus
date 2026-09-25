@@ -1,4 +1,4 @@
-# Read-only USB diagnostics for SpinQ Gemini Lab on Windows 10/11.
+﻿# Read-only USB diagnostics for SpinQ Gemini Lab on Windows 10/11.
 # Run while the instrument is idle. No driver, device command, or admin rights.
 param([switch]$Compare)
 
@@ -20,13 +20,13 @@ function Get-Snapshot {
 }
 
 function Show-Device($item) {
-    $vid = if ($item.InstanceId -match 'VID_([0-9A-Fa-f]{4})') { $Matches[1] } else { '?' }
-    $pid = if ($item.InstanceId -match 'PID_([0-9A-Fa-f]{4})') { $Matches[1] } else { '?' }
+    $vendorId = if ($item.InstanceId -match 'VID_([0-9A-Fa-f]{4})') { $Matches[1] } else { '?' }
+    $productId = if ($item.InstanceId -match 'PID_([0-9A-Fa-f]{4})') { $Matches[1] } else { '?' }
     [pscustomobject]@{
         Name = $item.FriendlyName
         Class = $item.Class
-        VID = $vid
-        PID = $pid
+        VID = $vendorId
+        PID = $productId
         Status = $item.Status
     }
 }
