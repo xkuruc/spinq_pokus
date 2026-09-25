@@ -139,7 +139,11 @@ def main():
     for label, step in graph_groups(report):
         if not isinstance(step, dict):
             continue
-        transformed = fid_fft(step)
+        try:
+            transformed = fid_fft(step)
+        except ValueError as exc:
+            print(f"{label}: lokálna FFT vynechaná ({exc})")
+            continue
         if transformed is None:
             print(f"{label}: FID nie je dostupný; rady: {', '.join(sorted(step))}")
             continue
