@@ -85,7 +85,7 @@ Get-Command python,python3,py -ErrorAction SilentlyContinue | Select-Object Name
 python --version
 ```
 
-Ak `python --version` zobrazí skutočný Python 3.10 až 3.12, vytvor
+Ak `python --version` zobrazí skutočný Python 3.10 až 3.13, vytvor
 prostredie iba v priečinku projektu a nainštaluj oficiálny balík:
 
 ```powershell
@@ -94,14 +94,33 @@ python -m venv .venv
 ```
 
 Ak je dostupný `py`, ale nie `python`, over `py -3 --version` a pri verzii
-3.10 až 3.12 použi namiesto prvého príkazu `py -3 -m venv .venv`. Ak
+3.10 až 3.13 použi namiesto prvého príkazu `py -3 -m venv .venv`. Ak
 funguje iba `python3`, over `python3 --version` a použi
 `python3 -m venv .venv`. Ak nefunguje žiadny z týchto príkazov, Python na
 tomto PC buď nie je nainštalovaný, alebo
 nie je dostupný v PATH. Najprv over jeho inštaláciu podľa pravidiel
 firemného PC; [oficiálny návod pre Windows](https://docs.python.org/3/using/windows.html)
-opisuje aj inštaláciu pre jedného používateľa. Bez funkčného Pythonu
-nemôže vzniknúť `.venv`, takže nasledujúce príkazy zatiaľ nespúšťaj.
+opisuje aj inštaláciu pre jedného používateľa. Príkazy ukazujúce cestu
+`WindowsApps\python.exe` môžu byť iba zástupné odkazy Windowsu; ak
+`python --version` vypíše „Python sa nenašiel“, Python ešte nefunguje.
+
+Ak firemné pravidlá povoľujú inštaláciu pre tvoj účet, stiahni z
+[oficiálnej stránky Pythonu 3.13.15](https://www.python.org/downloads/release/python-31315/)
+**Windows installer (64-bit)**, zvoľ inštaláciu iba pre seba a nechaj
+zapnutý `pip`. Nie je potrebné meniť systémový `PATH` ani inštalovať pre
+všetkých používateľov. Potom v novom PowerShelli spusti:
+
+```powershell
+$python = "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe"
+& $python --version
+& $python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install spinqlablink==1.0.2
+```
+
+Ak sa Python nainštaluje inde, pozri jeho cestu cez
+`Get-ChildItem "$env:LOCALAPPDATA\Programs\Python" -Filter python.exe -Recurse`
+a nastav `$python` na nájdený súbor. Bez funkčného Pythonu nemôže
+vzniknúť `.venv`, takže nasledujúce príkazy zatiaľ nespúšťaj.
 
 Najprv načítaj stav; tento príkaz nespúšťa experiment:
 
