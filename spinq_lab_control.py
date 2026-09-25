@@ -119,8 +119,11 @@ def install_queue_guard(link, queue_update_type):
     link.handler_map[queue_update_type] = handle_queue_update
 
 
-def run_rabi(link, types, report, report_path, timeout):
+def run_rabi(link, types, report, report_path, timeout, pause):
     report["measurements"] = []
+    if pause < 10:
+        print(f"Prestávka medzi meraniami: {pause:g} s. "
+              "Kratšia relaxácia môže skresliť Rabiho krivku.", flush=True)
     for width in RABI_WIDTHS_US:
         def configure(parameters):
             parameters.pulses = [types.Pulse(path=0, width=width, amplitude=100,
@@ -138,7 +141,7 @@ def run_rabi(link, types, report, report_path, timeout):
         write_json(report_path, report)
         print(f"  výsledok: {real}", flush=True)
         if width != RABI_WIDTHS_US[-1]:
-            time.sleep(10)  # Same pause as the official Rabi example.
+            time.sleep(pause)  # 10 s is the official Rabi example's pause.
 
     csv_path = report_path.with_suffix(".csv")
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
@@ -190,6 +193,8 @@ def main():
     parser.add_argument("--status-wait", type=int, default=15)
     parser.add_argument("--timeout", type=int, default=300,
                         help="maximálne čakanie na jedno meranie v sekundách")
+    parser.add_argument("--rabi-pause", type=float, default=10,
+                        help="prestávka medzi Rabi meraniami v sekundách (štandardne 10)")
     args = parser.parse_args()
     try:
         ipaddress.ip_address(args.host)
@@ -199,6 +204,8 @@ def main():
         parser.error("port musí byť 1–65535 a status-wait 1–60")
     if not 30 <= args.timeout <= 3600:
         parser.error("timeout musí byť 30–3600 sekúnd")
+    if not 0 <= args.rabi_pause <= 60:
+        parser.error("rabi-pause musí byť 0–60 sekúnd")
 
     try:
         from spinqlablink import ExperimentType, Pulse, SpinQLabLink
@@ -242,7 +249,7 @@ def main():
         if args.mode != "status":
             require_ready(report["device"])
         if args.mode in ("rabi", "all"):
-            run_rabi(link, types, report, report_path, args.timeout)
+            run_rabi(link, types, report, report_path, args.timeout, args.rabi_pause)
         if args.mode in ("physical", "all"):
             run_physical(link, types, report, report_path, args.timeout)
 

@@ -149,6 +149,25 @@ Príkaz `all` vykoná obe merania po sebe. Predvolené prihlasovacie slová
 Výsledky sú v `results/` vo formáte JSON, Rabi aj v CSV. Priečinok
 `results/` je v `.gitignore` a neodošle sa na GitHub.
 
+Rabiho meranie má štandardne štyri 10-sekundové prestávky medzi piatimi
+pulzmi, podľa oficiálneho príkladu SpinQ. Voliteľné `--rabi-pause 5`
+skráti celkový čas približne o 20 sekúnd; kratšia relaxácia však môže
+skresliť namerané amplitúdy. Tento prepínač mení iba budúce merania.
+
+Už uložené výsledky môžeš spracovať **lokálne na Windows PC** bez
+nového experimentu a bez sieťového pripojenia k prístroju:
+
+```powershell
+.\.venv\Scripts\python.exe .\analyze_results.py .\results\NAZOV_RABI_SUBORU.json
+```
+
+Program uloží fit Rabiho oscilácie a PNG graf. Ak JSON obsahuje rady
+`fidRe` a `fidIm`, spočíta z nich lokálnu FFT do CSV súborov. Používa
+časovú os FID grafu, ktorú knižnica SpinQ označuje v milisekundách.
+Je to vlastné spracovanie uložených kriviek, nie náhrada merania ani
+garancia rovnakého spektra ako FFT v tablete. Prípravu vzorky, pulzy
+a zber dát stále musí vykonať prístroj.
+
 Ak meranie prekročí časový limit, môže ešte bežať na prístroji. Pred
 opätovným spustením skontroluj front experimentov v aplikácii SpinQ.
 Ak staršia verzia skriptu zlyhala na `get_experiment_status`, najprv
