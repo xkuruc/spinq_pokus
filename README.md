@@ -203,6 +203,13 @@ spusti `git pull`. Opravený skript číta stav priamo z experimentu.
 
 Žiadne heslá, tokeny ani výstupy diagnostiky nepatria do verejného repozitára.
 
+## Reálne automatické merania na Windows
+
+Nový [stručný návod](LIVE_WINDOWS.md) a `spinq_live_suite.py` spúšťajú
+na pripojenom Windows počítači reálnu meraciu sériu. Potrebujú lokálny
+`live_suite.toml` s potvrdeným pracovným bodom a prevádzkovými limitmi.
+Po jeho vyplnení stačí jeden príkaz; výsledkom je `results.zip`.
+
 ## Audit SDK, NMR dát a budúcej kalibrácie
 
 Nový balík `spinq_audit/` je oddelený od funkčného

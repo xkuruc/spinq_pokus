@@ -1,0 +1,80 @@
+# Copy to live_suite.toml and fill the operating limits verified for your device.
+# The program will connect and report status, but will not send experiments until
+# baseline_verified=true and every required [limits] value is present.
+host = "172.19.20.100"
+port = 8181
+account = "anyword"
+password_env = "SPINQ_AUDIT_PASSWORD"
+baseline_verified = false
+hardware_lock_path = "~/.spinq_live_gemini.lock"
+
+[operation]
+repeat_count = 10
+max_experiments = 40
+pause_seconds = 10
+timeout_seconds = 180
+status_max_age_seconds = 120
+queue_max_age_seconds = 120
+# Set true only when you have confirmed exclusive use of the tablet/device.
+# If the server does not publish queue updates, this is needed to continue.
+exclusive_use_confirmed = false
+
+[baseline]
+# Values previously used by spinq_lab_control.py, not a safety approval.
+h_width_us = 40.0
+h_amplitude_pct = 100.0
+h_phase_deg = 90.0
+h_detuning_hz = 0.0
+sample_path = 0
+sample_frequency_hz = 10000
+sample_count = 16000
+sample_delay_us = 0
+relaxation_delay_us = 15.0
+make_pps = true
+
+[deltas]
+# Test changes, not hardware limits. Each is checked against [limits].
+amplitude_pct = 2.0
+phase_deg = 5.0
+width_us = 2.0
+detuning_hz = 10.0
+frequency_shift = 10
+demod_shift = 10
+sample_frequency_hz = 10000
+sample_count = 1000
+sample_delay_us = 100
+relaxation_delay_us = 1.0
+rabi_width_us = 2.0
+
+[features]
+# Enable only after their meaning and working point are confirmed locally.
+multi_segment_verified = false
+frequency_shift_verified = false
+demod_shift_verified = false
+sampling_variants_verified = true
+relaxation_variant_verified = true
+state_initialization_off_verified = false
+p_channel_verified = false
+no_rf_verified = false
+rabi_scan_verified = true
+
+# Add [phosphorus_baseline] with width_us, amplitude_pct, phase_deg,
+# detuning_hz after a P-channel working point is established.
+
+[limits]
+# Fill all fields below with documented local operating limits.
+# Do not copy Python validator maxima and call them safety limits.
+# max_pulse_amplitude_pct = ...
+# max_single_pulse_width_us = ...
+# max_requested_rf_us_per_task = ...
+# max_cumulative_requested_rf_us = ...
+# min_relaxation_us = ...
+# max_relaxation_us = ...
+# max_sample_count = ...
+# max_sample_frequency_hz = ...
+# max_sample_delay_us = ...
+# max_abs_detuning_hz = ...
+# max_abs_frequency_shift = ...
+# max_abs_demod_shift = ...
+# min_temperature_c = ...
+# max_temperature_c = ...

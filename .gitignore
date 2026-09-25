@@ -7,4 +7,5 @@ audit_*/
 audit_config.toml
 approved_baseline.json
 approved_plan.json
+live_suite.toml
 spinq_audit/user_reported_history.json
