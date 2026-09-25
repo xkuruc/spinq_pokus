@@ -64,12 +64,17 @@ def require_ready(snapshot):
         raise RuntimeError("Prístroj nehlási stabilný lock; experiment sa nespustil.")
 
 
-def wait_for_experiment(link, timeout):
+def wait_for_experiment(link, experiment, timeout):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        state = link.get_experiment_status()
+        # SpinQLabLink 1.0.2 exposes get_experiment_status(), but its
+        # ExperimentManager has no method by that name. Read the registered
+        # experiment's state, as the official examples do internally.
+        if link.get_expMgr().current_experiment is not experiment:
+            raise RuntimeError("SDK stratilo registráciu experimentu; skontroluj front na tablete.")
+        state = experiment.get_status()
         if state in ("COMPLETED", "FAILED"):
-            return link.get_experiment_result()
+            return experiment.get_result()
         if not link.get_connection():
             raise RuntimeError("Spojenie sa počas experimentu prerušilo.")
         time.sleep(1)
@@ -80,18 +85,38 @@ def wait_for_experiment(link, timeout):
 
 
 def run_one(link, experiment_type, configure, timeout):
-    _, parameters = link.register_experiment(experiment_type)
+    experiment, parameters = link.register_experiment(experiment_type)
+    submitted = False
+    finished = False
     try:
         configure(parameters)
         link.run_experiment()
-        result = wait_for_experiment(link, timeout)
+        submitted = True
+        result = wait_for_experiment(link, experiment, timeout)
+        finished = True
         if result.get("state") != "COMPLETED":
             raise RuntimeError(f"Experiment skončil stavom {result.get('state')}: {result}")
         return result
     finally:
-        # This clears only the SDK's local registration. It does not cancel a
-        # remote task, so a timeout must never be followed by an automatic retry.
-        link.deregister_experiment()
+        # A timed-out or interrupted task may still be active on the tablet.
+        # Keep its SDK registration until disconnect so late queue updates do
+        # not access a missing experiment. Never retry it automatically.
+        if not submitted or finished:
+            link.deregister_experiment()
+
+
+def install_queue_guard(link, queue_update_type):
+    def handle_queue_update(data):
+        # SDK 1.0.2 unconditionally dereferences current_experiment.id.
+        # Queue updates can arrive just after deregistration/disconnect.
+        current = link.get_expMgr().current_experiment
+        if current is None:
+            return
+        for position, item in enumerate(data.get("queue", [])):
+            if item.get("id") == current.id and position > 0:
+                print(f"Experiment čaká vo fronte: {position} pred ním.", flush=True)
+
+    link.handler_map[queue_update_type] = handle_queue_update
 
 
 def run_rabi(link, types, report, report_path, timeout):
@@ -177,6 +202,7 @@ def main():
 
     try:
         from spinqlablink import ExperimentType, Pulse, SpinQLabLink
+        from spinqlablink.utils.types import MachineType
     except ImportError as exc:
         print(f"Chýba SpinQLabLink: {exc}. Pozri README.md.", file=sys.stderr)
         return 2
@@ -198,6 +224,7 @@ def main():
         check_tcp(args.host, args.port)
         print(f"TCP {args.host}:{args.port} je dostupné.")
         link = SpinQLabLink(args.host, args.port, args.account, password)
+        install_queue_guard(link, MachineType.MSG_POST_EXP_QUEUE_UPDATE)
         observed_updates = set()
 
         def observer(_device, update_type):

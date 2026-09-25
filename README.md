@@ -151,6 +151,9 @@ Výsledky sú v `results/` vo formáte JSON, Rabi aj v CSV. Priečinok
 
 Ak meranie prekročí časový limit, môže ešte bežať na prístroji. Pred
 opätovným spustením skontroluj front experimentov v aplikácii SpinQ.
+Ak staršia verzia skriptu zlyhala na `get_experiment_status`, najprv
+skontroluj na tablete, že odoslaný experiment už skončil, a potom
+spusti `git pull`. Opravený skript číta stav priamo z experimentu.
 
 ## Zdroj API
 
