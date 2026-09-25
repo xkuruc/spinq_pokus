@@ -77,17 +77,29 @@ Najprv na **Windows PC** over spojenie (dosadíš svoju skutočnú IP):
 Test-NetConnection IP_Z_APLIKACIE -Port 8181
 ```
 
-`TcpTestSucceeded` musí byť `True`. Potom použi Python 3.10 alebo 3.11 a
-nainštaluj oficiálny balík iba do prostredia v tomto priečinku:
+`TcpTestSucceeded` musí byť `True`. Na Windows sa Python môže spúšťať
+príkazom `python`, aj keď spúšťač `py` chýba. Najprv zisti, čo je dostupné:
 
 ```powershell
-py -3.11 -m venv .venv
+Get-Command python,python3,py -ErrorAction SilentlyContinue | Select-Object Name,Source
+python --version
+```
+
+Ak `python --version` zobrazí skutočný Python 3.10 až 3.12, vytvor
+prostredie iba v priečinku projektu a nainštaluj oficiálny balík:
+
+```powershell
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install spinqlablink==1.0.2
 ```
 
-Ak Python 3.11 nie je nainštalovaný, over dostupné verzie príkazom `py -0p`
-a podľa nich uprav prvý príkaz. Na firemnom PC rešpektuj pravidlá pre
-inštalovanie balíkov.
+Ak je dostupný `py`, ale nie `python`, použi namiesto prvého príkazu
+`py -3.11 -m venv .venv` (ak je verzia 3.11 nainštalovaná). Ak nefunguje
+ani `python`, ani `py`, Python na tomto PC buď nie je nainštalovaný, alebo
+nie je dostupný v PATH. Najprv over jeho inštaláciu podľa pravidiel
+firemného PC; [oficiálny návod pre Windows](https://docs.python.org/3/using/windows.html)
+opisuje aj inštaláciu pre jedného používateľa. Bez funkčného Pythonu
+nemôže vzniknúť `.venv`, takže nasledujúce príkazy zatiaľ nespúšťaj.
 
 Najprv načítaj stav; tento príkaz nespúšťa experiment:
 
