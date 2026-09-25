@@ -93,6 +93,12 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install spinqlablink==1.0.2
 ```
 
+**Python 3.8 nepoužívaj pre SpinQLabLink 1.0.2.** Balík síce uvádza
+`python_requires >= 3.8` a jeho závislosti sa nainštalujú, ale import
+na Pythone 3.8 zlyhá: pribalený Protobuf kód je verzie 6.31.0, kým
+správca balíkov pre Python 3.8 vybral runtime 5.29.6. Overené v
+izolovanom prostredí; skript sa v ňom nespustí.
+
 Ak je dostupný `py`, ale nie `python`, over `py -3 --version` a pri verzii
 3.10 až 3.13 použi namiesto prvého príkazu `py -3 -m venv .venv`. Ak
 funguje iba `python3`, over `python3 --version` a použi
