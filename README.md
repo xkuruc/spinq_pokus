@@ -168,6 +168,18 @@ Je to vlastné spracovanie uložených kriviek, nie náhrada merania ani
 garancia rovnakého spektra ako FFT v tablete. Prípravu vzorky, pulzy
 a zber dát stále musí vykonať prístroj.
 
+Ak chceš zistiť, či tablet posiela FID ešte pred svojím FFT grafom,
+spusti **jeden skutočný experiment** fyzikálnej vrstvy s meraním časov:
+
+```powershell
+.\.venv\Scripts\python.exe .\spinq_lab_control.py physical --host IP_Z_APLIKACIE --timing
+```
+
+Výstup uvedie časy prijatia oboch častí FID (`fidRe`, `fidIm`), prvého
+FFT grafu a správy o skončení experimentu. Tento prepínač iba sleduje
+prichádzajúce správy; nemení pulzy ani parametre merania. Verejné
+SpinQLabLink API nemá zdokumentovanú voľbu na vypnutie FFT na tablete.
+
 Ak meranie prekročí časový limit, môže ešte bežať na prístroji. Pred
 opätovným spustením skontroluj front experimentov v aplikácii SpinQ.
 Ak staršia verzia skriptu zlyhala na `get_experiment_status`, najprv

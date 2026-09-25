@@ -84,16 +84,63 @@ def wait_for_experiment(link, experiment, timeout):
     )
 
 
-def run_one(link, experiment_type, configure, timeout):
+def install_timing_hooks(link, experiment, machine_type):
+    """Record when this client receives experiment messages; no extra sends."""
+    started = time.monotonic()
+    events = []
+    watched = (
+        (machine_type.MSG_POST_EXP_STARTED, "started"),
+        (machine_type.MSG_POST_EXP_DATA_UPDATED, "data"),
+        (machine_type.MSG_POST_EXP_CHART_UPDATED, "chart"),
+        (machine_type.MSG_POST_EXP_FINISHED, "finished"),
+    )
+    for message_id, label in watched:
+        original = link.exp_handler_map[message_id]
+
+        def timed(data, original=original, label=label):
+            if data.get("taskId") == experiment.id:
+                event = {"seconds": round(time.monotonic() - started, 3),
+                         "event": label}
+                if label == "chart":
+                    event["name"] = data.get("chart_name")
+                    event["points"] = len(data.get("points", []))
+                events.append(event)
+            original(data)
+
+        link.exp_handler_map[message_id] = timed
+    return events
+
+
+def summarize_timing(events):
+    def first(predicate):
+        return next((event["seconds"] for event in events if predicate(event)), None)
+
+    fid_real = first(lambda event: event.get("name") == "fidRe")
+    fid_imag = first(lambda event: event.get("name") == "fidIm")
+    fid_ready = max(fid_real, fid_imag) if fid_real is not None and fid_imag is not None else None
+    return {
+        "events": list(events),
+        "fid_ready_seconds": fid_ready,
+        "first_fft_chart_seconds": first(
+            lambda event: str(event.get("name", "")).startswith("fft")),
+        "experiment_finished_seconds": first(
+            lambda event: event["event"] == "finished"),
+    }
+
+
+def run_one(link, experiment_type, configure, timeout, timing_type=None):
     experiment, parameters = link.register_experiment(experiment_type)
     submitted = False
     finished = False
     try:
         configure(parameters)
+        events = install_timing_hooks(link, experiment, timing_type) if timing_type else None
         link.run_experiment()
         submitted = True
         result = wait_for_experiment(link, experiment, timeout)
         finished = True
+        if events is not None:
+            result["_client_timing"] = summarize_timing(events)
         if result.get("state") != "COMPLETED":
             raise RuntimeError(f"Experiment skončil stavom {result.get('state')}: {result}")
         return result
@@ -152,7 +199,7 @@ def run_rabi(link, types, report, report_path, timeout, pause):
     print(f"Rabi CSV: {csv_path}")
 
 
-def run_physical(link, types, report, report_path, timeout):
+def run_physical(link, types, report, report_path, timeout, timing):
     def configure(parameters):
         parameters.type_setting = 0  # Documented customized measurement.
         parameters.pulses = [types.Pulse(path=0, width=40, amplitude=100,
@@ -171,13 +218,21 @@ def run_physical(link, types, report, report_path, timeout):
 
     print("Fyzikálna vrstva: jeden 40 µs pulz bez gradientu ...", flush=True)
     result = run_one(link, types.ExperimentType.PHYSICAL_LAYER_EXPERIMENT,
-                     configure, timeout)
+                     configure, timeout, types.MachineType if timing else None)
     report["physical_result"] = result
     write_json(report_path, report)
     graphs = result.get("result", {}).get("graph", [])
     print(f"  dokončené, počet blokov dát: {len(graphs)}", flush=True)
     if graphs:
         print("  dátové rady:", ", ".join(sorted(graphs[0])))
+    if timing:
+        summary = result["_client_timing"]
+        print("  FID prijatý po:", summary["fid_ready_seconds"], "s")
+        print("  prvý FFT graf prijatý po:", summary["first_fft_chart_seconds"], "s")
+        print("  experiment skončil po:", summary["experiment_finished_seconds"], "s")
+        print("  poradie grafov:", ", ".join(
+            f"{event['name']}@{event['seconds']}s({event['points']})"
+            for event in summary["events"] if event["event"] == "chart"))
 
 
 def main():
@@ -195,6 +250,8 @@ def main():
                         help="maximálne čakanie na jedno meranie v sekundách")
     parser.add_argument("--rabi-pause", type=float, default=10,
                         help="prestávka medzi Rabi meraniami v sekundách (štandardne 10)")
+    parser.add_argument("--timing", action="store_true",
+                        help="pri fyzikálnom experimente zmerať príchod FID a FFT dát")
     args = parser.parse_args()
     try:
         ipaddress.ip_address(args.host)
@@ -220,6 +277,7 @@ def main():
     types = Types()
     types.ExperimentType = ExperimentType
     types.Pulse = Pulse
+    types.MachineType = MachineType
     password = getpass.getpass("Heslo SpinQ: ") if args.ask_password else "anyword"
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_UTC")
     report_path = Path(__file__).resolve().parent / "results" / f"{stamp}_{args.mode}.json"
@@ -251,7 +309,7 @@ def main():
         if args.mode in ("rabi", "all"):
             run_rabi(link, types, report, report_path, args.timeout, args.rabi_pause)
         if args.mode in ("physical", "all"):
-            run_physical(link, types, report, report_path, args.timeout)
+            run_physical(link, types, report, report_path, args.timeout, args.timing)
 
         report["completed"] = True
         write_json(report_path, report)
