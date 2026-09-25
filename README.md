@@ -180,6 +180,11 @@ FFT grafu a správy o skončení experimentu. Tento prepínač iba sleduje
 prichádzajúce správy; nemení pulzy ani parametre merania. Verejné
 SpinQLabLink API nemá zdokumentovanú voľbu na vypnutie FFT na tablete.
 
+Na jednorazové zverejnenie kódu **aj nameraných dát** z `results/` použi
+`push_all.ps1`. Skript pridá súbory, vytvorí commit a odošle ho na
+`xkuruc/spinq_pokus`. Token je iba argument pri spustení; skript ho
+neukladá do repozitára. Namerané dáta budú po odoslaní verejné.
+
 Ak meranie prekročí časový limit, môže ešte bežať na prístroji. Pred
 opätovným spustením skontroluj front experimentov v aplikácii SpinQ.
 Ak staršia verzia skriptu zlyhala na `get_experiment_status`, najprv
