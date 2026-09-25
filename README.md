@@ -93,9 +93,11 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install spinqlablink==1.0.2
 ```
 
-Ak je dostupný `py`, ale nie `python`, použi namiesto prvého príkazu
-`py -3.11 -m venv .venv` (ak je verzia 3.11 nainštalovaná). Ak nefunguje
-ani `python`, ani `py`, Python na tomto PC buď nie je nainštalovaný, alebo
+Ak je dostupný `py`, ale nie `python`, over `py -3 --version` a pri verzii
+3.10 až 3.12 použi namiesto prvého príkazu `py -3 -m venv .venv`. Ak
+funguje iba `python3`, over `python3 --version` a použi
+`python3 -m venv .venv`. Ak nefunguje žiadny z týchto príkazov, Python na
+tomto PC buď nie je nainštalovaný, alebo
 nie je dostupný v PATH. Najprv over jeho inštaláciu podľa pravidiel
 firemného PC; [oficiálny návod pre Windows](https://docs.python.org/3/using/windows.html)
 opisuje aj inštaláciu pre jedného používateľa. Bez funkčného Pythonu
