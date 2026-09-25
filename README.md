@@ -64,11 +64,63 @@ počká na stavové správy a odpojí sa. Nespúšťa experimenty ani nemení
 parametre. Adresu `192.168.15.4` z príkladov výrobcu nepoužívaj automaticky;
 dosadíš skutočnú adresu svojho zariadenia.
 
+## 4. Ovládanie cez pôvodnú obrazovku SpinQ
+
+Pôvodná obrazovka zostane pripojená ku Gemini Lab cez USB kábel. Windows PC
+posiela experimenty do jej SpinQLabLink servera cez lokálnu sieť. Názov
+zariadenia v aplikácii (napr. `Lab-00`) sa do API nezadáva; rozhodujúca je
+adresa z aplikácie.
+
+Najprv na **Windows PC** over spojenie (dosadíš svoju skutočnú IP):
+
+```powershell
+Test-NetConnection IP_Z_APLIKACIE -Port 8181
+```
+
+`TcpTestSucceeded` musí byť `True`. Potom použi Python 3.10 alebo 3.11 a
+nainštaluj oficiálny balík iba do prostredia v tomto priečinku:
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install spinqlablink==1.0.2
+```
+
+Ak Python 3.11 nie je nainštalovaný, over dostupné verzie príkazom `py -0p`
+a podľa nich uprav prvý príkaz. Na firemnom PC rešpektuj pravidlá pre
+inštalovanie balíkov.
+
+Najprv načítaj stav; tento príkaz nespúšťa experiment:
+
+```powershell
+.\.venv\Scripts\python.exe .\spinq_lab_control.py status --host IP_Z_APLIKACIE
+```
+
+Potom spusti Rabiho meranie (päť šírok pulzu 40–200 µs) alebo jednu
+fyzikálnu vrstvu (40 µs pulz, bez gradientu). Program pred experimentom
+vyžaduje stav `connected=True` a `lock_state=True`:
+
+```powershell
+.\.venv\Scripts\python.exe .\spinq_lab_control.py rabi --host IP_Z_APLIKACIE
+.\.venv\Scripts\python.exe .\spinq_lab_control.py physical --host IP_Z_APLIKACIE
+```
+
+Príkaz `all` vykoná obe merania po sebe. Predvolené prihlasovacie slová
+`anyword` sú z oficiálnych príkladov. Ak tvoje laboratórium používa vlastný
+účet, pridaj `--account TVOJ_UCET --ask-password`; heslo sa nikam neukladá.
+Výsledky sú v `results/` vo formáte JSON, Rabi aj v CSV. Priečinok
+`results/` je v `.gitignore` a neodošle sa na GitHub.
+
+Ak meranie prekročí časový limit, môže ešte bežať na prístroji. Pred
+opätovným spustením skontroluj front experimentov v aplikácii SpinQ.
+
 ## Zdroj API
 
 - [Oficiálny SpinQLabLink](https://github.com/SpinQTech/spinqlablink)
 - [Oficiálny príklad čítania stavu zariadenia](https://github.com/SpinQTech/spinqlablink/blob/main/examples/device_data_example.py)
 - [FTDI: predvolené VID/PID čipu FT232H](https://ftdichip.com/wp-content/uploads/2024/09/DS_FT232H.pdf)
 - [FTDI: D2XX Programmer's Guide](https://ftdichip.com/wp-content/uploads/2023/09/D2XX_Programmers_Guide.pdf)
+- [SpinQLabLink Quick Start](https://doc.spinq.cn/doc/SpinQLAB_Link/en/quickstart.html)
+- [SpinQLabLink: fyzikálna vrstva](https://doc.spinq.cn/doc/SpinQLAB_Link/en/experiment/Research_Experiment.html)
+- [Oficiálny príklad Rabiho oscilácie](https://github.com/SpinQTech/spinqlablink/blob/main/examples/part1/exp_rabi_example.py)
 
 Žiadne heslá, tokeny ani výstupy diagnostiky nepatria do verejného repozitára.
