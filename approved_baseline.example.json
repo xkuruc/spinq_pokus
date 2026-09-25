@@ -1,0 +1,34 @@
+{
+  "id": "historical_40us_physical_unapproved",
+  "origin": "parameters from existing spinq_lab_control.py; not a safety approval",
+  "approved": false,
+  "workstation_verified": false,
+  "approved_by": "",
+  "approved_utc": "",
+  "approval_evidence": "",
+  "two_channel_timing_verified": false,
+  "verified_units": {},
+  "internal_acquisitions_upper_bound": null,
+  "preparation_rf_upper_bound_us": null,
+  "repeat_count": 2,
+  "approved_variants": [],
+  "params": {
+    "compute_type": 0,
+    "relaxation_time": 15.0,
+    "stepList": [],
+    "samplePath": 0,
+    "h_freShift": 0,
+    "p_freShift": 0,
+    "h_freDemo": 0,
+    "p_freDemo": 0,
+    "makePps": true,
+    "sampleFre": 10000,
+    "sampleCount": 16000,
+    "sampleDelay": 0,
+    "pulse": {
+      "hPulse": [{"width": 40.0, "am": 100.0, "phase": 90.0, "freshift": 0.0}],
+      "pPulse": []
+    },
+    "gradient": []
+  }
+}

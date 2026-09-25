@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 diagnostics*.txt
 results/
+audit_*/
+audit_config.toml
+approved_baseline.json
+approved_plan.json
+spinq_audit/user_reported_history.json

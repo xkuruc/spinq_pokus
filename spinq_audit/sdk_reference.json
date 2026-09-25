@@ -1,0 +1,78 @@
+{
+  "package": "spinqlablink",
+  "version": "1.0.2",
+  "origin": "PyPI wheel and official upstream source, statically reviewed",
+  "files": [
+    "spinqlablink/__init__.py",
+    "spinqlablink/spinqlablink.py",
+    "spinqlablink/connection/__init__.py",
+    "spinqlablink/connection/connection.py",
+    "spinqlablink/connection/heartbeat.py",
+    "spinqlablink/connection/message_pb2.py",
+    "spinqlablink/connection/protocol.py",
+    "spinqlablink/device/__init__.py",
+    "spinqlablink/device/device.py",
+    "spinqlablink/experiment/ExperimentManager.py",
+    "spinqlablink/experiment/__init__.py",
+    "spinqlablink/experiment/exp_decot1.py",
+    "spinqlablink/experiment/exp_decot2.py",
+    "spinqlablink/experiment/exp_dydeco.py",
+    "spinqlablink/experiment/exp_layer_circuit.py",
+    "spinqlablink/experiment/exp_layer_physical.py",
+    "spinqlablink/experiment/exp_npopti.py",
+    "spinqlablink/experiment/exp_pulse.py",
+    "spinqlablink/experiment/exp_qalgorithm.py",
+    "spinqlablink/experiment/exp_qcircuit.py",
+    "spinqlablink/experiment/exp_qcontrol.py",
+    "spinqlablink/experiment/exp_qrefactor.py",
+    "spinqlablink/experiment/exp_qtask.py",
+    "spinqlablink/experiment/exp_qubit.py",
+    "spinqlablink/experiment/exp_rabi.py",
+    "spinqlablink/experiment/exp_shapePulse.py",
+    "spinqlablink/experiment/exp_spinecho.py",
+    "spinqlablink/experiment/exp_sysinit.py",
+    "spinqlablink/experiment/experiment_base.py",
+    "spinqlablink/utils/__init__.py",
+    "spinqlablink/utils/circuit.py",
+    "spinqlablink/utils/extension.py",
+    "spinqlablink/utils/gate.py",
+    "spinqlablink/utils/logger.py",
+    "spinqlablink/utils/pulse.py",
+    "spinqlablink/utils/types.py"
+  ],
+  "required_snippets": {
+    "spinqlablink/spinqlablink.py": [
+      "class SpinQLabLink:",
+      "def _handle_received_message(",
+      "def _handle_exp_queue_update_post("
+    ],
+    "spinqlablink/connection/protocol.py": [
+      "class Protocol:",
+      "def serialize_message(",
+      "def deserialize_message(",
+      "self.remaining_data"
+    ],
+    "spinqlablink/connection/connection.py": [
+      "class TCPConnection:",
+      "self._message_callback = None"
+    ],
+    "spinqlablink/experiment/exp_layer_physical.py": [
+      "class ExpLayerPhysicalParameters(",
+      "def get_parameters(",
+      "class ExpLayerPhysical("
+    ],
+    "spinqlablink/experiment/experiment_base.py": [
+      "class Experiment(",
+      "class ExperimentParameter("
+    ],
+    "spinqlablink/experiment/ExperimentManager.py": [
+      "class ExperimentManager:",
+      "self.current_experiment = None",
+      "def wait_for_experiment_completion("
+    ]
+  },
+  "upstream_main_commit_checked": "8fe50f65bf87b97bf39dc4e1f8db9363801fd169",
+  "python_source_matches_main_after_crlf_normalization": true,
+  "comparison_scope": "36 Python files in PyPI wheel versus official main commit; message.proto not in wheel",
+  "local_source_modification_status": "not_verified"
+}

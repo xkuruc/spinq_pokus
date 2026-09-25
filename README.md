@@ -202,3 +202,86 @@ spusti `git pull`. Opravený skript číta stav priamo z experimentu.
 - [Oficiálny príklad Rabiho oscilácie](https://github.com/SpinQTech/spinqlablink/blob/main/examples/part1/exp_rabi_example.py)
 
 Žiadne heslá, tokeny ani výstupy diagnostiky nepatria do verejného repozitára.
+
+## Audit SDK, NMR dát a budúcej kalibrácie
+
+Nový balík `spinq_audit/` je oddelený od funkčného
+`spinq_lab_control.py`. Predvolený režim nič nepripája ani neposiela
+prístroju. Potrebuje Python 3.11+ a pre offline/replay iba štandardnú
+knižnicu. Pri spustení na Windows použi **ten istý** interpreter z `.venv`,
+v ktorom funguje SpinQLabLink 1.0.2.
+
+```powershell
+.\.venv\Scripts\python.exe -m spinq_audit offline --out audit_offline
+```
+
+Otvor `audit_offline\REPORT.html`. Podklady sú v tom istom adresári a v
+`audit_bundle.zip`. Audit používa statický inventár nainštalovaného SDK;
+ak v danom interpreteri SDK chýba, použije označený referenčný snapshot
+oficiálneho balíka 1.0.2. Žiadny SDK balík neinštaluje, nemení ani
+neimportuje v offline/replay režime. Porovnanie s GitHub `main` je viazané
+na commit `8fe50f65bf87b97bf39dc4e1f8db9363801fd169`; obsah Python
+súborov v PyPI wheel 1.0.2 sa pri tomto audite zhodoval po normalizácii
+riadkov CRLF/LF. Audit uvádza verziu, pôvod a dostupné súbory SDK;
+úplná nemennosť lokálnych súborov tým nie je potvrdená.
+
+Pre pasívny zber vytvor lokálnu konfiguráciu bez hesla:
+
+```powershell
+Copy-Item .\audit_config.example.toml .\audit_config.toml
+.\.venv\Scripts\python.exe -m spinq_audit passive --config audit_config.toml --duration 60 --out audit_passive
+```
+
+Pred druhým príkazom v lokálnom `audit_config.toml` nahraď
+`IP_Z_APLIKACIE` adresou z aplikácie SpinQ.
+
+Heslo zadáš do skrytej výzvy alebo cez premennú `SPINQ_AUDIT_PASSWORD`;
+nikdy cez argument CLI. Pasívny režim vytvorí vlastné pripojenie iba po
+výslovnom spustení, dovolí login a heartbeat, číta push telemetriu a
+nespustí experiment. Nezachytáva dáta cudzieho experimentu. Existujúceho
+klienta možno pozorovať funkciou `audit_existing_client(client, out=...,
+owns_connection=False)`; tá ho neodpojí.
+
+Konkrétny návrh malých meraní bez odoslania vytvoríš takto:
+
+```powershell
+Copy-Item .\approved_baseline.example.json .\approved_baseline.json
+.\.venv\Scripts\python.exe -m spinq_audit plan --config audit_config.toml --baseline approved_baseline.json --out audit_plan
+```
+
+Príklad baseline obsahuje presné parametre predchádzajúceho 40 µs pokusu,
+ale je **neschválený**. Plán preto vypíše blokátory: chýbajú potvrdené
+jednotky, RF záťaž automatickej prípravy, interný počet akvizícií a
+prevádzkové limity. Tieto položky treba doložiť na tomto pracovisku;
+hodnoty zo schémy SDK nie sú bezpečnostnými limitmi. `plan.json` obsahuje
+presné navrhované payloady a `approval_template.json` úplnú kópiu plánu.
+
+Aktívny režim vyžaduje splnený bezpečnostný plán, `active_enabled=true`
+v konfigurácii, schválený baseline, limitný rozpočet a schválenie
+**presnej kópie** plánu v samostatnom súbore. Po kontrole plánu skopíruj
+`audit_plan\approval_template.json` do lokálneho `approved_plan.json`,
+nastav `approved=true`, svoje meno a UTC čas. Zmena plánu alebo
+konfigurácie po schválení sa zablokuje. Až potom, pri explicitnom
+povolení hardvéru, je dostupný príkaz:
+
+```powershell
+.\.venv\Scripts\python.exe -m spinq_audit active --config audit_config.toml --baseline approved_baseline.json --approved-plan approved_plan.json --allow-hardware --max-experiments 3 --out audit_active
+```
+
+Číslo `3` je iba príklad rozpočtu pre jeden baseline a dve opakovania;
+nie je to bezpečný fyzikálny limit. Aktívny executor navyše vyžaduje
+čerstvý stav a prázdnu frontu; ak ich server neposiela, zastaví sa bez
+merania. Žiadna chyba nespúšťa slepý retry. Odpojenie klienta nezastavuje
+prípadnú už odoslanú hardvérovú úlohu.
+
+Starý uložený JSON alebo nový audit možno vyhodnotiť bez SDK a bez siete:
+
+```powershell
+.\.venv\Scripts\python.exe -m spinq_audit replay --input .\results\NAZOV_RABI_SUBORU.json --out audit_replay
+.\.venv\Scripts\python.exe -m spinq_audit replay --input audit_passive --out audit_replay_passive
+```
+
+Starý `get_result()` už môže mať prepísané priebežné grafy a neobsahuje
+všetky hranice prenosu. Replay ho preto výslovne označí ako agregovaný
+výsledok, nie originálny transport ani RAW ADC. `audit_*/` je ignorovaný
+Gitom: report a namerané dáta sa neposielajú na GitHub automaticky.
