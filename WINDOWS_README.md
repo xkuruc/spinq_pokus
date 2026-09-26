@@ -1,6 +1,11 @@
-# Windows: jeden štart, reálne merania
+# Windows: pôvodná prieskumná séria
 
-V PowerShelli v repozitári spusti `git pull` a potom `run_windows.cmd`.
+Nový päťtematický benchmark používa `run_windows.cmd`; pozri
+[BENCHMARK_README.md](BENCHMARK_README.md). Tento návod ostáva pre starší
+`spinq_live_suite.py`.
+
+V PowerShelli v repozitári spusti `git pull` a potom
+`.\.venv\Scripts\python.exe .\spinq_live_suite.py --config .\live_suite.example.toml`.
 Použije existujúce `.venv`, tablet na `172.19.20.100:8181` a demo
 prihlásenie `anyword` z funkčného `spinq_lab_control.py`. Ak používaš iné
 heslo, nastav pred spustením premennú `SPINQ_AUDIT_PASSWORD`; skript sa

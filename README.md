@@ -1,5 +1,7 @@
 # SpinQ Gemini Lab: bezpečná kontrola na Windows
 
+Experimentálny benchmark: [BENCHMARK_README.md](BENCHMARK_README.md). Na Windowse ho spustíš cez `.\run_windows.cmd`.
+
 Tento repozitár má oddelené kroky. **Začni diagnostikou USB.** Tá iba
 číta informácie z Windows a neposiela zariadeniu žiadny príkaz.
 
@@ -205,11 +207,10 @@ spusti `git pull`. Opravený skript číta stav priamo z experimentu.
 
 ## Reálne automatické merania na Windows
 
-Na pripojenom Windows počítači spusti `run_windows.cmd`; postup je v
-[krátkom Windows návode](WINDOWS_README.md). Program vykoná dostupné reálne
-merania, zaznamená aj priebežné dáta a podľa čerstvej kalibrácie skúsi P kanál.
-Neoverené vnútorné pulzy a trvalé zásahy preskočí s dôvodom. Výsledkom je
-lokálny `results.zip`; Git push do samostatnej vetvy sa skúsi automaticky.
+Na pripojenom Windows počítači spusti `run_windows.cmd`; nový päťtematický
+benchmark je popísaný v [návode benchmarku](BENCHMARK_README.md). Staršia
+prieskumná séria je zachovaná ako samostatný `spinq_live_suite.py` a jej
+postup je v [pôvodnom Windows návode](WINDOWS_README.md).
 
 ## Audit SDK, NMR dát a budúcej kalibrácie
 

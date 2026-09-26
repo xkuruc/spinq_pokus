@@ -77,8 +77,9 @@ def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object
     try:
         remote = _remote(repo, env)
         with tempfile.TemporaryDirectory(prefix="spinq_results_push_") as name:
-            work = Path(name)
-            askpass = work / "askpass.cmd"
+            work = Path(name) / "checkout"
+            work.mkdir()
+            askpass = Path(name) / "askpass.cmd"
             askpass.write_text(
                 '@echo off\r\n'
                 'echo %~1 | findstr /I /C:"Username" >nul\r\n'
@@ -88,11 +89,21 @@ def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object
                 'exit /b 1\r\n', encoding="ascii")
             if sys.platform == "win32" and (env.get("GH_TOKEN") or env.get("GITHUB_TOKEN")):
                 env["GIT_ASKPASS"] = str(askpass)
-            files = _parts(zip_path, work)
             _git(["init", "-q"], work, env)
-            _git(["checkout", "-q", "-b", branch], work, env)
             _git(["remote", "add", "origin", remote], work, env)
-            _git(["add", "--", *files], work, env)
+            existing = _git(["ls-remote", "--heads", "origin", f"refs/heads/{branch}"], work, env)
+            if existing:
+                # A resumed measurement creates a fast-forward update to the
+                # same result branch. Never force-push or alter the main checkout.
+                _git(["fetch", "-q", "--depth=1", "origin", f"refs/heads/{branch}"], work, env)
+                _git(["checkout", "-q", "-b", branch, "FETCH_HEAD"], work, env)
+                for old in work.glob("results.zip*"):
+                    old.unlink()
+                (work / "HOW_TO_JOIN.txt").unlink(missing_ok=True)
+            else:
+                _git(["checkout", "-q", "-b", branch], work, env)
+            files = _parts(zip_path, work)
+            _git(["add", "-A"], work, env)
             _git(["-c", "user.name=SpinQ Results", "-c",
                   "user.email=spinq-results@users.noreply.github.com", "commit", "-q",
                   "-m", f"Gemini Lab results {branch.rsplit('/', 1)[-1]}"], work, env)

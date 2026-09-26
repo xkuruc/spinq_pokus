@@ -1,4 +1,6 @@
-# Reálne merania Gemini Lab na Windows
+# Pôvodná prieskumná séria Gemini Lab na Windows
+
+Nový benchmark sa spúšťa cez `run_windows.cmd`; pozri [BENCHMARK_README.md](BENCHMARK_README.md).
 
 `spinq_live_suite.py` používa nainštalovaný SpinQLabLink na tvojom Windows
 počítači. Tablet zostáva pripojený k prístroju cez USB. Na vývojovom Macu sa
@@ -34,7 +36,7 @@ V PowerShelli v priečinku repozitára:
 
 ```powershell
 git pull
-.\run_windows.cmd
+.\.venv\Scripts\python.exe .\spinq_live_suite.py --config .\live_suite.example.toml
 ```
 
 Predvolený plán postupne skúsi základný NMR signál, fyzikálny FID, 20

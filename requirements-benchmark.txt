@@ -1,0 +1,7 @@
+# Separate environment; the existing .venv remains untouched.
+spinqlablink==1.0.2
+numpy>=2.1,<3
+scipy>=1.15,<2
+scikit-learn>=1.6,<2
+matplotlib>=3.10,<4
+torch>=2.6,<3

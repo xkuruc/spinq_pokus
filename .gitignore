@@ -1,4 +1,6 @@
 .venv/
+.bench-test/
+.benchmark-venv/
 __pycache__/
 *.pyc
 diagnostics*.txt
