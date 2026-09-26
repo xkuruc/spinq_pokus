@@ -1,0 +1,197 @@
+{
+  "experiment": "01_bayes_kalibracia",
+  "run_id": "20260926_175559_UTC",
+  "started_utc": "2026-09-26T17:55:59.642749+00:00",
+  "state": "PILOT_FAILED",
+  "config": {
+    "host": "172.19.20.100",
+    "port": 8181,
+    "blocks": 3,
+    "acquisitions_per_method": 24,
+    "seed": 26092026,
+    "sample_hz": 10000,
+    "sample_count": 16000,
+    "pilot_widths_us": [
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      160,
+      200
+    ],
+    "pilot_repeat_width_us": 40,
+    "pilot_repeats": 3,
+    "pilot_phase_deg": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "reference_acquisitions_per_block": 8,
+    "heldout_controls_per_method": 2,
+    "particles": 512,
+    "design_mc_samples": 12,
+    "max_tasks": 460,
+    "max_requested_rf_us": 90000,
+    "timeout_seconds": 180,
+    "pause_seconds": 2,
+    "exclusive_use_confirmed": false,
+    "allow_unverified_ramsey": false
+  },
+  "environment": {
+    "checked_utc": "2026-09-26T17:55:59.567326+00:00",
+    "versions": {
+      "spinqlablink": "1.0.2",
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2"
+    },
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu_count": 16,
+    "gpu": "not used",
+    "thread_limits": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null
+    },
+    "sdk_physical_serializer": "MATCHES_ESTABLISHED_REQUEST",
+    "raw_adc_verified": false,
+    "server_fft_offload_disabled": false
+  },
+  "pilot": {},
+  "plan": {},
+  "acquisitions": {
+    "pilot_repeat_0": {
+      "key": "pilot_repeat_0",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.002
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "4c447b0c-3d34-4717-afd0-6abaf488b9c2",
+      "wall_seconds": 4.657717400230467,
+      "full_cycle_seconds": 4.7767321998253465,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_repeat_0.npz",
+      "completed_utc": "2026-09-26T17:56:06.252566+00:00"
+    },
+    "pilot_repeat_1": {
+      "key": "pilot_repeat_1",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.002
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "91adc24c-16c1-40a9-a633-0ce75bedc198",
+      "wall_seconds": 17.174431000370532,
+      "full_cycle_seconds": 18.888536300044507,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_repeat_1.npz",
+      "completed_utc": "2026-09-26T17:56:25.190916+00:00"
+    },
+    "pilot_repeat_2": {
+      "key": "pilot_repeat_2",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.002
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "da1370cc-1309-4daf-ab49-79148ce0a7ff",
+      "wall_seconds": 15.135738399811089,
+      "full_cycle_seconds": 16.82917039981112,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_repeat_2.npz",
+      "completed_utc": "2026-09-26T17:56:42.069643+00:00"
+    }
+  },
+  "methods": {},
+  "references": {},
+  "rows": [],
+  "errors": [
+    {
+      "reason": "SignalIdentificationError: Pilot FID coherence window is too short for six phase features",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\bayes_calibration.py\", line 1598, in execute\n    self.run_pilot()\n    ~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\bayes_calibration.py\", line 640, in run_pilot\n    self.pilot = identify_pilot_multiplet(repeats)\n                 ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\signal_01.py\", line 504, in identify_pilot_multiplet\n    features_windows = _feature_windows(mean_fid - fit[\"baseline\"], covariance,\n                                        sample_hz, fit[\"frequencies_hz\"], primary)\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\signal_01.py\", line 434, in _feature_windows\n    raise SignalIdentificationError(\"Pilot FID coherence window is too short for six phase features\")\nexperiments.signal_01.SignalIdentificationError: Pilot FID coherence window is too short for six phase features\n"
+    }
+  ],
+  "hardware_tasks_completed": 3,
+  "hardware_results_present": true,
+  "upload": {
+    "status": "NOT_ATTEMPTED"
+  },
+  "raw_data_type": "exported complex FID, not verified raw ADC",
+  "exclusive_use_attestations": [
+    {
+      "utc": "2026-09-26T17:55:59.661846+00:00",
+      "source": "explicit --exclusive-use-confirmed flag",
+      "scope": "this connection only; fresh nonempty server queue still blocks"
+    }
+  ],
+  "connection_setup_seconds": [
+    1.7486268999055028
+  ],
+  "finished_utc": "2026-09-26T17:56:44.012654+00:00"
+}
