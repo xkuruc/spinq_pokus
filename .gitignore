@@ -1,6 +1,7 @@
 .venv/
 .bench-test/
 .benchmark-venv/
+.bayes-venv/
 __pycache__/
 *.pyc
 diagnostics*.txt

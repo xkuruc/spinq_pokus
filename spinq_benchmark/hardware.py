@@ -15,7 +15,7 @@ from spinq_audit.adapter import AuditAdapter, verify_installed_sdk
 from spinq_audit.common import atomic_json, redact, utc_now
 from spinq_audit.probes import _configure_physical, wait_terminal
 from spinq_audit.recorder import EventRecorder
-from spinq_live_suite import HISTORICAL_PHYSICAL_BASELINE, read_new_events, wait_recorded
+from spinq_live_suite import HISTORICAL_PHYSICAL_BASELINE, wait_recorded
 
 
 class HardwareUncertain(RuntimeError):
@@ -115,6 +115,76 @@ def stored_graph_fields(graph, requested_count, *, compact=False):
             "all_decoded_graphs": graph}
 
 
+def last_complete_event_offset(path: Path) -> int:
+    """Return the byte immediately after the final complete JSONL newline.
+
+    A large chart line can be mid-write while the main thread checkpoints a
+    new task. Starting at the current file size could then land inside JSON.
+    Including that preceding partial line is harmless because its task ID is
+    filtered; starting in its middle is not.
+    """
+    if not path.exists():
+        return 0
+    with path.open("rb") as source:
+        end = source.seek(0, os.SEEK_END)
+        cursor = end
+        while cursor:
+            size = min(4096, cursor)
+            cursor -= size
+            source.seek(cursor)
+            block = source.read(size)
+            index = block.rfind(b"\n")
+            if index >= 0:
+                return cursor + index + 1
+    return 0
+
+
+def wait_completed_fid_events(recorder, event_path: Path, task_id: str,
+                              payload: dict, start_byte_offset: int, *,
+                              seconds: float = 10., settle_seconds: float = .15) -> dict:
+    """Boundedly drain delayed chart callbacks after SDK terminal completion.
+
+    This is a receive-only wait. It never invokes run_experiment or a retry.
+    Offset polling reads each complete JSONL line once; a partial concurrent
+    write is retried from its first byte on the next poll. `assemble_fid`
+    validates final task/group/path/qubit/step, matching axes and chart end.
+    """
+    from spinq_local.core import IncompleteFID, assemble_fid, read_task_events
+
+    deadline = time.monotonic() + max(0., seconds)
+    offset = start_byte_offset
+    events = []
+    reason = "No complete FID chart pair received"
+    first_complete = None
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining < 0:
+            return {"fid_capture_status": "INCOMPLETE", "fid_capture_reason": reason,
+                    "event_start_byte_offset": start_byte_offset,
+                    "event_end_byte_offset": offset, "captured_task_events": len(events)}
+        wait_recorded(recorder, seconds=min(1., max(.05, remaining)))
+        if not recorder.status()["complete"]:
+            raise RuntimeError("Recorder lost events after terminal hardware state")
+        new_events, offset = read_task_events(event_path, task_id, offset)
+        if new_events:
+            events.extend(new_events)
+            first_complete = None
+        try:
+            assemble_fid(events, task_id, parameters_sent=payload)
+        except IncompleteFID as exc:
+            reason = str(exc)
+            first_complete = None
+        else:
+            if first_complete is None:
+                first_complete = time.monotonic()
+            if time.monotonic() - first_complete >= settle_seconds:
+                return {"fid_capture_status": "COMPLETE",
+                        "event_start_byte_offset": start_byte_offset,
+                        "event_end_byte_offset": offset,
+                        "captured_task_events": len(events)}
+        time.sleep(min(.05, max(0., deadline - time.monotonic())))
+
+
 class LiveHardware:
     def __init__(self, out: Path, *, host="172.19.20.100", port=8181, account="anyword",
                  timeout_seconds=180, pause_seconds=2., max_tasks=180,
@@ -137,7 +207,6 @@ class LiveHardware:
             raise HardwareUncertain("Previous session has an uncertain task; do not resume blindly")
         self.task_count=sum(v.get("phase")=="completed" for v in self.journal.values())
         self.rf_us=sum(float(v.get("requested_rf_us",0)) for v in self.journal.values() if v.get("phase") in ("completed","failed"))
-        self.file_offset=0
 
     def __enter__(self):
         verify_installed_sdk()
@@ -221,8 +290,15 @@ class LiveHardware:
             self.adapter.own_task_ids.add(str(exp.id))
             self.adapter.pending_own_ack=True
             self.adapter.ack_mismatch=False
+            # Journal the active task's seek point before run_experiment. The
+            # writer may still drain older notifications, which task-ID
+            # filtering safely ignores; no event for this task can precede
+            # the command submission below.
+            event_path = self.data / "events.jsonl"
+            event_start = last_complete_event_offset(event_path)
             self.journal[key]={"phase":"submission_attempted_unconfirmed","requested_rf_us":rf,
-                               "task_id_before_ack":str(exp.id),"params":p,"utc":utc_now()}
+                               "task_id_before_ack":str(exp.id),"params":p,"utc":utc_now(),
+                               "event_start_byte_offset":event_start}
             try:
                 atomic_json(self.journal_path,self.journal)
             except Exception as exc:
@@ -258,7 +334,9 @@ class LiveHardware:
                 self.halted=True
                 raise HardwareUncertain(f"Hardware task {key} FAILED; stop submissions")
             try:
-                wait_recorded(self.recorder)
+                capture = wait_completed_fid_events(
+                    self.recorder, event_path, str(exp.id), p, event_start,
+                    seconds=min(10., max(2., self.timeout / 10.)))
                 # SDK result is an original decoded chart export, alongside event journal.
                 result=self.link.get_experiment_result()
                 graph=result.get("result",{}).get("graph",[])
@@ -266,10 +344,13 @@ class LiveHardware:
                      "wall_seconds":time.monotonic()-start,"finished_utc":utc_now(),
                      "internal_repetitions":"UNKNOWN","requested_rf_us":rf,
                      "raw_adc_confirmed":False}
+                row.update(capture)
                 row.update(stored_graph_fields(graph,p["sampleCount"],compact=self.compact_result))
                 atomic_json(target,row)
                 self.journal[key]["phase"]="completed"
                 self.journal[key]["result_file"]=str(target.relative_to(self.out))
+                self.journal[key]["event_end_byte_offset"]=capture["event_end_byte_offset"]
+                self.journal[key]["fid_capture_status"]=capture["fid_capture_status"]
                 atomic_json(self.journal_path,self.journal)
                 return row
             except Exception as exc:

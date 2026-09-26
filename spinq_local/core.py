@@ -280,18 +280,46 @@ def assemble_fid(events: Iterable[dict[str, Any]], task_id: str, path: str = "0"
                         re=re, im=im, parameters_sent=params, metadata=record_meta)
 
 
-def _events_for_task(path: Path, task_id: str) -> list[dict[str, Any]]:
-    events = []
+def read_task_events(path: Path, task_id: str, start_byte_offset: int = 0,
+                     end_byte_offset: int | None = None) -> tuple[list[dict[str, Any]], int]:
+    """Read only complete new JSONL lines for one task from a byte offset.
+
+    The plain event log is opened in binary mode because Windows text-mode
+    newline translation makes a byte count unsuitable as a text seek cookie.
+    A compressed-only legacy log remains readable via gzip's *uncompressed*
+    seek; active acquisition always uses the seekable plain JSONL file.
+    """
+    if start_byte_offset < 0 or (end_byte_offset is not None and
+                                  end_byte_offset < start_byte_offset):
+        raise ValueError("Invalid task-event byte interval")
+    events: list[dict[str, Any]] = []
     source_path = path if path.exists() else path.with_suffix(path.suffix + ".gz")
     if not source_path.exists():
-        return events
+        return events, start_byte_offset
     opener = gzip.open if source_path.suffix == ".gz" else open
-    with opener(source_path, "rt", encoding="utf-8") as source:
-        for line in source:
+    with opener(source_path, "rb") as source:
+        source.seek(start_byte_offset)
+        while end_byte_offset is None or source.tell() < end_byte_offset:
+            line_start = source.tell()
+            line = source.readline()
+            if not line:
+                break
+            if not line.endswith(b"\n") or (end_byte_offset is not None and
+                                             source.tell() > end_byte_offset):
+                # The recorder may be writing a large chart line concurrently.
+                # Retry that same line on the next poll, never parse a fragment.
+                source.seek(line_start)
+                break
             event = json.loads(line)
             body = event.get("payload", {}).get("chart_data") or event.get("payload", {}).get("json_data") or {}
             if str(body.get("taskId")) == str(task_id):
                 events.append(event)
+        return events, source.tell()
+
+
+def _events_for_task(path: Path, task_id: str, *, start_byte_offset: int = 0,
+                     end_byte_offset: int | None = None) -> list[dict[str, Any]]:
+    events, _ = read_task_events(path, task_id, start_byte_offset, end_byte_offset)
     return events
 
 
@@ -328,7 +356,13 @@ def run_raw(spec: ExperimentSpec, *, key: str, hardware: LiveHardware,
         return prior
     row = hardware.measure(key, spec.payload, allow_idle_probe=spec.idle_probe)
     task_id = row["task_id"]
-    events = _events_for_task(hardware.data / "events.jsonl", task_id)
+    event_start = row.get("event_start_byte_offset")
+    event_end = row.get("event_end_byte_offset") if row.get("fid_capture_status") == "COMPLETE" else None
+    # Older runs lack offsets; read-only resume still works using the original
+    # full log. For a new run, every task is bounded to its journaled slice.
+    events = _events_for_task(hardware.data / "events.jsonl", task_id,
+                              start_byte_offset=int(event_start or 0),
+                              end_byte_offset=int(event_end) if event_end is not None else None)
     if not events:
         atomic_json(raw_root / f"{key}.error.json", {"task_id": task_id,
                     "error": "No task events captured; simplified SDK graph not substituted"})
@@ -353,6 +387,9 @@ def run_raw(spec: ExperimentSpec, *, key: str, hardware: LiveHardware,
                                         "wall_seconds": row.get("wall_seconds"),
                                         "finished_utc": row.get("finished_utc"),
                                         "local_event_timing": event_times,
+                                        "event_start_byte_offset": event_start,
+                                        "event_end_byte_offset": event_end,
+                                        "fid_capture_status": row.get("fid_capture_status"),
                                         "internal_repetitions": "UNKNOWN",
                                         "server_processing_offload_unverified": True})
     except IncompleteFID as exc:
