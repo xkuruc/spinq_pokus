@@ -1,0 +1,1093 @@
+{
+  "experiment": "01_bayes_kalibracia",
+  "run_id": "20260926_180546_UTC",
+  "started_utc": "2026-09-26T18:05:46.034369+00:00",
+  "state": "PILOT_FAILED",
+  "config": {
+    "host": "172.19.20.100",
+    "port": 8181,
+    "blocks": 3,
+    "acquisitions_per_method": 24,
+    "seed": 26092026,
+    "sample_hz": 10000,
+    "sample_count": 16000,
+    "pilot_widths_us": [
+      20,
+      40,
+      60,
+      80,
+      100,
+      120,
+      160,
+      200
+    ],
+    "pilot_repeat_width_us": 40,
+    "pilot_repeats": 3,
+    "pilot_phase_deg": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "reference_acquisitions_per_block": 8,
+    "heldout_controls_per_method": 2,
+    "particles": 512,
+    "design_mc_samples": 12,
+    "max_tasks": 460,
+    "max_requested_rf_us": 90000,
+    "timeout_seconds": 180,
+    "pause_seconds": 2,
+    "exclusive_use_confirmed": false,
+    "allow_unverified_ramsey": false
+  },
+  "environment": {
+    "checked_utc": "2026-09-26T18:05:45.955654+00:00",
+    "versions": {
+      "spinqlablink": "1.0.2",
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "scikit-learn": "1.9.1",
+      "matplotlib": "3.11.2"
+    },
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu_count": 16,
+    "gpu": "not used",
+    "thread_limits": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null
+    },
+    "sdk_physical_serializer": "MATCHES_ESTABLISHED_REQUEST",
+    "raw_adc_verified": false,
+    "server_fft_offload_disabled": false
+  },
+  "pilot": {
+    "signal": {
+      "sample_hz": 10000.0,
+      "bands_hz": [
+        [
+          195.3125,
+          507.8125
+        ]
+      ],
+      "primary_component_index": 0,
+      "component_frequencies_hz": [
+        351.3115286046124
+      ],
+      "component_offsets_hz": [
+        0.0
+      ],
+      "component_decay_per_s": [
+        417.05096650757827
+      ],
+      "component_weights_re_im": [
+        [
+          1.0,
+          0.0
+        ]
+      ],
+      "reference_frequency_hz": 351.3115286046124,
+      "reference_coefficient_re_im": [
+        346.3551858724984,
+        -194.46543714324073
+      ],
+      "baseline_re_im": [
+        2.3949483961580142,
+        -1.6129504734651166
+      ],
+      "receiver_phase_rad": -0.5116009553230778,
+      "receiver_gauge": "reference primary coefficient of independent pilot; TX/RX global phase unresolved",
+      "noise_covariance_re_im": [
+        [
+          261.64889385837654,
+          -1.341142160649083
+        ],
+        [
+          -1.3411421606490779,
+          254.8442757896721
+        ]
+      ],
+      "lag_one_correlation": 0.10020728319424074,
+      "between_acquisition_covariance_re_im": [
+        [
+          1013.5817063005611,
+          822.4279773482178
+        ],
+        [
+          822.427977348218,
+          670.1665649072685
+        ]
+      ],
+      "feature_windows_s": [
+        [
+          0.0,
+          0.0004111111111111111
+        ],
+        [
+          0.001216888888888889,
+          0.0016280000000000003
+        ],
+        [
+          0.002433777777777778,
+          0.0028448888888888894
+        ],
+        [
+          0.0036506666666666675,
+          0.004061777777777779
+        ],
+        [
+          0.004867555555555556,
+          0.005278666666666667
+        ],
+        [
+          0.006084444444444445,
+          0.006495555555555556
+        ]
+      ],
+      "feature_covariance_re_im": [
+        [
+          0.0013667567286700106,
+          0.0009817725471080823,
+          -0.00649123611188916,
+          3.4536650994550356e-05,
+          -0.0012158558257917209,
+          0.01250094949776099,
+          -0.005286551176410251,
+          0.004505607864503671,
+          0.0007114986609523314,
+          0.008639082523448497,
+          -0.00204498379085574,
+          0.003422683125663968
+        ],
+        [
+          0.0009817725471080823,
+          0.0015578275379382522,
+          -0.005349272163686903,
+          0.0005229988630337316,
+          8.576762216415503e-05,
+          0.011446170806286253,
+          -0.004280870022673234,
+          0.004673575971229799,
+          0.0012842581055297053,
+          0.006820682060740629,
+          -0.0013413269529256567,
+          0.003632747719487237
+        ],
+        [
+          -0.00649123611188916,
+          -0.005349272163686903,
+          0.053697789757222544,
+          0.0034287778523067847,
+          0.0181177980455893,
+          -0.09385806958328674,
+          0.043887275955970195,
+          -0.029719137718738155,
+          -0.000597991311146689,
+          -0.07303054826773939,
+          0.019335575560766725,
+          -0.0219578771641475
+        ],
+        [
+          3.4536650994550356e-05,
+          0.0005229988630337316,
+          0.0034287778523067847,
+          0.0019206069895350171,
+          0.0038177997309294825,
+          -0.0032529976173361606,
+          0.0030098746215179704,
+          0.0004282028045940964,
+          0.001662729456409174,
+          -0.00542952338982167,
+          0.0020830869249317554,
+          0.0005661054802763041
+        ],
+        [
+          -0.0012158558257917209,
+          8.57676221641551e-05,
+          0.0181177980455893,
+          0.003817799730929483,
+          0.01250876282364448,
+          -0.02582927844749615,
+          0.015354141454871203,
+          -0.004972571784005215,
+          0.003538129989367747,
+          -0.026475895913944177,
+          0.008429668286934863,
+          -0.003124692462943483
+        ],
+        [
+          0.01250094949776099,
+          0.011446170806286253,
+          -0.09385806958328674,
+          -0.0032529976173361606,
+          -0.025829278447496145,
+          0.1725648215365638,
+          -0.07701329637930637,
+          0.05785870852889901,
+          0.004992074808620095,
+          0.1271797115393091,
+          -0.03217817426526714,
+          0.043326609638321543
+        ],
+        [
+          -0.005286551176410251,
+          -0.004280870022673234,
+          0.0438872759559702,
+          0.0030098746215179704,
+          0.015354141454871203,
+          -0.07701329637930637,
+          0.03674452174901975,
+          -0.024158081013055888,
+          -0.0002331490142376208,
+          -0.06036707397259759,
+          0.016081545847333133,
+          -0.017814067752025424
+        ],
+        [
+          0.004505607864503671,
+          0.0046735759712298,
+          -0.029719137718738155,
+          0.00042820280459409635,
+          -0.004972571784005215,
+          0.05785870852889902,
+          -0.024158081013055888,
+          0.021647541449986207,
+          0.0036386483930318106,
+          0.039389663147234175,
+          -0.009174835959213432,
+          0.016113799170491393
+        ],
+        [
+          0.0007114986609523314,
+          0.0012842581055297053,
+          -0.0005979913111466891,
+          0.001662729456409174,
+          0.003538129989367747,
+          0.004992074808620096,
+          -0.00023314901423762113,
+          0.00363864839303181,
+          0.002913605675454703,
+          -0.0002018250014599129,
+          0.0009656377929870584,
+          0.003040838988237352
+        ],
+        [
+          0.008639082523448497,
+          0.00682068206074063,
+          -0.07303054826773939,
+          -0.00542952338982167,
+          -0.026475895913944177,
+          0.1271797115393091,
+          -0.06036707397259759,
+          0.03938966314723418,
+          -0.00020182500145991348,
+          0.10120255804851017,
+          -0.027053190165777605,
+          0.02895213492507203
+        ],
+        [
+          -0.00204498379085574,
+          -0.0013413269529256567,
+          0.019335575560766725,
+          0.0020830869249317554,
+          0.008429668286934863,
+          -0.032178174265267145,
+          0.016081545847333133,
+          -0.009174835959213432,
+          0.0009656377929870584,
+          -0.0270531901657776,
+          0.008117505513412988,
+          -0.006600860716319516
+        ],
+        [
+          0.003422683125663968,
+          0.0036327477194872376,
+          -0.0219578771641475,
+          0.0005661054802763042,
+          -0.0031246924629434823,
+          0.043326609638321543,
+          -0.01781406775202542,
+          0.01611379917049139,
+          0.003040838988237352,
+          0.028952134925072027,
+          -0.006600860716319515,
+          0.012810442755628286
+        ]
+      ],
+      "pilot_task_ids": [
+        "06c71b57-2a7a-4134-8ea7-211d26a43eb6",
+        "cd9198d7-4fd4-43b1-abed-8c0a9162891d",
+        "96829b48-716c-4fbf-b682-39248799d8fa"
+      ],
+      "pilot_residual_rms": 16.52216848448686,
+      "status": "IDENTIFIED",
+      "diagnostics": {
+        "peak_centers_hz": [
+          351.5625
+        ],
+        "peak_snr_to_repeat_spectrum": [
+          8.731285436347303
+        ],
+        "active_points": 256,
+        "spectral_resolution_hz": 39.0625,
+        "spectral_noise_source": "independent pilot repetition differences",
+        "band_rule": "pilot spectral peak width and active-duration resolution, disjoint at midpoints",
+        "pilot_fit_residual_rms": 16.52216848448686,
+        "pilot_fit_relative_residual_rms": 0.8299718048364209,
+        "pilot_fit_coherent_residual_rms": 71.76297950694968,
+        "pilot_fit_coherent_relative_residual_rms": 0.38070734313304244,
+        "pilot_fit_coherent_samples": 65,
+        "pilot_feature_coherence_horizon_ms": 7.4,
+        "pilot_feature_last_end_ms": 6.495555555555556,
+        "pilot_band_edge_components": [],
+        "pilot_decay_edge_components": [],
+        "feature_window_sample_counts": [
+          5,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "feature_covariance_rule": "independent-repeat covariance plus AR(1)-inflated sample-noise floor; 3 repeats are rank deficient",
+        "receiver_phase_identifiability": "relative to independent pilot only; absolute TX/RX split unavailable",
+        "FID_sign_convention": "exported Re+iIm fitted as exp(+2pi*i*f*t); sign of physical Mxy precession not independently verified",
+        "frequency_fit_uncertainty_scope": "conditional independent-sample Hessian; do not use as calibrated coverage"
+      },
+      "vendor_result_used": false,
+      "physical_adc_clock_independently_verified": false
+    },
+    "rabi": {
+      "period_us": 168.18287453393148,
+      "t90_us": 42.04571863348287,
+      "t90_interval_us": [
+        37.38016270337923,
+        48.8976846057572
+      ],
+      "signed_complex_r2": 0.952969521667984,
+      "receiver_offset_re_im": [
+        -0.004868435332498579,
+        0.021549571147061113
+      ],
+      "receiver_sine_gain_re_im": [
+        1.0514998135780522,
+        0.007469193423555018
+      ],
+      "receiver_cosine_gain_re_im": [
+        0.03173973252572432,
+        -0.03305386190463341
+      ],
+      "status": "IDENTIFIED",
+      "diagnostics": {
+        "period_search_us": [
+          41.0,
+          450.0
+        ],
+        "widths_us": [
+          20.0,
+          40.0,
+          40.0,
+          40.0,
+          60.0,
+          80.0,
+          100.0,
+          120.0,
+          160.0,
+          200.0
+        ],
+        "profile_error": 0.2723631590551738,
+        "profile_variance_rule": "max(complex fit residual, repeated same-width pilot scatter)",
+        "profile_interval_is_validated_coverage": false,
+        "alternative_period_modes_us": [],
+        "fit_hits_search_edge": false,
+        "five_distinct_widths": true,
+        "frozen_projection_residual_rms": [
+          29.40904558829679,
+          32.156591629161966,
+          36.5304566289341,
+          32.77303900759601,
+          30.62830466280049,
+          27.080804673379582,
+          29.48581604314954,
+          33.125968256724015,
+          26.516584392026267,
+          33.61751915112962
+        ],
+        "projection_scope": "linear signed pilot-frozen mode, defined at Rabi nulls"
+      },
+      "scope": "complex FID mode amplitude versus pulse width; t90=period/4 under sinusoidal calibration model"
+    }
+  },
+  "plan": {},
+  "acquisitions": {
+    "pilot_repeat_0": {
+      "key": "pilot_repeat_0",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.002
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "06c71b57-2a7a-4134-8ea7-211d26a43eb6",
+      "wall_seconds": 5.880103699862957,
+      "full_cycle_seconds": 5.991646300069988,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_repeat_0.npz",
+      "completed_utc": "2026-09-26T18:05:53.469535+00:00"
+    },
+    "pilot_repeat_1": {
+      "key": "pilot_repeat_1",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.002
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "cd9198d7-4fd4-43b1-abed-8c0a9162891d",
+      "wall_seconds": 14.897823999635875,
+      "full_cycle_seconds": 16.625433299690485,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_repeat_1.npz",
+      "completed_utc": "2026-09-26T18:06:10.144985+00:00"
+    },
+    "pilot_repeat_2": {
+      "key": "pilot_repeat_2",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.002
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "96829b48-716c-4fbf-b682-39248799d8fa",
+      "wall_seconds": 16.143142399843782,
+      "full_cycle_seconds": 17.85701850010082,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_repeat_2.npz",
+      "completed_utc": "2026-09-26T18:06:28.050642+00:00"
+    },
+    "pilot_width_20": {
+      "key": "pilot_width_20",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 20.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "3ebd651c-1735-40d3-9166-f99525d11629",
+      "wall_seconds": 17.31793130002916,
+      "full_cycle_seconds": 18.752583000343293,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 20.0,
+      "raw_file": "raw/pilot_width_20.npz",
+      "completed_utc": "2026-09-26T18:06:47.088750+00:00"
+    },
+    "pilot_width_60": {
+      "key": "pilot_width_60",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 60.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "88a077a2-a750-4cc5-92a1-f67e27bd401f",
+      "wall_seconds": 16.094141200184822,
+      "full_cycle_seconds": 17.814928999636322,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 60.0,
+      "raw_file": "raw/pilot_width_60.npz",
+      "completed_utc": "2026-09-26T18:07:04.954879+00:00"
+    },
+    "pilot_width_80": {
+      "key": "pilot_width_80",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 80.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "e9ef5ebb-b42f-4a9f-8307-9bc361ac594f",
+      "wall_seconds": 14.717084599658847,
+      "full_cycle_seconds": 16.44598909979686,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 80.0,
+      "raw_file": "raw/pilot_width_80.npz",
+      "completed_utc": "2026-09-26T18:07:21.454978+00:00"
+    },
+    "pilot_width_100": {
+      "key": "pilot_width_100",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 100.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "9e260c65-de47-4d73-aaff-9d36a4cd248c",
+      "wall_seconds": 17.32094189990312,
+      "full_cycle_seconds": 19.024594399612397,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 100.0,
+      "raw_file": "raw/pilot_width_100.npz",
+      "completed_utc": "2026-09-26T18:07:40.529355+00:00"
+    },
+    "pilot_width_120": {
+      "key": "pilot_width_120",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 120.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "f81d398c-9816-410b-a85f-ff41cc30e474",
+      "wall_seconds": 15.702474899590015,
+      "full_cycle_seconds": 17.46090619964525,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 120.0,
+      "raw_file": "raw/pilot_width_120.npz",
+      "completed_utc": "2026-09-26T18:07:58.043999+00:00"
+    },
+    "pilot_width_160": {
+      "key": "pilot_width_160",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 160.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "04a08ce9-907a-4edf-a4aa-4cf4e004a133",
+      "wall_seconds": 17.70840990031138,
+      "full_cycle_seconds": 19.392723600380123,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 160.0,
+      "raw_file": "raw/pilot_width_160.npz",
+      "completed_utc": "2026-09-26T18:08:17.489064+00:00"
+    },
+    "pilot_width_200": {
+      "key": "pilot_width_200",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 200.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 90.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "36b1fbbe-1988-457a-b0e6-4a6adbb2d919",
+      "wall_seconds": 14.930241100024432,
+      "full_cycle_seconds": 16.64384109992534,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 200.0,
+      "raw_file": "raw/pilot_width_200.npz",
+      "completed_utc": "2026-09-26T18:08:34.183515+00:00"
+    },
+    "pilot_phase_0": {
+      "key": "pilot_phase_0",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 0.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "87280c5c-383d-4aad-9bd9-f87d5a7acea0",
+      "wall_seconds": 15.699576899874955,
+      "full_cycle_seconds": 17.3854638999328,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_phase_0.npz",
+      "completed_utc": "2026-09-26T18:08:51.665342+00:00"
+    },
+    "pilot_phase_180": {
+      "key": "pilot_phase_180",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 180.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "745f7ddf-6199-4655-a20a-6137a7411ea2",
+      "wall_seconds": 15.901895700022578,
+      "full_cycle_seconds": 17.62462339969352,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_phase_180.npz",
+      "completed_utc": "2026-09-26T18:09:09.343221+00:00"
+    },
+    "pilot_phase_270": {
+      "key": "pilot_phase_270",
+      "role": "pilot",
+      "block": null,
+      "method": null,
+      "candidate": {
+        "family": "rabi",
+        "width_us": 40.0,
+        "amplitude_pct": 100.0,
+        "phase_deg": 270.0,
+        "feature_windows_s": [
+          [
+            0.0,
+            0.0004111111111111111
+          ],
+          [
+            0.001216888888888889,
+            0.0016280000000000003
+          ],
+          [
+            0.002433777777777778,
+            0.0028448888888888894
+          ],
+          [
+            0.0036506666666666675,
+            0.004061777777777779
+          ],
+          [
+            0.004867555555555556,
+            0.005278666666666667
+          ],
+          [
+            0.006084444444444445,
+            0.006495555555555556
+          ]
+        ],
+        "sample_hz": 10000,
+        "sample_count": 16000,
+        "drive_frequency_shift_hz": 0.0,
+        "demodulation_shift_hz": 0.0,
+        "delay_us": 0.0,
+        "readout_width_us": 0.0,
+        "readout_phase_deg": 0.0,
+        "coherent_delay_verified": false,
+        "estimated_wall_seconds": null
+      },
+      "task_id": "c6139fad-808a-4a0e-91dc-0159bab9aafb",
+      "wall_seconds": 18.30067710019648,
+      "full_cycle_seconds": 20.074724200181663,
+      "full_cycle_scope": "measured whole local task cycle",
+      "requested_rf_us": 40.0,
+      "raw_file": "raw/pilot_phase_270.npz",
+      "completed_utc": "2026-09-26T18:09:29.470386+00:00"
+    }
+  },
+  "methods": {},
+  "references": {},
+  "rows": [],
+  "errors": [
+    {
+      "reason": "ValueError: Pilot multiplet fit misses the measured coherent FID window",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\bayes_calibration.py\", line 1612, in execute\n    self.run_pilot()\n    ~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\bayes_calibration.py\", line 700, in run_pilot\n    model, validation = _pilot_response_model(self.pilot, rabi.to_dict(), train,\n                        ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                                               heldout)\n                                               ^^^^^^^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\experiments\\bayes_calibration.py\", line 422, in _pilot_response_model\n    raise ValueError(\"Pilot multiplet fit misses the measured coherent FID window\")\nValueError: Pilot multiplet fit misses the measured coherent FID window\n"
+    }
+  ],
+  "hardware_tasks_completed": 13,
+  "hardware_results_present": true,
+  "upload": {
+    "status": "NOT_ATTEMPTED"
+  },
+  "raw_data_type": "exported complex FID, not verified raw ADC",
+  "exclusive_use_attestations": [
+    {
+      "utc": "2026-09-26T18:05:46.049819+00:00",
+      "source": "explicit --exclusive-use-confirmed flag",
+      "scope": "this connection only; fresh nonempty server queue still blocks"
+    }
+  ],
+  "connection_setup_seconds": [
+    1.3633836000226438
+  ],
+  "finished_utc": "2026-09-26T18:09:33.875029+00:00"
+}
