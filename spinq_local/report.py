@@ -60,6 +60,8 @@ class Results:
                     row["status"]=status
                     if not row["reason"]:row["reason"]=reason
         self.save()
+        if status!="RUNNING":
+            print(f"MODULE {letter}: {status}: {reason}",flush=True)
 
     def row(self,**values):
         item={key:values.get(key) for key in FIELDS}
@@ -68,6 +70,10 @@ class Results:
             (r["module"],r["method"],r["task"],r["block"])!=identity]
         self.data["rows"].append(item)
         self.save()
+        print(f"ROW {item['module']} block={item['block']} method={item['method']} "
+              f"task={item['task']} acquisitions={item['acquisitions']} "
+              f"error={item['error']} tolerance={item['tolerance']} "
+              f"status={item['status']}",flush=True)
 
     def markdown(self):
         d=self.data

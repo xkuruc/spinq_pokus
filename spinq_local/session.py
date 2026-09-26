@@ -28,9 +28,9 @@ from .signal import (MultipletSpec, estimate_noise, fft_local,
 
 def _jsonable(value):
     if isinstance(value, np.ndarray):
-        return value.tolist()
+        return _jsonable(value.tolist())
     if isinstance(value, np.generic):
-        return value.item()
+        return _jsonable(value.item())
     if isinstance(value, complex):
         return {"re": float(value.real), "im": float(value.imag)}
     if isinstance(value, dict):
@@ -128,6 +128,9 @@ class LocalSession:
             raise ValueError("Unknown dataset role")
         sequence = SequenceIR(segments, sample_count=count, label=key)
         request = compile_sequence(sequence, self.caps, idle_probe=idle_probe)
+        prior_journal=getattr(self.hw,"journal",{}) or {}
+        reused=((self.out/"raw"/f"{key}.json").is_file() or
+                prior_journal.get(key,{}).get("phase")=="completed")
         record = run_raw(request, key=key, hardware=self.hw, output=self.out)
         record.metadata.update({"measurement_block": f"block-{block:02d}" if block >= 0 else "pilot",
                                 "setting_family": family, "dataset_role": role,
@@ -140,6 +143,10 @@ class LocalSession:
         self.results.save()
         if not any(existing.key == key for existing in self.role_records[role]):
             self.role_records[role].append(record)
+        print(f"FID {'REUSED' if reused else 'MEASURED'}: key={key} "
+              f"task={record.task_id} points={len(record.re)} "
+              f"wall_s={record.metadata.get('wall_seconds')} "
+              f"raw={self.out/'raw'/f'{key}.npz'}",flush=True)
         return record
 
     def pulse(self, key: str, width: float, *, amplitude: float = 100.,
@@ -150,21 +157,38 @@ class LocalSession:
                             role=role, block=block, family=family)
 
     def coefficient(self, record: RawFIDRecord) -> complex:
-        if self.spec is None:
-            # Matched projection uses an actual measured pilot template. It
-            # retains sign/phase and never reads vendor FFT/fit fields.
-            template = self.pilot_records["pilot_40_r0"].fid
-            n = min(len(template), len(record.fid), 2048)
-            return complex(np.vdot(template[:n], record.fid[:n]) /
-                           max(np.vdot(template[:n], template[:n]).real, 1e-12))
+        # Amplitude/phase comparisons use one measured and fixed pilot FID.
+        # The multiplet frequency fit is kept separate in frequency(): a weak
+        # or drifting fitted mode must not change the signed Rabi observable.
+        template_record = self.pilot_records["pilot_40_r0"]
+        template_axis = validate_axis(template_record)
+        record_axis = validate_axis(record)
+        if template_axis.sample_hz != record_axis.sample_hz:
+            raise ValueError("Projection requires the pilot and measurement sample clocks to match")
         started = time.monotonic_ns()
-        fit = fit_complex_multiplet(record, self.spec, self.noise)
+        n = min(len(template_record.fid), len(record.fid), 512)
+        if n < 64:
+            raise ValueError("Projection requires at least 64 paired FID points")
+        template = template_record.fid[:n]
+        denominator = float(np.vdot(template, template).real)
+        if not np.isfinite(denominator) or denominator <= 1e-12:
+            raise ValueError("Measured pilot projection template has no usable signal")
+        coefficient = complex(np.vdot(template, record.fid[:n]) / denominator)
+        if not np.isfinite(coefficient):
+            raise ValueError("Measured FID projection is nonfinite")
         finished = time.monotonic_ns()
-        atomic_json(self.out/"models"/f"{record.key}_multiplet.json", _jsonable({
-            "fit": fit, "analysis_started_monotonic_ns": started,
-            "analysis_finished_monotonic_ns": finished}))
-        mode = fit["modes"][self.primary_component_index]
-        return complex(mode["coefficient_re"], mode["coefficient_im"])
+        atomic_json(self.out/"models"/f"{record.key}_projection.json", {
+            "coefficient": _jsonable(coefficient),
+            "method": "fixed measured complex pilot FID projection",
+            "template_task": template_record.task_id,
+            "template_key": template_record.key,
+            "window_points": n,
+            "window_seconds": n / template_axis.sample_hz,
+            "normalization": "vdot(template, FID) / vdot(template, template)",
+            "vendor_fft_or_fit_used": False,
+            "analysis_started_monotonic_ns": started,
+            "analysis_finished_monotonic_ns": finished})
+        return coefficient
 
     def frequency(self, record: RawFIDRecord) -> float:
         if self.spec is None:
@@ -182,14 +206,18 @@ class LocalSession:
             key = f"pilot_{int(width)}"
             self.pilot_records[key] = self.pulse(key, width, role="pilot")
         pilot_failures={}
+        def note_failure(name: str, exc: Exception) -> None:
+            reason=f"{type(exc).__name__}: {exc}"
+            pilot_failures[name]=reason
+            print(f"PILOT WARNING {name}: {reason}",flush=True)
         try:
             self.noise = estimate_noise([self.pilot_records[f"pilot_40_r{i}"] for i in range(3)])
         except Exception as exc:
-            pilot_failures["independent_noise"]=f"{type(exc).__name__}: {exc}"
+            note_failure("independent_noise",exc)
         try:
             self.spec,self.primary_component_index = _pilot_bands(self.pilot_records["pilot_40_r0"])
         except Exception as exc:
-            pilot_failures["component_identity"]=f"{type(exc).__name__}: {exc}"
+            note_failure("component_identity",exc)
         try:
             rabi = _rabi_period([40.,80.,120.,160.,200.],
                                 [self.coefficient(self.pilot_records[k]) for k in
@@ -208,14 +236,14 @@ class LocalSession:
             residual_var=float(rabi["fit_residual"])/(5*abs(self.a_receiver_gain)**2)
             self.a_observation_cov=np.asarray(scatter)+max(residual_var,1e-8)*np.eye(2)
         except Exception as exc:
-            pilot_failures["rabi_t90"]=f"{type(exc).__name__}: {exc}"
+            note_failure("rabi_t90",exc)
             self.t90_us=None
             rabi={"status":"METHOD_FAILED","reason":pilot_failures["rabi_t90"],
                   "amplitude_pct":100.}
         try:
             self.reference_frequency_hz = self.frequency(self.pilot_records["pilot_40_r0"])
         except Exception as exc:
-            pilot_failures["reference_frequency"]=f"{type(exc).__name__}: {exc}"
+            note_failure("reference_frequency",exc)
         axis = validate_axis(self.pilot_records["pilot_40_r0"])
         length_pilot = []
         for count in (4000,8000):
@@ -228,7 +256,7 @@ class LocalSession:
                                          "estimate_hz": self.frequency(record),
                                          "wall_seconds": record.metadata["wall_seconds"]})
                 except Exception as exc:
-                    pilot_failures[f"frequency_{key}"]=f"{type(exc).__name__}: {exc}"
+                    note_failure(f"frequency_{key}",exc)
         for repeat in range(3):
             record = self.pilot_records[f"pilot_40_r{repeat}"]
             try:
@@ -236,7 +264,7 @@ class LocalSession:
                                      "estimate_hz":self.frequency(record),
                                      "wall_seconds":record.metadata["wall_seconds"]})
             except Exception as exc:
-                pilot_failures[f"frequency_{record.key}"]=f"{type(exc).__name__}: {exc}"
+                note_failure(f"frequency_{record.key}",exc)
         full=[r["estimate_hz"] for r in length_pilot if r["sample_count"]==16000]
         scatter = float(np.std(full, ddof=1)) if len(full)>=2 else None
         fid_target = max(3., 2*scatter) if scatter is not None else None
@@ -246,6 +274,7 @@ class LocalSession:
                 target_se_hz=fid_target, max_repeats=8)
         except Exception as exc:
             acquisition_plan={"status":"REFERENCE_INADEQUATE","reason":str(exc)}
+            print(f"PILOT WARNING fid_acquisition_plan: {type(exc).__name__}: {exc}",flush=True)
         pilot = {"rabi":rabi,"noise":({"covariance":self.noise.re_im_covariance.tolist(),
                   "lag_one":self.noise.lag_one_correlation,
                   "independent_repetitions":self.noise.repetitions} if self.noise else None),
@@ -423,6 +452,7 @@ class LocalSession:
             except Exception as exc:
                 update={"status":"METHOD_FAILED","reason":f"{type(exc).__name__}: {exc}"}
                 self.results.data["errors"].append(f"A {name} block {block}: {update['reason']}")
+                print(f"A WARNING method={name} block={block+1}: {update['reason']}",flush=True)
             atomic_json(self.out/"models"/f"A_{name}_b{block:02d}.json", _jsonable({
                 "setting":setting.__dict__,"posterior":update,
                 "observed":observed,"task":record.key}))
@@ -651,7 +681,9 @@ class LocalSession:
                 if len(rows)>=3:
                     try:fits[name]=fit_calibration_joint(rows,
                         rf_hz_at_100pct=1/(4*self.t90_us*1e-6))
-                    except Exception as exc:fits[name]={"status":"METHOD_FAILED","reason":str(exc)}
+                    except Exception as exc:
+                        fits[name]={"status":"METHOD_FAILED","reason":str(exc)}
+                        print(f"A WARNING joint_fit method={name}: {type(exc).__name__}: {exc}",flush=True)
             atomic_json(self.out/"models"/"A_summary.json",_jsonable({
                 "posteriors":summaries,"joint_fits":fits,
                 "warning":"No independent phase/frequency reference in current H-only path"}))

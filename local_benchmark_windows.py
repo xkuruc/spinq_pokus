@@ -58,24 +58,40 @@ def _copy_docs(out:Path):
         if source.is_file():shutil.copyfile(source,out/name)
 
 
-def _record_status(results:Results,module:str,exc:Exception):
+def _record_status(results:Results,module:str,exc:Exception,*,stage:str):
     if isinstance(exc,CapabilityUnavailable):status="UNVERIFIED_TIMING"
     elif isinstance(exc,IncompleteFID):status="DEPENDENCY_FAILED"
     elif isinstance(exc,ValueError) and "budget" in str(exc).lower():status="BUDGET_EXHAUSTED"
     else:status="METHOD_FAILED"
-    reason=f"{type(exc).__name__}: {exc}"
+    reason=f"{stage}: {type(exc).__name__}: {exc}"
+    detail=redact("".join(traceback.format_exception(type(exc),exc,exc.__traceback__,limit=6)))
     results.data["errors"].append(f"{module}: {reason}")
+    results.data.setdefault("error_details",[]).append({
+        "module":module,"stage":stage,"status":status,"reason":reason,
+        "traceback":detail})
     results.module(module,status,reason)
-    print(f"{module}: {status}: {reason}",flush=True)
+    print(f"TRACE {module}/{stage}:\n{detail}",flush=True)
 
 
-def _run_guarded(results:Results,module:str,fn):
+def _run_guarded(results:Results,module:str,fn,*,stage:str):
     try:return fn()
     except HardwareUncertain:raise
     except KeyboardInterrupt:raise
     except Exception as exc:
-        _record_status(results,module,exc)
+        _record_status(results,module,exc,stage=stage)
         return None
+
+
+def _print_pilot(pilot:dict,session:LocalSession):
+    rabi=pilot.get("rabi",{})
+    print(f"PILOT: Rabi status={rabi.get('status','FIT_OK')} "
+          f"period_us={rabi.get('period_us')} t90_us={session.t90_us} "
+          f"signed_r2={rabi.get('signed_complex_r2')} "
+          f"noise={'OK' if session.noise is not None else 'UNAVAILABLE'} "
+          f"bands_hz={pilot.get('multiplet_bands_hz')}",flush=True)
+    for key,reason in pilot.get("failures",{}).items():
+        print(f"PILOT WARNING {key}: {reason}",flush=True)
+    print(f"PILOT: FID length plan={pilot.get('fid_acquisition_plan')}",flush=True)
 
 
 def _physical_control(session:LocalSession,results:Results):
@@ -156,6 +172,7 @@ def _physical_control(session:LocalSession,results:Results):
             programs["G2_local_design"]=design.program
         except Exception as exc:
             results.data["errors"].append(f"G local design: {type(exc).__name__}: {exc}")
+            print(f"G WARNING local_design: {type(exc).__name__}: {exc}",flush=True)
     g=run_g_physical(acquire,programs,[task],conditions,observable,
         capabilities=session.caps,blocks=session.blocks,
         max_acquisitions=6*session.blocks,seed=session.seed+1)
@@ -271,6 +288,14 @@ def _finalize(out:Path,results:Results,*,upload:bool,mark_finished:bool=True):
         if complete:
             results.data["upload"]=publish_results(ROOT,archive,f"benchmark/{out.name}")
         results.save()
+    counts={module:sum(row["module"]==module for row in results.data["rows"])
+            for module in "ABCDEFGH"}
+    print(f"SUMMARY: state={results.data['state']} "
+          f"measured_tasks={results.data['budgets']['acquisitions_used']} "
+          f"comparison_rows={len(results.data['rows'])} per_module={counts} "
+          f"errors={len(results.data['errors'])}",flush=True)
+    if not results.data["rows"]:
+        print("SUMMARY: No comparison yet; inspect PILOT WARNING/TRACE above and saved data/ events.",flush=True)
     print(f"Report: {out/'REPORT.md'}",flush=True)
     print(f"Archive: {archive}",flush=True)
     print(f"Upload: {results.data['upload']['status']}",flush=True)
@@ -301,6 +326,7 @@ def main():
     results.data["upload"]={"status":"NOT_ATTEMPTED"}
     results.data["torch_optional_ready"]=bool(preflight.get("torch",{}).get("ready"))
     results.save()
+    print(f"Results directory: {out}",flush=True)
     failed=False
     session=None
     try:
@@ -309,7 +335,7 @@ def main():
             max_requested_rf_us=args.max_requested_rf_us) as hardware:
             session=LocalSession(hardware,results,blocks=args.blocks,seed=args.seed)
             print("Pilot: independent FID, noise, Rabi and acquisition lengths",flush=True)
-            pilot=_run_guarded(results,"A",session.pilot)
+            pilot=_run_guarded(results,"A",session.pilot,stage="pilot")
             if pilot is not None:
                 recovered=[error for error in results.data["errors"] if
                     error.startswith("A: IncompleteFID: Exported axis inconsistent with uniform requested sampling")]
@@ -317,26 +343,59 @@ def main():
                     results.data.setdefault("recovered_errors",[]).extend(recovered)
                     results.data["errors"]=[error for error in results.data["errors"] if error not in recovered]
                     results.save()
+                _print_pilot(pilot,session)
+                a_ready=(session.t90_us is not None and session.noise is not None and
+                         abs(session.a_receiver_gain)>1e-9)
+                b_ready=(session.spec is not None and session.reference_frequency_hz is not None)
+                if not a_ready:
+                    results.module("A","REFERENCE_INADEQUATE",
+                        "Pilot Rabi, independent noise or receiver normalization unavailable: "
+                        +str(pilot.get("failures",{})))
+                if not b_ready:
+                    results.module("B","REFERENCE_INADEQUATE",
+                        "Pilot component identity or independent frequency reference unavailable: "
+                        +str(pilot.get("failures",{})))
                 try:session.vendor_fft_control()
                 except Exception as exc:
                     results.data["errors"].append(
                         f"Separate vendor FFT replica check unavailable: {type(exc).__name__}: {exc}")
                     results.save()
-                _run_guarded(results,"B",session.timing_probe)
-                if session.caps.zero_amplitude_delay_verified:
-                    _run_guarded(results,"B",session.module_b_echo_probe)
-                _run_guarded(results,"H",session.h_map)
+                    print(f"PILOT WARNING vendor FFT control: {type(exc).__name__}: {exc}",flush=True)
+                timing=_run_guarded(results,"B",session.timing_probe,stage="timing_probe")
+                if timing is not None:
+                    print(f"TIMING: segments_verified={timing.get('sequence_verified')} "
+                          f"zero_amplitude_delay_verified={timing.get('zero_amplitude_delay_verified')} "
+                          f"return_control_drift={timing.get('return_control_drift')}",flush=True)
+                if session.caps.zero_amplitude_delay_verified and session.t90_us is not None:
+                    _run_guarded(results,"B",session.module_b_echo_probe,stage="echo_probe")
+                h_ready=False
+                if a_ready:
+                    h_map=_run_guarded(results,"H",session.h_map,stage="rf_map")
+                    h_ready=h_map is not None and session.rf_map is not None
+                    if h_map is not None:
+                        print(f"H MAP: amplitudes_pct={h_map.get('amplitude_pct')} "
+                              f"rate_x_hz={h_map.get('effective_rate_x_hz')} "
+                              f"rate_y_hz={h_map.get('effective_rate_y_hz')}",flush=True)
+                else:
+                    results.module("H","REFERENCE_INADEQUATE",
+                                   "Pilot Rabi/noise prerequisites unavailable; RF map not attempted")
                 for block in range(args.blocks):
                     print(f"Measurement block {block+1}/{args.blocks}",flush=True)
-                    for module,fn in (("A",session.module_a_block),
-                                      ("B",session.module_b_block),
-                                      ("H",session.module_h_block)):
-                        _run_guarded(results,module,lambda fn=fn:fn(block))
-                    _run_guarded(results,"F",lambda:session.collect_f_block(block))
-                session.finish_a_b_h()
-                _run_guarded(results,"C",lambda:_physical_control(session,results))
-                _run_guarded(results,"D",lambda:_offline_analysis(session,results,preflight))
-                _run_guarded(results,"E",lambda:_physical_e(session,results))
+                    if a_ready:
+                        _run_guarded(results,"A",lambda:session.module_a_block(block),
+                                     stage=f"block_{block+1:02d}")
+                    if b_ready:
+                        _run_guarded(results,"B",lambda:session.module_b_block(block),
+                                     stage=f"block_{block+1:02d}")
+                    if h_ready:
+                        _run_guarded(results,"H",lambda:session.module_h_block(block),
+                                     stage=f"block_{block+1:02d}")
+                    _run_guarded(results,"F",lambda:session.collect_f_block(block),
+                                 stage=f"collect_block_{block+1:02d}")
+                _run_guarded(results,"A",session.finish_a_b_h,stage="summarize_a_b_h")
+                _run_guarded(results,"C",lambda:_physical_control(session,results),stage="physical_control")
+                _run_guarded(results,"D",lambda:_offline_analysis(session,results,preflight),stage="offline_analysis")
+                _run_guarded(results,"E",lambda:_physical_e(session,results),stage="physical_validation")
             else:
                 failed=True
                 results.data["state"]="FAILED_PILOT"
@@ -347,6 +406,7 @@ def main():
         failed=True
         results.data["state"]="STOPPED_UNCERTAIN"
         results.data["errors"].append(f"STOP: {type(exc).__name__}: {redact(str(exc))}")
+        print(f"STOP: {type(exc).__name__}: {redact(str(exc))}",flush=True)
         for module in "ABCDEFGH":
             if results.data["modules"][module]["status"] in ("PENDING","RUNNING"):
                 results.module(module,"STOPPED_UNCERTAIN",str(exc))
@@ -355,6 +415,7 @@ def main():
         results.data["state"]="STOPPED_UNCERTAIN"
         results.data["errors"].append(f"GLOBAL: {type(exc).__name__}: {redact(str(exc))}")
         results.data["errors"].append(traceback.format_exc(limit=4))
+        print(f"GLOBAL ERROR:\n{redact(traceback.format_exc(limit=8))}",flush=True)
     else:
         if not failed:
             results.data["state"]="COMPLETED_WITH_EXPLICIT_LIMITATIONS"

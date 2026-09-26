@@ -41,6 +41,18 @@ dosadzuje podľa skutočného názvu adresára:
 .\run_windows.cmd --resume .\results\20260926_123456_UTC
 ```
 
+Ak potrebuješ overiť uložený Rabiho pilot pred ďalšími meraniami, tento
+príkaz číta iba súbory na Windowse. Nepripája sa k prístroju a výsledok
+vypíše do konzoly:
+
+```powershell
+.\.benchmark-venv\Scripts\python.exe .\diagnose_saved_pilot.py .\results\20260926_123456_UTC
+```
+
+Živý beh vypisuje každý prijatý FID (`MEASURED` alebo `REUSED`), priebežné
+porovnávacie riadky, výsledok pilotu a dôvody preskočenia metód. Pri chybe
+vypíše fázu, blok a krátky traceback; detaily zároveň uloží do `results.json`.
+
 Bez kontaktu so zariadením možno znova vytvoriť report, grafy a ZIP zo
 zachovaných výsledkov:
 
