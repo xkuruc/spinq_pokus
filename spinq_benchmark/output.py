@@ -70,7 +70,8 @@ def aggregate_rows(rows, frozen_plan=None):
     targets={"calibration":(frozen_plan or {}).get("calibration_target_joint_error"),
              "acquisition":(frozen_plan or {}).get("acquisition_target_se_hz"),
              "pulse_tuning":(frozen_plan or {}).get("pulse_target_held_out_error"),
-             "robust_pulse":(frozen_plan or {}).get("robust_target_error")}
+             "robust_pulse":(frozen_plan or {}).get("robust_target_error"),
+             "denoising":(frozen_plan or {}).get("denoising_target_combined_error")}
     result=[]
     for (topic,method),items in sorted(groups.items()):
         errors=[float(x["error"]) for x in items]
@@ -194,13 +195,13 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
             ax.set(xlabel="Vysielacie rozladenie (Hz)",ylabel="Relatívna chyba komplexnej odozvy",
                    title="Robustnosť H pulzov")
             ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"robustness.png",dpi=140);plt.close(fig)
-        denoise=topics.get("denoising",{}).get("2",{}).get("metrics",{})
-        if denoise:
+        denoise_blocks=[b.get("metrics",{}) for b in topics.get("denoising",{}).values() if b.get("metrics")]
+        if denoise_blocks:
             fig,ax=plt.subplots(figsize=(8,4))
-            names=list(denoise)
-            ax.bar(names,[denoise[n]["combined_error"] for n in names])
+            names=list(denoise_blocks[0])
+            ax.bar(names,[sum(b[n]["combined_error"] for b in denoise_blocks)/len(denoise_blocks) for n in names])
             ax.set(ylabel="Kombinovaná chyba voči nezávislému priemeru",
-                   title="Denoising: jedna testovacia rodina")
+                   title="Denoising: nezávislé testovacie rodiny")
             ax.tick_params(axis="x",labelrotation=25)
             fig.tight_layout();fig.savefig(out/"plots"/"denoising.png",dpi=140);plt.close(fig)
     except Exception:

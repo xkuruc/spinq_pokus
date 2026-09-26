@@ -378,8 +378,7 @@ class Benchmark:
         methods=list(shapes)
         random.Random(self.seed+900+block).shuffle(methods)
         # Reference uses independent on-resonance rectangle measurements for each preparation.
-        preparations={"none":[],"x90":[{"width":float(t90),"am":100.,"phase":0.,"freshift":0.}],
-                      "y90":[{"width":float(t90),"am":100.,"phase":90.,"freshift":0.}]}
+        preparations={"none":[],"x90":[{"width":float(t90),"am":100.,"phase":0.,"freshift":0.}]}
         refs={}
         for prep,pre in preparations.items():
             if sum(q["width"] for q in pre+rectangle)>200: continue
@@ -428,14 +427,19 @@ class Benchmark:
         """Collect independent repeats, split by both acquisition block and phase family."""
         from spinq_benchmark.learning import train_complex_denoiser,apply_complex_denoiser
         start=time.monotonic()
-        families={"train_0":0.,"train_90":90.,"validation_180":180.,"test_270":270.}
-        blocks={"train_0":0,"train_90":0,"validation_180":1,"test_270":2}
+        families={"train_0":0.,"train_90":90.,"validation_180":180.,
+                  "test_225":225.,"test_270":270.,"test_315":315.}
+        blocks={"train_0":0,"train_90":0,"validation_180":1,
+                "test_225":2,"test_270":3,"test_315":4}
         collected={}
-        for family,phase in families.items():
+        def collect_family(family):
+            phase=families[family]
             collected[family]=[]
             for rep in range(6):
                 row,y,fit=self.acquire(f"denoise_{family}_{rep}",phase=phase)
                 collected[family].append({"key":row["key"],"signal":y,"wall_seconds":row["wall_seconds"]})
+        for family in ("train_0","train_90","validation_180"):
+            collect_family(family)
         split={family:{"block":blocks[family],"phase_deg":families[family],
                        "inputs":[x["key"] for x in rows[:3]],"references":[x["key"] for x in rows[3:]]}
                for family,rows in collected.items()}
@@ -458,57 +462,93 @@ class Benchmark:
         train_started=time.monotonic()
         training=train_complex_denoiser(train,validation,model_path,seed=self.seed)
         train_seconds=time.monotonic()-train_started
-        test=collected["test_270"]
-        source=test[0]["signal"]
-        reference=np.mean(np.stack([x["signal"] for x in test[3:]]),axis=0)
-        reference_fit=complex_fit(reference,10000,tracked_hz=self.tracked_hz)["target"]
-        # Standard baselines share one input acquisition. Averaging uses 3 inputs and pays for them.
-        inference_started=time.monotonic()
-        neural_output=apply_complex_denoiser(source,model_path)
-        inference_seconds=time.monotonic()-inference_started
-        candidates={"window_fft_fit":source,"hankel_rank2":hankel_denoise(source),
-                    "torch_noise2noise":neural_output,
-                    "three_acquisition_average":np.mean(np.stack([x["signal"] for x in test[:3]]),axis=0)}
-        metrics={}
-        for method,signal in candidates.items():
-            fit=complex_fit(signal,10000,tracked_hz=reference_fit["frequency_hz"])["target"]
-            signed_amp=(fit["amplitude"]-reference_fit["amplitude"])/max(reference_fit["amplitude"],1e-9)
-            signed_phase=math.atan2(math.sin(fit["phase_rad"]-reference_fit["phase_rad"]),
-                                    math.cos(fit["phase_rad"]-reference_fit["phase_rad"]))
-            signed_freq=fit["frequency_hz"]-reference_fit["frequency_hz"]
-            amp,phase,freq=abs(signed_amp),abs(signed_phase),abs(signed_freq)
-            residual=float(np.sqrt(np.mean(np.abs(signal-reference)**2)))/max(float(np.sqrt(np.mean(np.abs(reference)**2))),1e-9)
-            error=float(math.sqrt(amp**2+phase**2+freq**2+residual**2))
-            metrics[method]={"amplitude_relative_error":amp,"phase_error_rad":phase,
-                             "frequency_error_hz":freq,"relative_fid_residual":residual,
-                             "signed_amplitude_bias":signed_amp,"signed_phase_bias_rad":signed_phase,
-                             "signed_frequency_bias_hz":signed_freq,
-                             "combined_error":error,"input_acquisitions":3 if method=="three_acquisition_average" else 1}
-        rotated=apply_complex_denoiser(source*1j,model_path)
-        metrics["torch_noise2noise"]["rotation_equivariance_relative_error"]=float(
-            np.linalg.norm(rotated-1j*candidates["torch_noise2noise"])/max(np.linalg.norm(candidates["torch_noise2noise"]),1e-9))
-        baseline=metrics["window_fft_fit"]["combined_error"]
-        for method,m in metrics.items():
-            self.results.row(topic="denoising",method=method,block=2,phase="pilot",
-                measurements=m["input_acquisitions"]+3,internal_repetitions="UNKNOWN",
-                requested_samples=16000*(m["input_acquisitions"]+3),
-                wall_seconds=sum(x["wall_seconds"] for x in test[:m["input_acquisitions"]+3]),
-                compute_seconds=train_seconds if method=="torch_noise2noise" else None,
-                error=m["combined_error"],uncertainty=None,
-                improvement_vs_baseline=(baseline-m["combined_error"])/baseline if baseline else None,
-                status="NEPRESVEDČIVÉ",reason="one held-out family/block; reference is finite independent average, not clean truth")
-        summary={"status":"NEPRESVEDČIVÉ","reason":"real CPU training complete; one held-out family does not establish generalization",
-                 "training":training,"training_seconds":train_seconds,"total_module_seconds":time.monotonic()-start,
-                 "repeat_stability_relative_drift":stability,
-                 "costs":{"training_acquisitions":12,"validation_acquisitions":6,
-                          "test_acquisitions":6,"test_reference_acquisitions":3,
-                          "first_use_local_seconds":train_seconds+inference_seconds,
-                          "reused_model_local_seconds":inference_seconds,
-                          "reused_model_input_acquisitions":1},
-                 "split":split,"reference_fit":reference_fit,"metrics":metrics,
-                 "noise2noise_assumption":"independence/stability tested only indirectly via repeat drift; no clean truth"}
-        self.results.topic("denoising",2,summary)
-        return summary
+        val_rows=collected["validation_180"]
+        val_source=val_rows[0]["signal"]
+        val_reference=np.mean(np.stack([x["signal"] for x in val_rows[3:]]),axis=0)
+        val_fit=complex_fit(val_source,10000,tracked_hz=self.tracked_hz)["target"]
+        val_ref_fit=complex_fit(val_reference,10000,tracked_hz=self.tracked_hz)["target"]
+        val_amp=(val_fit["amplitude"]-val_ref_fit["amplitude"])/max(val_ref_fit["amplitude"],1e-9)
+        val_phase=math.atan2(math.sin(val_fit["phase_rad"]-val_ref_fit["phase_rad"]),
+                             math.cos(val_fit["phase_rad"]-val_ref_fit["phase_rad"]))
+        val_freq=val_fit["frequency_hz"]-val_ref_fit["frequency_hz"]
+        val_resid=float(np.linalg.norm(val_source-val_reference)/max(np.linalg.norm(val_reference),1e-9))
+        validation_target=float(math.sqrt(val_amp**2+val_phase**2+val_freq**2+val_resid**2))
+        self.results.data.setdefault("frozen_plan",{})["denoising_target_combined_error"]=validation_target
+        self.results.save()
+        for family in ("test_225","test_270","test_315"):
+            collect_family(family)
+            rows=collected[family]
+            split[family]={"block":blocks[family],"phase_deg":families[family],
+                           "inputs":[x["key"] for x in rows[:3]],
+                           "references":[x["key"] for x in rows[3:]]}
+            early=np.mean(np.stack([x["signal"] for x in rows[:3]]),axis=0)
+            late=np.mean(np.stack([x["signal"] for x in rows[3:]]),axis=0)
+            stability[family]=float(np.linalg.norm(early-late)/max(np.linalg.norm(early),1e-9))
+            atomic_json(self.results.out/"data"/"denoise_split.json",split)
+        summaries={}
+        for test_block,family in enumerate(("test_225","test_270","test_315")):
+            test=collected[family]
+            source=test[0]["signal"]
+            reference=np.mean(np.stack([x["signal"] for x in test[3:]]),axis=0)
+            reference_fit=complex_fit(reference,10000,tracked_hz=self.tracked_hz)["target"]
+            separate_reference_fits=[complex_fit(x["signal"],10000,
+                tracked_hz=reference_fit["frequency_hz"])["target"] for x in test[3:]]
+            reference_frequency_se=float(np.std([f["frequency_hz"] for f in separate_reference_fits],ddof=1)/math.sqrt(3))
+            # Standard baselines share one input acquisition. Averaging pays for three.
+            inference_started=time.monotonic()
+            neural_output=apply_complex_denoiser(source,model_path)
+            inference_seconds=time.monotonic()-inference_started
+            candidates={"window_fft_fit":source,"hankel_rank2":hankel_denoise(source),
+                        "torch_noise2noise":neural_output,
+                        "three_acquisition_average":np.mean(np.stack([x["signal"] for x in test[:3]]),axis=0)}
+            metrics={}
+            for method,signal in candidates.items():
+                fit=complex_fit(signal,10000,tracked_hz=reference_fit["frequency_hz"])["target"]
+                signed_amp=(fit["amplitude"]-reference_fit["amplitude"])/max(reference_fit["amplitude"],1e-9)
+                signed_phase=math.atan2(math.sin(fit["phase_rad"]-reference_fit["phase_rad"]),
+                                        math.cos(fit["phase_rad"]-reference_fit["phase_rad"]))
+                signed_freq=fit["frequency_hz"]-reference_fit["frequency_hz"]
+                amp,phase,freq=abs(signed_amp),abs(signed_phase),abs(signed_freq)
+                residual=float(np.sqrt(np.mean(np.abs(signal-reference)**2)))/max(float(np.sqrt(np.mean(np.abs(reference)**2))),1e-9)
+                error=float(math.sqrt(amp**2+phase**2+freq**2+residual**2))
+                metrics[method]={"amplitude_relative_error":amp,"phase_error_rad":phase,
+                                 "frequency_error_hz":freq,"relative_fid_residual":residual,
+                                 "signed_amplitude_bias":signed_amp,"signed_phase_bias_rad":signed_phase,
+                                 "signed_frequency_bias_hz":signed_freq,
+                                 "combined_error":error,"input_acquisitions":3 if method=="three_acquisition_average" else 1}
+            rotated=apply_complex_denoiser(source*1j,model_path)
+            metrics["torch_noise2noise"]["rotation_equivariance_relative_error"]=float(
+                np.linalg.norm(rotated-1j*neural_output)/max(np.linalg.norm(neural_output),1e-9))
+            baseline=metrics["window_fft_fit"]["combined_error"]
+            for method,m in metrics.items():
+                paid=m["input_acquisitions"]
+                self.results.row(topic="denoising",method=method,block=test_block,phase="pilot",
+                    measurements=paid+3,internal_repetitions="UNKNOWN",
+                    requested_samples=16000*(paid+3),
+                    wall_seconds=sum(x["wall_seconds"] for x in test[:paid])+sum(x["wall_seconds"] for x in test[3:]),
+                    compute_seconds=(train_seconds+inference_seconds if test_block==0 else inference_seconds)
+                        if method=="torch_noise2noise" else None,
+                    error=m["combined_error"],uncertainty=reference_frequency_se,
+                    improvement_vs_baseline=(baseline-m["combined_error"])/baseline if baseline else None,
+                    status="PILOT",reason="held-out phase family and independent block; finite reference average, not clean truth")
+            summary={"status":"PILOT","reason":"held-out family/block after real CPU training; no clean truth",
+                     "family":family,"phase_deg":families[family],"reference_fit":reference_fit,
+                     "reference_frequency_se_hz":reference_frequency_se,"metrics":metrics,
+                     "repeat_stability_relative_drift":stability[family],
+                     "training":training if test_block==0 else "same saved model reused",
+                     "frozen_validation_target_combined_error":validation_target,
+                     "costs":{"training_acquisitions":12 if test_block==0 else 0,
+                              "validation_acquisitions":6 if test_block==0 else 0,
+                              "test_input_acquisitions":3,"test_reference_acquisitions":3,
+                              "first_use_local_seconds":train_seconds+inference_seconds if test_block==0 else None,
+                              "reused_model_local_seconds":inference_seconds if test_block else None}}
+            summaries[str(test_block)]=summary
+            self.results.topic("denoising",test_block,summary)
+        atomic_json(self.results.out/"data"/"denoising_training_provenance.json",
+                    {"split":split,"stability":stability,"training":training,"training_seconds":train_seconds,
+                     "test_blocks":3,"total_module_seconds":time.monotonic()-start,
+                     "noise2noise_assumption":"independence/stability tested indirectly via repeated acquisitions; no clean truth"})
+        return summaries
 
 
 def main():
