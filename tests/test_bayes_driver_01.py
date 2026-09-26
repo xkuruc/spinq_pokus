@@ -14,15 +14,19 @@ from unittest.mock import patch
 import numpy as np
 
 from experiments.bayes_calibration import (
-    BayesRun, _pilot_response_model, candidate, candidate_dict, candidate_from_dict,
+    BayesRun, _pilot_repeat_consistency, _pilot_repeat_window,
+    _pilot_response_model,
+    _same_physical_candidate, candidate, candidate_dict, candidate_from_dict,
     fit_shared, prior_and_tolerances, validate_config,
 )
 from experiments.likelihood import NMRModel, predict_complex
-from experiments.signal_01 import PilotSignalModel, demodulated_features
+from experiments.signal_01 import (PilotSignalModel, SignalIdentificationError,
+                                   demodulated_features, identify_pilot_multiplet)
 from experiments.smc import PriorBounds
 from experiments.smc import ParticleFilter
 from spinq_benchmark.hardware import HardwareUncertain
 from spinq_local.core import RawFIDRecord
+from spinq_local.core import Capabilities, Segment, SequenceIR, compile_sequence
 from bayes_01_windows import main as windows_main, saved_config_for_reanalysis
 
 
@@ -54,6 +58,147 @@ class DriverNumericalTests(unittest.TestCase):
         serialized = json.loads(json.dumps(candidate_dict(original)))
         self.assertEqual(serialized, candidate_dict(candidate_from_dict(serialized)))
         self.assertEqual(serialized["feature_windows_s"][0], [0., .002])
+
+    def test_repeat_consistency_requires_three_measured_matching_fids(self):
+        fs = 10_000
+        n = 16_000
+        t = np.arange(n) / fs
+        rng = np.random.default_rng(709)
+
+        def measured(key: str, frequency_hz: float) -> RawFIDRecord:
+            signal = 330 * np.exp((-300 + 2j * np.pi * frequency_hz) * t)
+            signal += rng.normal(0, 18, n) + 1j * rng.normal(0, 18, n)
+            return RawFIDRecord(key=key, task_id=f"task-{key}", group="g",
+                path="0", qubit="0", step="NMRSIG",
+                axis_original=np.arange(n) * .1, time_seconds=t,
+                re=signal.real, im=signal.imag,
+                parameters_sent={"sampleFre": fs, "sampleCount": n,
+                                 "pulse": {"hPulse": [{"width": 40.}]}},
+                metadata={})
+
+        records = [measured("repeat0", 330.), measured("repeat1", 410.),
+                   measured("repeat2", 330.), measured("confirmation", 330.)]
+        coherent_end = _pilot_repeat_window(records[:3])
+        self.assertGreater(coherent_end, .002)
+        self.assertLess(coherent_end, .03)
+        initial, first = _pilot_repeat_consistency(records[:3], coherent_end)
+        self.assertIsNone(initial)
+        self.assertEqual(first["status"], "UNSTABLE")
+        selected, verified = _pilot_repeat_consistency(records, coherent_end)
+        self.assertEqual(selected, (0, 2, 3))
+        self.assertEqual(verified["excluded_keys"], ["repeat1"])
+
+    def test_discordant_repeat_does_not_block_bounded_confirmation(self):
+        fs, n = 10_000, 16_000
+        t = np.arange(n) / fs
+        rng = np.random.default_rng(119)
+        base = 330 * np.exp((-300 + 2j * np.pi * 330) * t)
+
+        def record(key, scale):
+            fid = scale * base + rng.normal(0, 18, n) + 1j * rng.normal(0, 18, n)
+            return RawFIDRecord(key=key, task_id=key, group="g", path="0",
+                qubit="0", step="NMRSIG", axis_original=np.arange(n) * .1,
+                time_seconds=t, re=fid.real, im=fid.imag,
+                parameters_sent={"sampleFre": fs, "sampleCount": n}, metadata={})
+
+        repeats = [record("first", 1), record("discordant", -2),
+                   record("third", 1), record("confirmation", 1)]
+        with self.assertRaises(SignalIdentificationError):
+            identify_pilot_multiplet(repeats[:3])
+        end = _pilot_repeat_window(repeats[:3])
+        self.assertIsNone(_pilot_repeat_consistency(repeats[:3], end)[0])
+        self.assertEqual(_pilot_repeat_consistency(repeats, end)[0], (0, 2, 3))
+
+    def test_pilot_resume_may_rebind_analysis_windows_but_not_pulse(self):
+        pilot = synthetic_pilot()
+        original = candidate_dict(candidate(40., 90., pilot))
+        changed_windows = {**original, "feature_windows_s": [[0., .001],
+                            [.002, .003], [.004, .005]]}
+        self.assertTrue(_same_physical_candidate(original, changed_windows))
+        self.assertFalse(_same_physical_candidate(original,
+            {**changed_windows, "width_us": 80.}))
+
+    def test_resumed_report_keeps_prior_code_and_refreshes_derived_status(self):
+        repo = Path(__file__).resolve().parents[1]
+        config = json.loads((repo / "config-01-bayes.json").read_text())
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder) / "run"
+            BayesRun(repo, out, config, {})
+            old = out / "source_snapshot"
+            old.mkdir(exist_ok=True)
+            (old / "manifest.json").write_text('{"git_revision":"old-code"}')
+            (old / "old_code.py").write_text("prior attempt")
+            (out / "plan.json").write_text("{}")
+            (out / "calibration.json").write_text(
+                '{"status":"UNAVAILABLE_PILOT_INCOMPLETE"}')
+            resumed = BayesRun(repo, out, config, {}, resume=True)
+            resumed.finish(upload=False)
+            self.assertEqual(json.loads((out / "calibration.json").read_text())
+                             ["status"], "PILOT_ONLY")
+            self.assertTrue((out / "source_snapshot" / "manifest.json").is_file())
+            self.assertTrue(any((entry / "old_code.py").is_file() for entry in
+                                (out / "source_snapshot_history").iterdir()))
+
+    def test_resume_supersedes_stale_pilot_analysis_before_new_selection(self):
+        repo = Path(__file__).resolve().parents[1]
+        config = json.loads((repo / "config-01-bayes.json").read_text())
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder) / "run"
+            first = BayesRun(repo, out, config, {})
+            first.data["pilot"] = {"signal": {"status": "old"},
+                                   "rabi": {"status": "old"}}
+            first.save()
+            resumed = BayesRun(repo, out, config, {}, resume=True)
+            with patch.object(resumed, "_pilot_record",
+                              side_effect=RuntimeError("no physical tasks")):
+                with self.assertRaisesRegex(RuntimeError, "no physical tasks"):
+                    resumed.run_pilot()
+            self.assertEqual(resumed.data["pilot"], {})
+            self.assertEqual(resumed.data["pilot_attempt_history"][0]["pilot"]
+                             ["signal"]["status"], "old")
+
+    def test_resuming_cached_acquisition_preserves_original_fid_files(self):
+        repo = Path(__file__).resolve().parents[1]
+        config = json.loads((repo / "config-01-bayes.json").read_text())
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder) / "run"
+            first = BayesRun(repo, out, config, {})
+            command = candidate(40., 90., synthetic_pilot())
+            spec = compile_sequence(SequenceIR(
+                segments=(Segment(0., 40., amplitude_pct=100., phase_deg=90.),),
+                sample_count=16000, sample_hz=10000, label="saved"), Capabilities())
+            t = np.arange(16000) / 10000
+            signal = 300 * np.exp((-300 + 2j * np.pi * 330) * t)
+            record = RawFIDRecord(key="saved", task_id="original-task", group="g",
+                path="0", qubit="0", step="NMRSIG",
+                axis_original=np.arange(16000) * .1, time_seconds=t,
+                re=signal.real, im=signal.imag, parameters_sent=spec.payload,
+                metadata={"full_cycle_seconds": 1.})
+            record.save(out / "raw")
+            first.data["acquisitions"]["saved"] = {
+                "role": "pilot", "candidate": candidate_dict(command),
+                "full_cycle_seconds": 1.}
+            first.save()
+            before = [(out / "raw" / f"saved.{suffix}").read_bytes()
+                      for suffix in ("npz", "json")]
+            resumed = BayesRun(repo, out, config, {}, resume=True)
+            resumed.hw = types.SimpleNamespace(task_count=0)
+            rebound = replace(command, feature_windows_s=((0., .001),
+                              (.002, .003), (.004, .005)))
+            reused, _ = resumed.acquire("saved", rebound, role="pilot")
+            self.assertEqual(reused.task_id, "original-task")
+            self.assertEqual(resumed.data["acquisitions"]["saved"]["original_candidate"],
+                             candidate_dict(command))
+            after = [(out / "raw" / f"saved.{suffix}").read_bytes()
+                     for suffix in ("npz", "json")]
+            self.assertEqual(before, after)
+            twice = BayesRun(repo, out, config, {}, resume=True)
+            twice.hw = types.SimpleNamespace(task_count=0)
+            twice.acquire("saved", rebound, role="pilot")
+            self.assertEqual(twice.data["acquisitions"]["saved"]["original_candidate"],
+                             candidate_dict(command))
+            self.assertEqual(before, [(out / "raw" / f"saved.{suffix}").read_bytes()
+                                      for suffix in ("npz", "json")])
 
     def test_common_weighted_fit_recovers_known_parameters(self):
         pilot = synthetic_pilot()
@@ -90,16 +235,16 @@ class DriverNumericalTests(unittest.TestCase):
                    for phase in (0., 180., 270.)]
         fitted, diagnostic = _pilot_response_model(pilot, {"t90_us": 40.},
                                                      train, heldout)
-        self.assertEqual(diagnostic["status"], "PILOT_HOLDOUT_VALIDATED")
+        self.assertEqual(diagnostic["status"], "PILOT_RESPONSE_CHECKS_VALIDATED")
         self.assertLess(abs(fitted.receiver_gain - model.receiver_gain), .01)
         wrong = [(setting, -signal) for setting, signal in heldout]
-        with self.assertRaisesRegex(ValueError, "independent pilot"):
+        with self.assertRaisesRegex(ValueError, "pilot phase/return"):
             _pilot_response_model(pilot, {"t90_us": 40.}, train, wrong)
         # A noise-only tail can make the full-FID residual ratio large. It
         # must not turn a reversed physical phase response into a pass.
         noisy_tail = replace(pilot, diagnostics={**pilot.diagnostics,
             "pilot_fit_relative_residual_rms": .9})
-        with self.assertRaisesRegex(ValueError, "independent pilot"):
+        with self.assertRaisesRegex(ValueError, "pilot phase/return"):
             _pilot_response_model(noisy_tail, {"t90_us": 40.}, train, wrong)
 
     def test_data_driven_prior_has_separate_tolerances(self):

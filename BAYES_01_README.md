@@ -22,8 +22,15 @@ Výsledky priebežne zapisuje do `results/01_bayes_kalibracia/<run_id>/`: `REPOR
 Pri prerušení sa dá pokračovať bez opakovania už dokončených úloh:
 
 ```powershell
-.\run_01_bayes_kalibracia.cmd --resume results\01_bayes_kalibracia\<run_id>
+.\run_01_bayes_kalibracia.cmd --resume results\01_bayes_kalibracia\<run_id> --exclusive-use-confirmed
 ```
+
+Ak tri rovnaké pilotné FID nesúhlasia v úvodnom koherentnom úseku, spúšťač
+odošle najviac **jedno** dodatočné rovnaké meranie (40 µs, 90°). Pokračuje len
+vtedy, keď sa nájdu tri vzájomne zhodné samostatné akvizície. Všetky pôvodné
+FID vrátane vyradeného zostanú v `raw/`; pri pokračovaní sa dokončené FID
+znova neposielajú ani neprepisujú. Kód použitý v pôvodnom a pokračujúcom
+behu zostáva oddelene v archíve.
 
 Opätovná analýza uloženého behu neodosiela príkazy prístroju:
 

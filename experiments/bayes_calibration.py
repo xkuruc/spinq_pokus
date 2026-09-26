@@ -10,6 +10,7 @@ unverified coherent delays are never submitted.
 from __future__ import annotations
 
 import importlib.metadata
+import itertools
 import json
 import math
 import os
@@ -42,7 +43,7 @@ from .likelihood import Candidate, NMRModel, interleaved_real_imag, predict_comp
 from .output_01 import (archive_results, plot_comparisons, prepare_output,
                         save_results, snapshot_sources)
 from .publish_01 import publish_results
-from .signal_01 import (PilotSignalModel, demodulated_features,
+from .signal_01 import (PilotSignalModel, SignalIdentificationError, demodulated_features,
                         estimate_pilot_rabi, estimate_signal,
                         identify_pilot_multiplet)
 from .smc import ParticleFilter, PriorBounds, phase_difference, wrap_phase
@@ -81,6 +82,14 @@ def candidate_from_dict(data: dict[str, Any]) -> Candidate:
     fields["feature_windows_s"] = tuple(tuple(float(v) for v in w)
                                          for w in data["feature_windows_s"])
     return Candidate(**fields)
+
+
+def _same_physical_candidate(saved: dict[str, Any], current: dict[str, Any]) -> bool:
+    # Feature windows and wall-time estimates are analysis metadata. The
+    # compiled pulse, acquisition clock and count must remain exactly equal.
+    analysis_only = {"feature_windows_s", "estimated_wall_seconds"}
+    return ({key: value for key, value in saved.items() if key not in analysis_only} ==
+            {key: value for key, value in current.items() if key not in analysis_only})
 
 
 def model_dict(model: NMRModel) -> dict[str, Any]:
@@ -144,6 +153,111 @@ def _covariance_whitener(covariance: np.ndarray) -> np.ndarray:
     if covariance.ndim != 2 or covariance.shape[0] != covariance.shape[1]:
         raise ValueError("Feature covariance is not square")
     return np.linalg.inv(np.linalg.cholesky(covariance))
+
+
+def _pilot_repeat_window(records: Sequence[RawFIDRecord]) -> float:
+    """Find the leading coherent signal without fitting an unstable mean FID.
+
+    Each acquisition is baseline-corrected separately, then the median
+    magnitude across acquisitions rejects one discordant repeat. A late
+    isolated artifact cannot extend the first contiguous signal interval.
+    """
+    if len(records) < 3:
+        raise ValueError("Pilot window needs three independent FIDs")
+    n = min(len(record.re) for record in records)
+    sample_hz = validate_axis(records[0]).sample_hz
+    if any(validate_axis(record).sample_hz != sample_hz for record in records):
+        raise ValueError("Pilot repeat sample clocks differ")
+    time_axis = records[0].time_seconds[:n]
+    if any(not np.allclose(record.time_seconds[:n], time_axis,
+                           rtol=0., atol=1e-6) for record in records[1:]):
+        raise ValueError("Pilot repeat time axes differ")
+    tail_count = max(256, n // 8)
+    if n < 2 * tail_count:
+        raise ValueError("Pilot FID is too short to establish a late noise tail")
+    tails = np.stack([record.fid[n - tail_count:n] for record in records])
+    baselines = np.mean(tails, axis=1)
+    noise = float(np.median(np.sqrt(np.mean(np.abs(
+        tails - baselines[:, None]) ** 2, axis=1))))
+    if not math.isfinite(noise) or noise <= 0:
+        raise ValueError("Pilot late-tail noise is unavailable")
+    smooth_count = min(max(16, int(sample_hz / 100)), n // 8)
+    kernel = np.ones(smooth_count) / smooth_count
+    envelopes = [np.sqrt(np.convolve(np.abs(record.fid[:n] - baseline) ** 2,
+                                    kernel, mode="same"))
+                 for record, baseline in zip(records, baselines)]
+    active = np.flatnonzero(np.median(np.stack(envelopes), axis=0) > 3 * noise)
+    if len(active) == 0:
+        raise SignalIdentificationError("Pilot repeats show no coherent FID above late noise")
+    if active[0] > smooth_count:
+        raise SignalIdentificationError(
+            "Pilot coherent FID does not begin near the acquisition start")
+    last = int(active[0])
+    for index in active[1:]:
+        index = int(index)
+        if index - last - 1 > smooth_count:
+            break
+        last = index
+    end = float(time_axis[last] + 1 / sample_hz)
+    if int(np.count_nonzero(time_axis < end)) < 24 or n - last - 1 < 256:
+        raise SignalIdentificationError("Pilot leading coherent FID window is unusable")
+    return end
+
+
+def _pilot_repeat_consistency(records: Sequence[RawFIDRecord],
+                              coherent_end_s: float) -> tuple[tuple[int, ...] | None, dict]:
+    """Select three same-command FIDs only when early waveforms agree.
+
+    The comparison is against each pair's own late noise floor. It treats a
+    FID as one acquisition, not thousands of independent quantum shots.
+    The bounded caller may obtain one more physical repeat when no triple
+    passes, while retaining every excluded record for the report.
+    """
+    if len(records) < 3:
+        raise ValueError("Pilot consistency needs three independent FIDs")
+    n = min(len(record.re) for record in records)
+    sample_hz = validate_axis(records[0]).sample_hz
+    if any(validate_axis(record).sample_hz != sample_hz for record in records):
+        raise ValueError("Pilot repeat sample clocks differ")
+    time_axis = records[0].time_seconds[:n]
+    if any(not np.allclose(record.time_seconds[:n], time_axis,
+                           rtol=0., atol=1e-6) for record in records[1:]):
+        raise ValueError("Pilot repeat time axes differ")
+    early_count = int(np.count_nonzero(records[0].time_seconds[:n] < coherent_end_s))
+    if early_count < 24 or n - early_count < 256:
+        raise ValueError("Pilot repeat lacks a coherent window or late noise tail")
+    tail_start = n - max(256, n // 8)
+    threshold = 2.0
+    pairwise = []
+    ratios = {}
+    for i, j in itertools.combinations(range(len(records)), 2):
+        difference = records[i].fid[:n] - records[j].fid[:n]
+        early_rms = float(np.sqrt(np.mean(np.abs(difference[:early_count]) ** 2)))
+        tail_rms = float(np.sqrt(np.mean(np.abs(difference[tail_start:]) ** 2)))
+        ratio = early_rms / max(tail_rms, 1e-12)
+        if not all(map(math.isfinite, (early_rms, tail_rms, ratio))):
+            raise ValueError("Pilot repeat consistency contains nonfinite FID values")
+        ratios[(i, j)] = ratio
+        pairwise.append({"first": records[i].key, "second": records[j].key,
+                         "early_rms": early_rms, "late_noise_rms": tail_rms,
+                         "early_to_late_ratio": ratio})
+    choices = []
+    for indices in itertools.combinations(range(len(records)), 3):
+        scores = [ratios[(i, j)] for i, j in itertools.combinations(indices, 2)]
+        choices.append((max(scores), sum(scores), indices))
+    best = min(choices)
+    selected = best[2] if best[0] <= threshold else None
+    diagnostic = {"status": "CONSISTENT" if selected else "UNSTABLE",
+                  "coherent_end_ms": 1000 * coherent_end_s,
+                  "early_samples": early_count, "late_noise_samples": n - tail_start,
+                  "max_early_to_late_ratio": best[0],
+                  "threshold_ratio": threshold,
+                  "selected_keys": [records[i].key for i in selected] if selected else [],
+                  "excluded_keys": [record.key for i, record in enumerate(records)
+                                    if selected is not None and i not in selected],
+                  "pairwise": pairwise,
+                  "criterion": "all three early pairwise FID RMS differences <= 2x their own late-tail noise RMS"}
+    return selected, diagnostic
 
 
 def fit_shared(observations: Sequence[tuple[Candidate, np.ndarray]], model: NMRModel,
@@ -338,15 +452,16 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Finite task and requested-RF budgets required")
     pilot_tasks = (len(config["pilot_widths_us"]) +
                    config["pilot_repeats"] - 1 +
-                   len(set(config["pilot_phase_deg"]) - {90}) + 2)
+                   len(set(config["pilot_phase_deg"]) - {90}) + 2 +
+                   1)  # one bounded repeat-consistency confirmation
     per_block_tasks = (len(METHODS) * (config["acquisitions_per_method"] + 2) +
                        config["reference_acquisitions_per_block"] + 2)
     if config["max_tasks"] < pilot_tasks + config["blocks"] * per_block_tasks:
         raise ValueError("Task budget cannot cover the frozen worst-case study plan")
     pilot_rf = (sum(float(x) for x in config["pilot_widths_us"]) +
-                (config["pilot_repeats"] - 1 +
-                 len(set(config["pilot_phase_deg"]) - {90}) + 2) *
-                float(config["pilot_repeat_width_us"]))
+                 (config["pilot_repeats"] - 1 +
+                 len(set(config["pilot_phase_deg"]) - {90}) + 2 + 1) *
+                 float(config["pilot_repeat_width_us"]))
     worst_rf = (pilot_rf + config["blocks"] *
                 (200. * (len(METHODS) *
                  (config["acquisitions_per_method"] + 2) +
@@ -393,11 +508,11 @@ def offline_preflight() -> dict[str, Any]:
 def _pilot_response_model(pilot: PilotSignalModel, rabi: dict[str, Any],
                           train: Sequence[tuple[Candidate, np.ndarray]],
                           heldout: Sequence[tuple[Candidate, np.ndarray]]) -> tuple[NMRModel, dict]:
-    """Set the receiver gain from pilot widths, then test untouched phases.
+    """Set the receiver gain from pilot widths, then check phase responses.
 
     The RF detuning origin cannot be established by a demodulated FID alone.
     We leave it at the documented model convention of zero and require the
-    independent phase/width holdouts to agree before using this approximation.
+    phase/width response checks to agree before using this approximation.
     """
     t90 = float(rabi["t90_us"])
     base_model = NMRModel(
@@ -437,24 +552,39 @@ def _pilot_response_model(pilot: PilotSignalModel, rabi: dict[str, Any],
             estimate = predict_complex(theta, c, trial)[0]
             rms = float(np.sqrt(np.mean(np.abs(y - estimate)**2)))
             magnitude = float(np.sqrt(np.mean(np.abs(y)**2)))
-            threshold = max(5 * noise_scale,
-                            min(.5, max(.3, 2.5 * coherent_fit_error)) * magnitude)
-            checks.append({"candidate": candidate_dict(c), "complex_feature_rmse": rms,
+            signal_to_noise = magnitude / max(noise_scale, 1e-12)
+            threshold = min(.5 * magnitude,
+                            max(4 * noise_scale,
+                                min(.5, max(.3, 2.5 * coherent_fit_error)) * magnitude))
+            checks.append({"candidate": candidate_dict(c),
+                           "check_role": ("phase_response" if c.family == "phase" else
+                                          "repeat_reproducibility"),
+                           "used_in_signal_and_rabi_identification": c.family != "phase",
+                           "complex_feature_rmse": rms,
                            "observed_feature_rms": magnitude,
-                           "threshold": threshold, "passes": rms <= threshold})
+                           "noise_rms_per_feature": noise_scale,
+                           "feature_signal_to_noise": signal_to_noise,
+                           "threshold": threshold,
+                           "passes": signal_to_noise >= 3 and rms <= threshold})
         alternatives.append((sum(x["complex_feature_rmse"]**2 for x in checks),
                              trial, gain_factor, checks))
     _, model, gain_factor, checks = min(alternatives, key=lambda x: x[0])
     if not heldout or not all(item["passes"] for item in checks):
-        raise ValueError("Frozen short-pulse NMR model failed independent pilot phase/return controls")
-    return model, {"status": "PILOT_HOLDOUT_VALIDATED", "receiver_gain_factor_re_im":
+        raise ValueError("Frozen short-pulse NMR model failed pilot phase/return response checks")
+    return model, {"status": "PILOT_RESPONSE_CHECKS_VALIDATED", "receiver_gain_factor_re_im":
                    _complex_pair(gain_factor), "pilot_train_acquisitions": len(train),
-                   "pilot_heldout_acquisitions": len(heldout), "heldout_checks": checks,
-                   "detection_sign_from_heldout_phase": model.detection_sign,
+                   "pilot_response_check_acquisitions": len(heldout),
+                   "repeat_reproducibility_acquisitions": sum(
+                       c.family != "phase" for c, _ in heldout),
+                   "phase_response_acquisitions": sum(
+                       c.family == "phase" for c, _ in heldout),
+                   "response_check_scope": "repeat FIDs contributed to the pilot signal and Rabi fits; phase FIDs were not used for receiver-gain fitting; response checks choose detection sign",
+                   "response_checks": checks,
+                   "detection_sign_selected_by_response_checks": model.detection_sign,
                    "pulse_detuning_origin_hz": 0.,
                    "pulse_detuning_origin_scope": "model convention, not independently measured RF carrier offset",
                    "fid_frequency_source": "complex FID; no unverified Ramsey delay submitted",
-                   "holdout_threshold_rule": "complex RMSE per feature <= max(5x per-feature noise, capped coherent-fit allowance)",
+                   "response_check_threshold_rule": "measured feature signal >= 3x per-feature noise and complex RMSE <= min(0.5x signal, max(4x noise, capped coherent-fit allowance))",
                    "pilot_coherent_fit_relative_error": coherent_fit_error,
                    "receiver_gauge": "fixed independent pilot coefficient; only relative phase inferable"}
 
@@ -532,6 +662,8 @@ class BayesRun:
                 raise ValueError("Resume configuration differs from frozen original")
             if self.data.get("state") == "STOPPED_UNCERTAIN" and not read_only:
                 raise HardwareUncertain("A task was uncertain; manual reconciliation is required")
+            if not read_only:
+                self.data.setdefault("resume_environments", []).append(preflight)
         else:
             self.data = {"experiment": EXPERIMENT, "run_id": self.out.name,
                          "started_utc": utc_now(), "state": "RUNNING",
@@ -575,9 +707,14 @@ class BayesRun:
                          sample_hz=command.sample_hz, label=key)
         spec = compile_sequence(seq, Capabilities())
         previous = self.data["acquisitions"].get(key)
-        if previous and previous["candidate"] != candidate_dict(command):
-            raise ValueError(f"Resume candidate changed for {key}")
         saved_raw_before_call = (self.out / "raw" / f"{key}.json").exists()
+        current_candidate = candidate_dict(command)
+        analysis_rebound = bool(previous and previous["candidate"] != current_candidate and
+            self.resuming and role == "pilot" and previous["role"] == "pilot" and
+            saved_raw_before_call and
+            _same_physical_candidate(previous["candidate"], current_candidate))
+        if previous and previous["candidate"] != current_candidate and not analysis_rebound:
+            raise ValueError(f"Resume physical candidate changed for {key}")
         started = time.perf_counter()
         record = run_raw(spec, key=key, hardware=self.hw, output=self.out)
         cycle_s = time.perf_counter() - started
@@ -597,21 +734,32 @@ class BayesRun:
             cycle_scope = "measured whole local task cycle"
         # Preserve exact payload and role in the original record. A resumed
         # completed task is reused from disk and is never submitted again.
+        if analysis_rebound:
+            record.metadata.setdefault("original_candidate",
+                                       previous.get("original_candidate", previous["candidate"]))
         record.metadata.update({"role": role, "block": block, "method": method,
-                                "candidate": candidate_dict(command),
+                                "candidate": current_candidate,
                                 "full_cycle_seconds": full_cycle_s,
                                 "full_cycle_scope": cycle_scope})
-        record.save(self.out / "raw")
+        # A resumed acquisition is read-only source evidence. Rebinding its
+        # analysis windows updates results.json, never the original FID files.
+        if not saved_raw_before_call:
+            record.save(self.out / "raw")
         if self.pilot is not None:
             features = demodulated_features(record.fid, record.time_seconds, self.pilot)
         else:
             features = np.empty(0, complex)
         row = {"key": key, "role": role, "block": block, "method": method,
-               "candidate": candidate_dict(command), "task_id": record.task_id,
+               "candidate": current_candidate, "task_id": record.task_id,
                "wall_seconds": record.metadata.get("wall_seconds"),
                "full_cycle_seconds": full_cycle_s, "full_cycle_scope": cycle_scope,
                "requested_rf_us": spec.rf_duration_us,
                "raw_file": f"raw/{key}.npz", "completed_utc": utc_now()}
+        if analysis_rebound:
+            row["original_candidate"] = previous.get("original_candidate",
+                                                       previous["candidate"])
+        elif previous and "original_candidate" in previous:
+            row["original_candidate"] = previous["original_candidate"]
         self.data["acquisitions"][key] = row
         self.save()
         return record, features
@@ -639,13 +787,49 @@ class BayesRun:
             self.tolerances = Tolerances(**self.plan["tolerances"])
             self.event("Frozen pilot and plan restored from disk")
             return
+        if self.data["pilot"]:
+            self.data.setdefault("pilot_attempt_history", []).append({
+                "superseded_utc": utc_now(), "pilot": self.data["pilot"]})
+            self.data["pilot"] = {}
+            self.save()
         pilot_started = time.perf_counter()
         original_pilot_keys = {key for key, row in self.data["acquisitions"].items()
                                if row["role"] == "pilot"}
         repeat_width = float(self.config["pilot_repeat_width_us"])
         repeats = [self._pilot_record(f"pilot_repeat_{i}", repeat_width)
                    for i in range(self.config["pilot_repeats"])]
+        coherent_end = _pilot_repeat_window(repeats)
+        selected, consistency = _pilot_repeat_consistency(repeats, coherent_end)
+        if selected is None:
+            self.data["pilot"]["repeat_consistency"] = consistency
+            self.save()
+            self.event("Pilot repeats disagree: max early/late noise ratio="
+                       f"{consistency['max_early_to_late_ratio']:.2f}; "
+                       "one additional 40 us, 90 deg confirmation FID", kind="WARNING")
+            repeats.append(self._pilot_record("pilot_repeat_confirm_3", repeat_width))
+            selected, consistency = _pilot_repeat_consistency(repeats, coherent_end)
+            if selected is None:
+                self.data["pilot"]["repeat_consistency"] = consistency
+                self.save()
+                raise SignalIdentificationError(
+                    "Pilot repeats unstable after one confirmation FID: "
+                    f"best early/late noise ratio={consistency['max_early_to_late_ratio']:.2f} "
+                    f"> {consistency['threshold_ratio']:.2f}; no benchmark tasks submitted")
+        self.data["pilot"]["repeat_consistency"] = consistency
+        self.save()
+        self.event("Pilot repeat selection: "
+                   f"used={consistency['selected_keys']}, "
+                   f"excluded={consistency['excluded_keys']}, "
+                   f"max_ratio={consistency['max_early_to_late_ratio']:.2f}")
+        repeats = [repeats[index] for index in selected]
         self.pilot = identify_pilot_multiplet(repeats)
+        final_selected, final_consistency = _pilot_repeat_consistency(
+            repeats, max(end for _, end in self.pilot.feature_windows_s))
+        self.data["pilot"]["repeat_consistency"]["selected_recheck"] = final_consistency
+        self.save()
+        if final_selected is None:
+            raise SignalIdentificationError(
+                "Selected pilot repeats disagree over the newly identified coherent FID window")
         self.data["pilot"]["signal"] = self.pilot.to_dict()
         self.save()
         self.event("Pilot FID: "
@@ -657,6 +841,13 @@ class BayesRun:
         if self.pilot.status != "IDENTIFIED":
             raise ValueError(f"Pilot multiplet unresolved: {self.pilot.status}; "
                              f"{self.pilot.diagnostics}")
+        coherent_error = float(self.pilot.diagnostics[
+            "pilot_fit_coherent_relative_residual_rms"])
+        if not math.isfinite(coherent_error) or coherent_error > .35:
+            raise SignalIdentificationError(
+                "Pilot multiplet fit misses the measured coherent FID window: "
+                f"relative error={coherent_error:.3f} "
+                "outside finite <= 0.350 limit; no Rabi/phase/benchmark tasks submitted")
         widths: list[float] = []
         rabi_records: list[RawFIDRecord] = []
         for width in self.config["pilot_widths_us"]:
@@ -699,18 +890,18 @@ class BayesRun:
                     for phase, record in zip(phases, phase_records)]
         model, validation = _pilot_response_model(self.pilot, rabi.to_dict(), train,
                                                    heldout)
-        # The short-spin model is approximate. Independent phase/return
+        # The short-spin model is approximate. Phase/return response
         # residuals become a documented likelihood floor so a tiny repeat
         # noise covariance cannot create false posterior precision.
         model_rms = max(float(row["complex_feature_rmse"])
-                        for row in validation["heldout_checks"])
+                        for row in validation["response_checks"])
         augmented = (self.pilot.feature_covariance_re_im +
                      np.eye(len(self.pilot.feature_covariance_re_im)) * model_rms**2 / 2)
         self.pilot = replace(self.pilot, feature_covariance_re_im=augmented,
             diagnostics={**self.pilot.diagnostics,
                 "short_spin_model_discrepancy_floor_rms": model_rms,
                 "likelihood_covariance_scope":
-                    "independent repeats plus heldout physical-model discrepancy; systematic bias remains separately checked"})
+                    "repeat variation plus measured phase/return model discrepancy; systematic bias remains separately checked"})
         self.data["pilot"]["signal"] = self.pilot.to_dict()
         validation["likelihood_model_discrepancy_floor_rms"] = model_rms
         self.save()
@@ -839,8 +1030,10 @@ class BayesRun:
         width = float(self.config["pilot_repeat_width_us"])
         command = candidate(width, 90., pilot, family="return_control")
         record, features = self.acquire(key, command, role="resume_check")
-        repeat_records = [self._record(f"pilot_repeat_{index}")
-                          for index in range(int(self.config["pilot_repeats"]))]
+        selected_keys = self.data.get("pilot", {}).get("repeat_consistency", {}).get(
+            "selected_keys") or [f"pilot_repeat_{index}"
+                                 for index in range(int(self.config["pilot_repeats"]))]
+        repeat_records = [self._record(key) for key in selected_keys]
         center = np.mean([demodulated_features(item.fid, item.time_seconds, pilot)
                           for item in repeat_records], axis=0)
         residual = interleaved_real_imag(features - center)
@@ -1546,7 +1739,7 @@ class BayesRun:
         """No hardware commands; keeps partial data and a complete local ZIP."""
         if self.data["rows"]:
             self._comparative_summary()
-        if not (self.out / "calibration.json").exists():
+        if not self.data["rows"]:
             atomic_json(self.out / "calibration.json", {
                 "experiment": EXPERIMENT,
                 "status": "PILOT_ONLY" if (self.out / "plan.json").exists() else
@@ -1557,8 +1750,15 @@ class BayesRun:
                 "persistent_device_calibration_modified": False,
                 "pilot": self.data.get("pilot", {}),
                 "validity": "No method calibration certified without independent block reference and controls"})
-        if not (self.out / "source_snapshot" / "manifest.json").exists():
-            snapshot_sources(self.out, self.repo)
+        snapshot_dir = self.out / "source_snapshot"
+        if self.resuming and (snapshot_dir / "manifest.json").is_file():
+            # Preserve the exact code from the earlier attempt, then capture
+            # the code actually used for this resumed analysis. Both belong
+            # in the archive alongside the unchanged original FID files.
+            history = (self.out / "source_snapshot_history" /
+                       datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f_UTC"))
+            shutil.copytree(snapshot_dir, history)
+        snapshot_sources(self.out, self.repo)
         plot_comparisons(self.out, self.data["rows"])
         self.data["finished_utc"] = utc_now()
         self.save()

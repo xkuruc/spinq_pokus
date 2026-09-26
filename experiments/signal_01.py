@@ -197,6 +197,28 @@ def _validate_repeats(records: Sequence[RawFIDRecord]) -> tuple[float, int]:
     return sample_hz, minimum
 
 
+def _leading_active_end(envelope: np.ndarray, threshold: float,
+                        smooth_samples: int) -> int:
+    """End of the FID's first measured coherent interval, in samples.
+
+    Short gaps can occur at multiplet beat minima. A later isolated rise in
+    the receiver output cannot extend the initial FID's spectral window.
+    """
+    active = np.flatnonzero(envelope > threshold)
+    if not len(active):
+        raise SignalIdentificationError("No pilot FID interval remains above repeat-derived noise")
+    if active[0] > smooth_samples:
+        raise SignalIdentificationError(
+            "Pilot FID does not rise above repeat-derived noise near acquisition start")
+    previous = int(active[0])
+    for index in active[1:]:
+        index = int(index)
+        if index - previous - 1 > smooth_samples:
+            break
+        previous = index
+    return previous + 1
+
+
 def _discover_bands(mean_fid: np.ndarray, sample_hz: float, noise_cov: np.ndarray,
                     centered_repeats: np.ndarray, *, max_components: int) -> tuple[tuple[tuple[float, float], ...], dict]:
     n = len(mean_fid)
@@ -209,9 +231,15 @@ def _discover_bands(mean_fid: np.ndarray, sample_hz: float, noise_cov: np.ndarra
     smooth_n = max(16, min(n // 20, int(sample_hz / 100)))
     envelope = np.sqrt(np.convolve(np.abs(centered_signal) ** 2,
                                    np.ones(smooth_n) / smooth_n, mode="same"))
-    active = np.flatnonzero(envelope > 3 * noise_rms)
-    n_active = min(n, max(256, int(active[-1] + 1) if len(active) else 0))
-    if n_active < 256 or float(np.max(envelope)) < 6 * noise_rms:
+    if float(np.max(envelope)) < 6 * noise_rms:
+        raise SignalIdentificationError("Pilot signal is below independent-repeat noise threshold")
+    leading_end = _leading_active_end(envelope, 3 * noise_rms, smooth_n)
+    # A short-lived FID must be analyzed near its measured coherent interval.
+    # Forcing 256 samples at 10 kHz can taper away a signal that lasts only
+    # about 7 ms.  Keep 128 samples for spectral resolution while retaining
+    # the repeat-derived peak threshold below.
+    n_active = min(n, max(128, leading_end))
+    if n_active < 128:
         raise SignalIdentificationError("Pilot signal is below independent-repeat noise threshold")
     # A Hann taper suppresses the spectral sidelobes of a strong mode, which
     # otherwise masquerade as extra weak components in high-SNR FIDs.
@@ -233,8 +261,12 @@ def _discover_bands(mean_fid: np.ndarray, sample_hz: float, noise_cov: np.ndarra
     for peak in order:
         width_bins = float(peak_widths(spectrum, [peak], rel_height=0.5)[0][0])
         width_hz = max(resolution, width_bins * sample_hz / nfft)
-        exclusion_hz = max(6 * resolution, 2.5 * width_hz)
-        if all(abs(frequency[peak] - frequency[prior]) > max(exclusion_hz, 2.5 * prior_width)
+        # scipy's width is the FULL width at half height. A distinct peak
+        # beyond the four-bin Hann main lobe and 1.5 measured full widths is
+        # resolved only when it also clears the repeat-derived peak threshold.
+        # A broader exclusion merged real lines in a short coherent FID.
+        exclusion_hz = max(4 * resolution, 1.5 * width_hz)
+        if all(abs(frequency[peak] - frequency[prior]) > max(exclusion_hz, 1.5 * prior_width)
                for prior, prior_width in selected):
             selected.append((int(peak), width_hz))
         if len(selected) >= max_components:
@@ -419,16 +451,14 @@ def fixed_pilot_projection(record: RawFIDRecord, pilot: PilotSignalModel,
 def _coherence_horizon(signal: np.ndarray, noise_covariance: np.ndarray,
                        sample_hz: float) -> float:
     noise_rms = math.sqrt(float(np.trace(noise_covariance)))
+    smooth_n = max(16, int(sample_hz / 100))
     smoothed = np.sqrt(np.convolve(np.abs(signal) ** 2,
-                                  np.ones(max(16, int(sample_hz / 100))) /
-                                  max(16, int(sample_hz / 100)), mode="same"))
-    active = np.flatnonzero(smoothed > 3 * noise_rms)
-    if not len(active):
-        raise SignalIdentificationError("No pilot FID interval remains above repeat-derived noise")
+                                  np.ones(smooth_n) / smooth_n, mode="same"))
+    leading_end = _leading_active_end(smoothed, 3 * noise_rms, smooth_n)
     # All established acquisition modes contain at least 4000 points at
     # 10 kHz; keep the likelihood vector within their common first 0.25 s.
     # Longer tails remain available to the separate full-FID model check.
-    return min(float((active[-1] + 1) / sample_hz), 0.25, len(signal) / sample_hz)
+    return min(float(leading_end / sample_hz), 0.25, len(signal) / sample_hz)
 
 
 def _feature_windows(signal: np.ndarray, noise_covariance: np.ndarray,

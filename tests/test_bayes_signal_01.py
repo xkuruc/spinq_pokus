@@ -127,6 +127,50 @@ class BayesSignalTests(unittest.TestCase):
         self.assertLess(abs(pilot.component_frequencies_hz[0] + 1700), 2.)
         self.assertLess(pilot.diagnostics["active_points"], 2000)
 
+    def test_short_coherence_resolves_two_repeat_supported_modes(self):
+        # A roughly 8 ms FID loses its weaker line if spectral discovery
+        # includes too much noise-only tail before applying the Hann taper.
+        rng = np.random.default_rng(2026)
+        t = np.arange(16_000) / FS
+        signal = ((1 - .5j)
+                  + (140 + 40j) * np.exp((-390 - 2j * np.pi * 120) * t)
+                  + (300 - 140j) * np.exp((-344 + 2j * np.pi * 348) * t))
+        records = []
+        for i in range(3):
+            noise = 15 * (rng.normal(size=len(t)) + 1j * rng.normal(size=len(t)))
+            records.append(record(f"brief-{i}", signal + noise,
+                                  sample_count=len(t)))
+        pilot = identify_pilot_multiplet(records)
+        self.assertEqual(pilot.status, "IDENTIFIED")
+        self.assertEqual(len(pilot.component_frequencies_hz), 2)
+        self.assertAlmostEqual(pilot.component_frequencies_hz[0], -120, delta=10)
+        self.assertAlmostEqual(pilot.component_frequencies_hz[1], 348, delta=10)
+        self.assertEqual(pilot.diagnostics["active_points"], 128)
+        self.assertGreater(min(pilot.diagnostics["peak_snr_to_repeat_spectrum"]), 7)
+        self.assertLess(pilot.diagnostics["pilot_fit_coherent_relative_residual_rms"], .2)
+
+    def test_late_isolated_artifact_does_not_extend_leading_fid_window(self):
+        rng = np.random.default_rng(2030)
+        t = np.arange(16_000) / FS
+        early = (300 - 140j) * np.exp((-344 + 2j * np.pi * 348) * t)
+        late = (180 * np.exp(-.5 * ((t - .095) / .003)**2)
+                * np.exp(2j * np.pi * 1300 * t))
+        # The delayed artifact itself exceeds the 3x repeat-noise threshold.
+        late_envelope = np.sqrt(np.convolve(np.abs(late)**2,
+                                           np.ones(100) / 100, mode="same"))
+        self.assertGreater(late_envelope.max(), 3 * math.sqrt(2) * 15)
+        records = []
+        for i in range(3):
+            noise = 15 * (rng.normal(size=len(t)) + 1j * rng.normal(size=len(t)))
+            records.append(record(f"delayed-{i}", 1 - .5j + early + late + noise,
+                                  sample_count=len(t)))
+        pilot = identify_pilot_multiplet(records)
+        self.assertEqual(pilot.status, "IDENTIFIED")
+        self.assertEqual(len(pilot.component_frequencies_hz), 1)
+        self.assertAlmostEqual(pilot.component_frequencies_hz[0], 348, delta=10)
+        self.assertEqual(pilot.diagnostics["active_points"], 128)
+        self.assertLess(pilot.diagnostics["pilot_feature_coherence_horizon_ms"], 20)
+
     def test_six_features_follow_measured_short_coherence_and_fail_if_undersampled(self):
         t = np.arange(16_000) / FS
         short_signal = 400 * np.exp(-270 * t)
