@@ -16,7 +16,7 @@ from urllib.parse import urlsplit
 from spinq_audit.common import redact
 
 PART_BYTES = 80 * 1024 * 1024
-GIT_TIMEOUT_SECONDS = 120
+GIT_TIMEOUT_SECONDS = 900
 
 
 def _git(args: list[str], cwd: Path, env: dict[str, str]) -> str:
@@ -104,12 +104,28 @@ def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object
                 _git(["checkout", "-q", "-b", branch], work, env)
             files = _parts(zip_path, work)
             _git(["add", "-A"], work, env)
+            unchanged = subprocess.run(["git", "diff", "--cached", "--quiet"],
+                cwd=work, env=env, stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode == 0
+            if existing and unchanged:
+                return {"status": "UPLOAD_SUCCEEDED", "branch": branch,
+                        "files": files, "remote_source": "git remote origin",
+                        "note": "identical archive already present"}
             _git(["-c", "user.name=SpinQ Results", "-c",
                   "user.email=spinq-results@users.noreply.github.com", "commit", "-q",
                   "-m", f"Gemini Lab results {branch.rsplit('/', 1)[-1]}"], work, env)
             push_prefix = (["-c", "credential.helper="] if env.get("GIT_ASKPASS") else [])
-            _git([*push_prefix, "push", "--porcelain", "origin",
-                  f"HEAD:refs/heads/{branch}"], work, env)
+            try:
+                _git([*push_prefix, "push", "--porcelain", "origin",
+                      f"HEAD:refs/heads/{branch}"], work, env)
+            except (RuntimeError, subprocess.TimeoutExpired):
+                # HTTP may fail after the remote accepted the commit. Confirm
+                # the exact remote HEAD before reporting a failed upload.
+                local_head = _git(["rev-parse", "HEAD"], work, env)
+                remote_head = _git(["ls-remote", "--heads", "origin",
+                                    f"refs/heads/{branch}"], work, env)
+                if not remote_head or remote_head.split()[0] != local_head:
+                    raise
             return {"status": "UPLOAD_SUCCEEDED", "branch": branch,
                     "files": files, "remote_source": "git remote origin"}
     except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:

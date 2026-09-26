@@ -13,7 +13,13 @@ git pull
 
 Skript vytvorí samostatné `.benchmark-venv`, nainštaluje oficiálny `spinqlablink==1.0.2`, NumPy, SciPy, scikit-learn, matplotlib a PyTorch a **neupraví existujúcu `.venv`**. Ak firemný počítač zablokuje inštaláciu, zastaví sa pred meraním. Inštalácia Torch môže byť veľká. GPU netreba.
 
-Výsledky sú v `results/<UTC_run_id>/results.zip`, `REPORT.md`, `comparison.csv`, `results.json`, `data/`, `models/` a `plots/`. Program po skončení skúsi neinteraktívne odoslanie ZIP do vetvy `benchmark/<UTC_run_id>`. Použije existujúce Git prihlasovanie alebo `GH_TOKEN` / `GITHUB_TOKEN` v prostredí. Token sa nezapisuje do súborov. Ak push zlyhá, ZIP ostáva lokálne a v správe bude `UPLOAD_FAILED`.
+Výsledky sú v `results/<UTC_run_id>/results.zip`, `REPORT.md`, `comparison.csv`, `results.json`, `data/`, `models/` a `plots/`. Program po skončení skúsi neinteraktívne odoslanie ZIP do vetvy `benchmark/<UTC_run_id>`. Použije existujúce Git prihlasovanie alebo `GH_TOKEN` / `GITHUB_TOKEN` v prostredí. Token sa nezapisuje do súborov. Ak push zlyhá, ZIP ostáva lokálne a v správe bude `UPLOAD_FAILED`. Pri prekročení časového limitu program najprv overí, či vzdialená vetva už prijala presný commit; veľký ZIP môže byť nahraný, hoci Git na PC nevrátil odpoveď včas.
+
+Ak vetva na GitHube naozaj neexistuje, iba opakuj vytvorenie archívu a odoslanie bez pripojenia k prístroju:
+
+```powershell
+.\run_windows.cmd --resume .\results\<UTC_run_id> --upload-only
+```
 
 Pokračovanie po prerušení:
 

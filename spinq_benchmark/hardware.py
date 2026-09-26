@@ -60,6 +60,22 @@ def validate_request(p, cumulative_rf_us, max_rf_us=12000.):
     return rf
 
 
+def paired_fid_graphs(graph, requested_count):
+    """Preserve matched decoded charts, including the observed one-point truncation."""
+    pairs=[]
+    for block,g in enumerate(graph):
+        real,imag=g.get("fidRe"),g.get("fidIm")
+        if real is None or imag is None: continue
+        if (len(real)!=len(imag) or len(real) not in (requested_count,requested_count-1)
+                or any(a[0]!=b[0] for a,b in zip(real,imag))):
+            continue
+        pairs.append({"block":block,"axis_as_received":[a[0] for a in real],
+                      "re_im":[[a[1],b[1]] for a,b in zip(real,imag)],
+                      "actual_sample_count":len(real),
+                      "requested_sample_count":requested_count})
+    return pairs
+
+
 class LiveHardware:
     def __init__(self, out: Path, *, host="172.19.20.100", port=8181, account="anyword",
                  timeout_seconds=180, pause_seconds=2., max_tasks=180,
@@ -189,14 +205,7 @@ class LiveHardware:
                 # SDK result is an original decoded chart export, alongside event journal.
                 result=self.link.get_experiment_result()
                 graph=result.get("result",{}).get("graph",[])
-                pairs=[]
-                for block,g in enumerate(graph):
-                    real,imag=g.get("fidRe"),g.get("fidIm")
-                    if real is None or imag is None: continue
-                    if len(real)!=len(imag) or len(real)!=p["sampleCount"] or any(a[0]!=b[0] for a,b in zip(real,imag)):
-                        continue
-                    pairs.append({"block":block,"axis_as_received":[a[0] for a in real],
-                                  "re_im":[[a[1],b[1]] for a,b in zip(real,imag)]})
+                pairs=paired_fid_graphs(graph,p["sampleCount"])
                 row={"key":key,"state":state,"task_id":str(exp.id),"params":p,"preflight":preflight,
                      "wall_seconds":time.monotonic()-start,"finished_utc":utc_now(),
                      "fid_pairs":pairs,"all_decoded_graphs":graph,

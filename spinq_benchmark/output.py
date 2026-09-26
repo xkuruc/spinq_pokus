@@ -135,12 +135,15 @@ def report(data):
         for block,item in blocks.items():
             lines.append(f"- Blok {block}: {item.get('status','NEPRESVEDČIVÉ')}; {item.get('reason','')}" )
         lines.append("")
+    if data.get("plots"):
+        lines.extend(["## Grafy", ""]+[f"- {name}: {state}" for name,state in data["plots"].items()]+[""])
     if data.get("errors"):
         lines.extend(["## Chyby",""]+[f"- {e}" for e in data["errors"]]+[""])
     return "\n".join(lines)+"\n"
 
 
 def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
+    status={}
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -170,6 +173,7 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
         pulse=topics.get("pulse_tuning",{})
         if pulse:
             fig,ax=plt.subplots(figsize=(7,4))
+            drawn=0
             for method in sorted({m for block in pulse.values() for m in block.get("methods",{})}):
                 histories=[block.get("methods",{}).get(method,{}).get("evaluations",[])
                            for block in pulse.values()]
@@ -178,11 +182,18 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
                     count=min(len(h) for h in histories)
                     ax.plot(range(1,count+1),[sum(min(e["loss"] for e in h[:k]) for h in histories)/len(histories)
                                                   for k in range(1,count+1)],"o-",label=method)
+                    drawn+=1
             ax.set(xlabel="Kandidáti meraní (2 akvizície na kandidáta)",ylabel="Najnižšia pozorovaná strata",
                    title="Konvergencia RF doladenia")
-            ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"pulse_convergence.png",dpi=140);plt.close(fig)
+            if drawn:
+                ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"pulse_convergence.png",dpi=140)
+                status["pulse_convergence"]="CREATED"
+            else:
+                status["pulse_convergence"]="SKIPPED_NO_EVALUATIONS"
+            plt.close(fig)
         if robust:
             fig,ax=plt.subplots(figsize=(7,4))
+            drawn=0
             for method in sorted({m for block in robust.values() for m in block.get("readings",{})}):
                 pairs=[]
                 for block in robust.values():
@@ -192,9 +203,15 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
                     xs=sorted(set(x for x,_ in pairs))
                     ax.plot(xs,[sum(y for x,y in pairs if x==v)/sum(x==v for x,_ in pairs)
                                 for v in xs],"o-",label=method)
+                    drawn+=1
             ax.set(xlabel="Vysielacie rozladenie (Hz)",ylabel="Relatívna chyba komplexnej odozvy",
                    title="Robustnosť H pulzov")
-            ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"robustness.png",dpi=140);plt.close(fig)
+            if drawn:
+                ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"robustness.png",dpi=140)
+                status["robustness"]="CREATED"
+            else:
+                status["robustness"]="SKIPPED_NO_READINGS"
+            plt.close(fig)
         denoise_blocks=[b.get("metrics",{}) for b in topics.get("denoising",{}).values() if b.get("metrics")]
         if denoise_blocks:
             fig,ax=plt.subplots(figsize=(8,4))
@@ -204,9 +221,11 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
                    title="Denoising: nezávislé testovacie rodiny")
             ax.tick_params(axis="x",labelrotation=25)
             fig.tight_layout();fig.savefig(out/"plots"/"denoising.png",dpi=140);plt.close(fig)
-    except Exception:
-        # Plot failure never destroys numerical results.
-        pass
+            status["denoising"]="CREATED"
+    except Exception as exc:
+        # Plot failure never destroys numerical results, but is visible in the report.
+        status["error"]=f"{type(exc).__name__}: {exc}"
+    return status
 
 
 def bundle(out:Path):

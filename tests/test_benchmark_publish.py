@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import publish_results as publishing
 from publish_results import publish_results
 
 
@@ -23,9 +24,19 @@ class ResultPublishingTests(unittest.TestCase):
                 self.assertEqual(publish_results(repo,archive,"benchmark/test")["status"],"UPLOAD_SUCCEEDED")
                 archive.write_bytes(b"continued")
                 self.assertEqual(publish_results(repo,archive,"benchmark/test")["status"],"UPLOAD_SUCCEEDED")
+                self.assertEqual(publish_results(repo,archive,"benchmark/test")["status"],"UPLOAD_SUCCEEDED")
+                archive.write_bytes(b"accepted despite timeout")
+                original_git=publishing._git
+                def delayed_response(args,cwd,env):
+                    response=original_git(args,cwd,env)
+                    if "push" in args:
+                        raise subprocess.TimeoutExpired(["git",*args],120)
+                    return response
+                with patch.object(publishing,"_git",side_effect=delayed_response):
+                    self.assertEqual(publish_results(repo,archive,"benchmark/test")["status"],"UPLOAD_SUCCEEDED")
             content=subprocess.check_output(["git","--git-dir",str(bare),"show",
                                              "refs/heads/benchmark/test:results.zip"])
-            self.assertEqual(content,b"continued")
+            self.assertEqual(content,b"accepted despite timeout")
             tree=subprocess.check_output(["git","--git-dir",str(bare),"ls-tree","--name-only",
                                           "refs/heads/benchmark/test"],text=True)
             self.assertEqual(tree.strip(),"results.zip")

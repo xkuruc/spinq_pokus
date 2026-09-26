@@ -559,7 +559,26 @@ def main():
     ap.add_argument("--resume",type=Path,help="existing results/<run_id> folder; completed tasks are reused")
     ap.add_argument("--seed",type=int,default=240926)
     ap.add_argument("--no-upload",action="store_true")
+    ap.add_argument("--upload-only",action="store_true",
+                    help="regenerate report/archive and retry upload; never connect to hardware")
     args=ap.parse_args()
+    if args.upload_only:
+        if args.resume is None: ap.error("--upload-only requires --resume results/<run_id>")
+        out=args.resume.resolve()
+        existing_path=out/"results.json"
+        if not existing_path.is_file(): ap.error(f"missing existing results: {existing_path}")
+        existing=json.loads(existing_path.read_text(encoding="utf-8"))
+        result=Results(out,existing["config"])
+        result.data["plots"]=plot_comparisons(out,result.data.get("rows",[]),result.data.get("topics",{}))
+        result.save()
+        bundle(out)
+        if not args.no_upload:
+            result.data["upload"]=publish_results(Path(__file__).resolve().parent,
+                out/"results.zip",f"benchmark/{out.name}")
+            result.save();bundle(out)
+        print(f"Archive: {out/'results.zip'}",flush=True)
+        print(f"Upload: {result.data['upload'].get('status')}",flush=True)
+        return 0 if result.data["upload"].get("status")=="UPLOAD_SUCCEEDED" else 2
     if not 3<=args.blocks<=20: ap.error("blocks must be 3..20")
     stamp=datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_UTC")
     out=(args.resume or Path("results")/stamp).resolve()
@@ -615,7 +634,8 @@ def main():
         result.data["finished_utc"]=utc_now()
         result.data["aggregate"]=aggregate_rows(result.data["rows"],result.data.get("frozen_plan"))
         result.save()
-        plot_comparisons(out,result.data["rows"],result.data["topics"])
+        result.data["plots"]=plot_comparisons(out,result.data["rows"],result.data["topics"])
+        result.save()
         bundle(out)
         if not args.no_upload:
             upload=publish_results(Path(__file__).resolve().parent,out/"results.zip",f"benchmark/{out.name}")
