@@ -1,0 +1,3871 @@
+{
+  "status": "FROZEN",
+  "created_utc": "2026-09-26T18:39:01.115111+00:00",
+  "pilot_signal": {
+    "sample_hz": 10000.0,
+    "bands_hz": [
+      [
+        -456.3238116958388,
+        111.5234375
+      ],
+      [
+        113.0859375,
+        649.2008621938332
+      ]
+    ],
+    "primary_component_index": 1,
+    "component_frequencies_hz": [
+      -126.03729883097287,
+      329.0174055282611
+    ],
+    "component_offsets_hz": [
+      -455.054704359234,
+      0.0
+    ],
+    "component_decay_per_s": [
+      288.3903188659664,
+      272.46833733800185
+    ],
+    "component_weights_re_im": [
+      [
+        0.3794836815644588,
+        0.15664597066680486
+      ],
+      [
+        1.0,
+        0.0
+      ]
+    ],
+    "reference_frequency_hz": 329.0174055282611,
+    "reference_coefficient_re_im": [
+      317.0779251880319,
+      -138.59448438670006
+    ],
+    "baseline_re_im": [
+      -0.5834716572542213,
+      -0.0008226241924904039
+    ],
+    "receiver_phase_rad": -0.4120739218742339,
+    "receiver_gauge": "reference primary coefficient of independent pilot; TX/RX global phase unresolved",
+    "noise_covariance_re_im": [
+      [
+        237.39896054261592,
+        -1.897031737546155
+      ],
+      [
+        -1.8970317375461523,
+        236.4832775108153
+      ]
+    ],
+    "lag_one_correlation": 0.025215486284080667,
+    "between_acquisition_covariance_re_im": [
+      [
+        36.48587492170465,
+        84.00353026063195
+      ],
+      [
+        84.00353026063196,
+        274.42548778133045
+      ]
+    ],
+    "feature_windows_s": [
+      [
+        0.0,
+        0.000488888888888889
+      ],
+      [
+        0.0014471111111111113,
+        0.0019360000000000002
+      ],
+      [
+        0.0028942222222222225,
+        0.003383111111111112
+      ],
+      [
+        0.004341333333333334,
+        0.004830222222222224
+      ],
+      [
+        0.005788444444444445,
+        0.006277333333333334
+      ],
+      [
+        0.007235555555555556,
+        0.007724444444444445
+      ]
+    ],
+    "feature_covariance_re_im": [
+      [
+        0.03347423321413329,
+        -7.151833311885718e-05,
+        -0.0009605765367280166,
+        0.00025487373182390293,
+        0.00028230256401538714,
+        -6.972682685482973e-05,
+        -0.0007021878394261605,
+        0.00030361975261549595,
+        0.0003219557932905189,
+        0.00023269427391347323,
+        0.0005061122571863249,
+        1.6385009493324628e-06
+      ],
+      [
+        -7.151833311885715e-05,
+        0.03677572909539004,
+        0.00039070364803546405,
+        0.00039470715425922887,
+        0.0008435607090460755,
+        -0.00013534563388957138,
+        0.001888072297175266,
+        0.0004744181715110559,
+        -0.0004672075224925008,
+        0.001183489340497261,
+        -0.00010284007116997722,
+        0.001985489066683267
+      ],
+      [
+        -0.0009605765367280166,
+        0.00039070364803546416,
+        0.03462360166122846,
+        -0.0004175954489693488,
+        -0.00043232057623145815,
+        0.0001118757505486296,
+        0.001353554662491496,
+        -0.000495175371512718,
+        -0.0005927986287302544,
+        -0.00032227929622273105,
+        -0.0008877933116463272,
+        0.00013572309774770192
+      ],
+      [
+        0.00025487373182390293,
+        0.0003947071542592289,
+        -0.0004175954489693488,
+        0.03308466151179393,
+        0.00022861660170575077,
+        -4.836276960778367e-05,
+        -0.0001261666761152809,
+        0.00019783399299110597,
+        0.00010207971087018295,
+        0.00024262929907604947,
+        0.0002305776563341826,
+        0.00022117491973086016
+      ],
+      [
+        0.0002823025640153872,
+        0.0008435607090460755,
+        -0.00043232057623145815,
+        0.00022861660170575074,
+        0.03327106718694566,
+        -7.047077863895043e-05,
+        5.0226407771710864e-05,
+        0.00027330555900923175,
+        6.80468157175252e-05,
+        0.00039685472133539244,
+        0.00025132767167898595,
+        0.0004546883600654559
+      ],
+      [
+        -6.972682685482974e-05,
+        -0.00013534563388957138,
+        0.0001118757505486296,
+        -4.8362769607783666e-05,
+        -7.047077863895044e-05,
+        0.03293323935962574,
+        2.1723922732512914e-05,
+        -5.7770618240252305e-05,
+        -2.4894963475034403e-05,
+        -7.500385783314505e-05,
+        -6.280638676880525e-05,
+        -7.462895896710202e-05
+      ],
+      [
+        -0.0007021878394261606,
+        0.0018880722971752661,
+        0.001353554662491496,
+        -0.00012616667611528096,
+        5.02264077717109e-05,
+        2.1723922732512928e-05,
+        0.034663537367071846,
+        -0.00014999647323643182,
+        -0.0006108611818198866,
+        0.0002696054448837631,
+        -0.0006650089524121402,
+        0.0009261696203599154
+      ],
+      [
+        0.00030361975261549595,
+        0.0004744181715110559,
+        -0.000495175371512718,
+        0.00019783399299110597,
+        0.0002733055590092318,
+        -5.777061824025228e-05,
+        -0.0001499964732364318,
+        0.03315521663311404,
+        0.00012113541250711722,
+        0.0002903642416025964,
+        0.00027463470270737184,
+        0.0002656541487069419
+      ],
+      [
+        0.0003219557932905189,
+        -0.0004672075224925009,
+        -0.0005927986287302543,
+        0.00010207971087018295,
+        6.80468157175252e-05,
+        -2.4894963475034397e-05,
+        -0.0006108611818198865,
+        0.00012113541250711722,
+        0.03316090549080278,
+        3.371035894797561e-07,
+        0.00030092395587051195,
+        -0.00021901555242449518
+      ],
+      [
+        0.00023269427391347323,
+        0.001183489340497261,
+        -0.00032227929622273094,
+        0.00024262929907604945,
+        0.0003968547213353925,
+        -7.500385783314505e-05,
+        0.0002696054448837631,
+        0.0002903642416025964,
+        3.3710358947976334e-07,
+        0.033399998651090744,
+        0.0002022804135140609,
+        0.0006267057750548134
+      ],
+      [
+        0.0005061122571863249,
+        -0.00010284007116997729,
+        -0.0008877933116463271,
+        0.0002305776563341826,
+        0.00025132767167898595,
+        -6.280638676880525e-05,
+        -0.0006650089524121402,
+        0.00027463470270737184,
+        0.00030092395587051195,
+        0.0002022804135140609,
+        0.033391700805566846,
+        -2.002200586649483e-05
+      ],
+      [
+        1.638500949332455e-06,
+        0.0019854890666832674,
+        0.00013572309774770194,
+        0.00022117491973086016,
+        0.00045468836006545593,
+        -7.462895896710202e-05,
+        0.0009261696203599154,
+        0.0002656541487069419,
+        -0.00021901555242449518,
+        0.0006267057750548135,
+        -2.002200586649482e-05,
+        0.033943710634604225
+      ]
+    ],
+    "pilot_task_ids": [
+      "10dfadf6-366b-498c-925e-536428397461",
+      "d4aef36b-a894-47ec-b1d8-604c692d52c2",
+      "add11455-c6fc-41c0-b37f-07c34ab012a8"
+    ],
+    "pilot_residual_rms": 16.09678300506094,
+    "status": "IDENTIFIED",
+    "diagnostics": {
+      "peak_centers_hz": [
+        -97.65625,
+        322.265625
+      ],
+      "peak_snr_to_repeat_spectrum": [
+        13.841335620833544,
+        38.239183248497106
+      ],
+      "active_points": 128,
+      "spectral_resolution_hz": 78.125,
+      "spectral_noise_source": "independent pilot repetition differences",
+      "band_rule": "pilot spectral peak width and active-duration resolution, disjoint at midpoints",
+      "pilot_fit_residual_rms": 16.09678300506094,
+      "pilot_fit_relative_residual_rms": 0.769990581295107,
+      "pilot_fit_coherent_residual_rms": 34.80347952493335,
+      "pilot_fit_coherent_relative_residual_rms": 0.17830039111814794,
+      "pilot_fit_coherent_samples": 78,
+      "pilot_feature_coherence_horizon_ms": 8.8,
+      "pilot_feature_last_end_ms": 7.724444444444445,
+      "pilot_band_edge_components": [],
+      "pilot_decay_edge_components": [],
+      "feature_window_sample_counts": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "feature_covariance_rule": "independent-repeat covariance plus AR(1)-inflated sample-noise floor; 3 repeats are rank deficient",
+      "receiver_phase_identifiability": "relative to independent pilot only; absolute TX/RX split unavailable",
+      "FID_sign_convention": "exported Re+iIm fitted as exp(+2pi*i*f*t); sign of physical Mxy precession not independently verified",
+      "frequency_fit_uncertainty_scope": "conditional independent-sample Hessian; do not use as calibrated coverage",
+      "short_spin_model_discrepancy_floor_rms": 0.25497358560753947,
+      "likelihood_covariance_scope": "repeat variation plus measured phase/return model discrepancy; systematic bias remains separately checked"
+    },
+    "vendor_result_used": false,
+    "physical_adc_clock_independently_verified": false
+  },
+  "rabi": {
+    "period_us": 168.78395193518438,
+    "t90_us": 42.195987983796094,
+    "t90_interval_us": [
+      39.683667083854814,
+      45.18648310387985
+    ],
+    "signed_complex_r2": 0.9670809659389228,
+    "receiver_offset_re_im": [
+      0.0385534095516298,
+      -0.00717511064830345
+    ],
+    "receiver_sine_gain_re_im": [
+      0.9401262955733665,
+      0.057847686740763536
+    ],
+    "receiver_cosine_gain_re_im": [
+      0.050981741015932266,
+      -0.040985409074026126
+    ],
+    "status": "IDENTIFIED",
+    "diagnostics": {
+      "period_search_us": [
+        41.0,
+        450.0
+      ],
+      "widths_us": [
+        20.0,
+        40.0,
+        40.0,
+        40.0,
+        60.0,
+        80.0,
+        100.0,
+        120.0,
+        160.0,
+        200.0
+      ],
+      "profile_error": 0.1518223337278996,
+      "profile_variance_rule": "max(complex fit residual, repeated same-width pilot scatter)",
+      "profile_interval_is_validated_coverage": false,
+      "alternative_period_modes_us": [],
+      "fit_hits_search_edge": false,
+      "five_distinct_widths": true,
+      "frozen_projection_residual_rms": [
+        27.816077628323576,
+        28.843177805301092,
+        27.814990236614683,
+        27.94679706396469,
+        28.187940174613953,
+        27.5198039538421,
+        28.202810072663475,
+        33.20471414444281,
+        26.260087494803166,
+        28.215437545325962
+      ],
+      "projection_scope": "linear signed pilot-frozen mode, defined at Rabi nulls"
+    },
+    "scope": "complex FID mode amplitude versus pulse width; t90=period/4 under sinusoidal calibration model"
+  },
+  "model": {
+    "reference_frequency_hz": 329.0174055282611,
+    "reference_coefficient_re_im": [
+      317.0779251880319,
+      -138.59448438670006
+    ],
+    "baseline_re_im": [
+      -0.5834716572542213,
+      -0.0008226241924904039
+    ],
+    "receiver_gain_re_im": [
+      304.18084829742025,
+      -117.19443277734592
+    ],
+    "component_offsets_hz": [
+      -455.054704359234,
+      0.0
+    ],
+    "component_weights_re_im": [
+      [
+        0.3794836815644588,
+        0.15664597066680486
+      ],
+      [
+        1.0,
+        0.0
+      ]
+    ],
+    "component_decay_per_s": [
+      288.3903188659664,
+      272.46833733800185
+    ],
+    "pulse_detuning_offset_hz": 0.0,
+    "amplitude_reference_pct": 100.0,
+    "detection_sign": 1,
+    "physical_scope": "validated short H pulse effective one-spin response with frozen measured multiplet"
+  },
+  "model_validation": {
+    "status": "PILOT_RESPONSE_CHECKS_VALIDATED",
+    "receiver_gain_factor_re_im": [
+      0.9410814732366953,
+      0.04173822180753143
+    ],
+    "pilot_train_acquisitions": 8,
+    "pilot_response_check_acquisitions": 5,
+    "repeat_reproducibility_acquisitions": 2,
+    "phase_response_acquisitions": 3,
+    "response_check_scope": "repeat FIDs contributed to the pilot signal and Rabi fits; phase FIDs were not used for receiver-gain fitting; response checks choose detection sign",
+    "response_checks": [
+      {
+        "candidate": {
+          "family": "rabi",
+          "width_us": 40.0,
+          "amplitude_pct": 100.0,
+          "phase_deg": 90.0,
+          "feature_windows_s": [
+            [
+              0.0,
+              0.000488888888888889
+            ],
+            [
+              0.0014471111111111113,
+              0.0019360000000000002
+            ],
+            [
+              0.0028942222222222225,
+              0.003383111111111112
+            ],
+            [
+              0.004341333333333334,
+              0.004830222222222224
+            ],
+            [
+              0.005788444444444445,
+              0.006277333333333334
+            ],
+            [
+              0.007235555555555556,
+              0.007724444444444445
+            ]
+          ],
+          "sample_hz": 10000,
+          "sample_count": 16000,
+          "drive_frequency_shift_hz": 0.0,
+          "demodulation_shift_hz": 0.0,
+          "delay_us": 0.0,
+          "readout_width_us": 0.0,
+          "readout_phase_deg": 0.0,
+          "coherent_delay_verified": false,
+          "estimated_wall_seconds": null
+        },
+        "check_role": "repeat_reproducibility",
+        "used_in_signal_and_rabi_identification": true,
+        "complex_feature_rmse": 0.08700232047795241,
+        "observed_feature_rms": 0.6188131783260131,
+        "noise_rms_per_feature": 0.051329694891579875,
+        "feature_signal_to_noise": 12.055656664881583,
+        "threshold": 0.2758365793114809,
+        "passes": true
+      },
+      {
+        "candidate": {
+          "family": "rabi",
+          "width_us": 40.0,
+          "amplitude_pct": 100.0,
+          "phase_deg": 90.0,
+          "feature_windows_s": [
+            [
+              0.0,
+              0.000488888888888889
+            ],
+            [
+              0.0014471111111111113,
+              0.0019360000000000002
+            ],
+            [
+              0.0028942222222222225,
+              0.003383111111111112
+            ],
+            [
+              0.004341333333333334,
+              0.004830222222222224
+            ],
+            [
+              0.005788444444444445,
+              0.006277333333333334
+            ],
+            [
+              0.007235555555555556,
+              0.007724444444444445
+            ]
+          ],
+          "sample_hz": 10000,
+          "sample_count": 16000,
+          "drive_frequency_shift_hz": 0.0,
+          "demodulation_shift_hz": 0.0,
+          "delay_us": 0.0,
+          "readout_width_us": 0.0,
+          "readout_phase_deg": 0.0,
+          "coherent_delay_verified": false,
+          "estimated_wall_seconds": null
+        },
+        "check_role": "repeat_reproducibility",
+        "used_in_signal_and_rabi_identification": true,
+        "complex_feature_rmse": 0.09587573118379315,
+        "observed_feature_rms": 0.610704792358136,
+        "noise_rms_per_feature": 0.051329694891579875,
+        "feature_signal_to_noise": 11.897689897594073,
+        "threshold": 0.27222225833795743,
+        "passes": true
+      },
+      {
+        "candidate": {
+          "family": "phase",
+          "width_us": 40.0,
+          "amplitude_pct": 100.0,
+          "phase_deg": 0.0,
+          "feature_windows_s": [
+            [
+              0.0,
+              0.000488888888888889
+            ],
+            [
+              0.0014471111111111113,
+              0.0019360000000000002
+            ],
+            [
+              0.0028942222222222225,
+              0.003383111111111112
+            ],
+            [
+              0.004341333333333334,
+              0.004830222222222224
+            ],
+            [
+              0.005788444444444445,
+              0.006277333333333334
+            ],
+            [
+              0.007235555555555556,
+              0.007724444444444445
+            ]
+          ],
+          "sample_hz": 10000,
+          "sample_count": 16000,
+          "drive_frequency_shift_hz": 0.0,
+          "demodulation_shift_hz": 0.0,
+          "delay_us": 0.0,
+          "readout_width_us": 0.0,
+          "readout_phase_deg": 0.0,
+          "coherent_delay_verified": false,
+          "estimated_wall_seconds": null
+        },
+        "check_role": "phase_response",
+        "used_in_signal_and_rabi_identification": false,
+        "complex_feature_rmse": 0.08223841953278536,
+        "observed_feature_rms": 0.6122338398925444,
+        "noise_rms_per_feature": 0.051329694891579875,
+        "feature_signal_to_noise": 11.927478649263806,
+        "threshold": 0.2729038327715156,
+        "passes": true
+      },
+      {
+        "candidate": {
+          "family": "phase",
+          "width_us": 40.0,
+          "amplitude_pct": 100.0,
+          "phase_deg": 180.0,
+          "feature_windows_s": [
+            [
+              0.0,
+              0.000488888888888889
+            ],
+            [
+              0.0014471111111111113,
+              0.0019360000000000002
+            ],
+            [
+              0.0028942222222222225,
+              0.003383111111111112
+            ],
+            [
+              0.004341333333333334,
+              0.004830222222222224
+            ],
+            [
+              0.005788444444444445,
+              0.006277333333333334
+            ],
+            [
+              0.007235555555555556,
+              0.007724444444444445
+            ]
+          ],
+          "sample_hz": 10000,
+          "sample_count": 16000,
+          "drive_frequency_shift_hz": 0.0,
+          "demodulation_shift_hz": 0.0,
+          "delay_us": 0.0,
+          "readout_width_us": 0.0,
+          "readout_phase_deg": 0.0,
+          "coherent_delay_verified": false,
+          "estimated_wall_seconds": null
+        },
+        "check_role": "phase_response",
+        "used_in_signal_and_rabi_identification": false,
+        "complex_feature_rmse": 0.12149302024250778,
+        "observed_feature_rms": 0.617032040629847,
+        "noise_rms_per_feature": 0.051329694891579875,
+        "feature_signal_to_noise": 12.020956717805563,
+        "threshold": 0.27504263544182667,
+        "passes": true
+      },
+      {
+        "candidate": {
+          "family": "phase",
+          "width_us": 40.0,
+          "amplitude_pct": 100.0,
+          "phase_deg": 270.0,
+          "feature_windows_s": [
+            [
+              0.0,
+              0.000488888888888889
+            ],
+            [
+              0.0014471111111111113,
+              0.0019360000000000002
+            ],
+            [
+              0.0028942222222222225,
+              0.003383111111111112
+            ],
+            [
+              0.004341333333333334,
+              0.004830222222222224
+            ],
+            [
+              0.005788444444444445,
+              0.006277333333333334
+            ],
+            [
+              0.007235555555555556,
+              0.007724444444444445
+            ]
+          ],
+          "sample_hz": 10000,
+          "sample_count": 16000,
+          "drive_frequency_shift_hz": 0.0,
+          "demodulation_shift_hz": 0.0,
+          "delay_us": 0.0,
+          "readout_width_us": 0.0,
+          "readout_phase_deg": 0.0,
+          "coherent_delay_verified": false,
+          "estimated_wall_seconds": null
+        },
+        "check_role": "phase_response",
+        "used_in_signal_and_rabi_identification": false,
+        "complex_feature_rmse": 0.25497358560753947,
+        "observed_feature_rms": 0.6096371795855867,
+        "noise_rms_per_feature": 0.051329694891579875,
+        "feature_signal_to_noise": 11.876890771965053,
+        "threshold": 0.27174636890068676,
+        "passes": true
+      }
+    ],
+    "detection_sign_selected_by_response_checks": 1,
+    "pulse_detuning_origin_hz": 0.0,
+    "pulse_detuning_origin_scope": "model convention, not independently measured RF carrier offset",
+    "fid_frequency_source": "complex FID; no unverified Ramsey delay submitted",
+    "response_check_threshold_rule": "measured feature signal >= 3x per-feature noise and complex RMSE <= min(0.5x signal, max(4x noise, capped coherent-fit allowance))",
+    "pilot_coherent_fit_relative_error": 0.17830039111814794,
+    "receiver_gauge": "fixed independent pilot coefficient; only relative phase inferable",
+    "likelihood_model_discrepancy_floor_rms": 0.25497358560753947
+  },
+  "short_fid_validation": {
+    "status": "VALIDATED_FASTER",
+    "short_count": 8000,
+    "short_records": [
+      "pilot_short8000_0",
+      "pilot_short8000_1"
+    ],
+    "feature_difference_whitened_norm": 2.754526323246999,
+    "frequency_shift_max_hz": 57.69950521262018,
+    "frequency_tolerance_hz": 156.25,
+    "short_full_cycle_median_s": 15.624223649734631,
+    "full_full_cycle_median_s": 17.286006399895996,
+    "fit_statuses": [
+      "FIT_OK",
+      "FIT_OK"
+    ],
+    "criterion": "same frozen complex FID feature/frequency; at least 5 percent measured whole-cycle saving"
+  },
+  "particle_convergence": {
+    "status": "CONVERGED_PILOT_REPLAY",
+    "selected_particles": 512,
+    "replay_acquisitions": 5,
+    "criterion": "adjacent N posterior means within 0.35 frozen tolerance in identifiable coordinates",
+    "runs": [
+      {
+        "particles": 128,
+        "posterior": {
+          "mean_delta_hz": 2.0129130184342894,
+          "mean_t90_us": 42.18314481778426,
+          "mean_phase_rad": -0.025582910508379707,
+          "var_delta_hz2": 37.57835759788716,
+          "var_t90_us2": 21.128731796406882,
+          "var_phase_rad2": 0.005522021865840672,
+          "phase_resultant": 0.9972419904602039,
+          "phase_identified": true,
+          "ci95_delta_hz": [
+            -11.291983427472577,
+            12.50025668498609
+          ],
+          "ci95_t90_us": [
+            33.717771832463484,
+            50.14936162605905
+          ],
+          "ci95_phase_rad": [
+            -0.16759365808631532,
+            0.08861489572836145
+          ],
+          "n_particles": 128,
+          "ess": 104.21286454316643,
+          "updates": 5,
+          "resampling_count": 8
+        },
+        "resampling_count": 8
+      },
+      {
+        "particles": 256,
+        "posterior": {
+          "mean_delta_hz": 2.231782092409176,
+          "mean_t90_us": 41.3631447644874,
+          "mean_phase_rad": -0.02806306495701281,
+          "var_delta_hz2": 36.27133562692488,
+          "var_t90_us2": 21.97610718482012,
+          "var_phase_rad2": 0.004917352888492295,
+          "phase_resultant": 0.9975446541806805,
+          "phase_identified": true,
+          "ci95_delta_hz": [
+            -10.0854626878546,
+            13.539426936121886
+          ],
+          "ci95_t90_us": [
+            33.90392996292352,
+            50.07203314870737
+          ],
+          "ci95_phase_rad": [
+            -0.16260594337722045,
+            0.11121442235044032
+          ],
+          "n_particles": 256,
+          "ess": 217.7499502000663,
+          "updates": 5,
+          "resampling_count": 8
+        },
+        "resampling_count": 8
+      },
+      {
+        "particles": 512,
+        "posterior": {
+          "mean_delta_hz": 2.185579098180159,
+          "mean_t90_us": 41.92757735472528,
+          "mean_phase_rad": -0.02967467656214455,
+          "var_delta_hz2": 41.926033903084004,
+          "var_t90_us2": 24.871836790608434,
+          "var_phase_rad2": 0.005352153693473917,
+          "phase_resultant": 0.9973273861480321,
+          "phase_identified": true,
+          "ci95_delta_hz": [
+            -10.580843886562521,
+            14.002124124007759
+          ],
+          "ci95_t90_us": [
+            33.74928108445236,
+            50.362972797931455
+          ],
+          "ci95_phase_rad": [
+            -0.17312690699212663,
+            0.10968131312973295
+          ],
+          "n_particles": 512,
+          "ess": 459.6234296899667,
+          "updates": 5,
+          "resampling_count": 8
+        },
+        "resampling_count": 8
+      },
+      {
+        "particles": 1024,
+        "posterior": {
+          "mean_delta_hz": 2.199030379858828,
+          "mean_t90_us": 41.80608997752424,
+          "mean_phase_rad": -0.028902875880443362,
+          "var_delta_hz2": 35.47087529643553,
+          "var_t90_us2": 23.673993549932078,
+          "var_phase_rad2": 0.004589544753916463,
+          "phase_resultant": 0.9977077581218208,
+          "phase_identified": true,
+          "ci95_delta_hz": [
+            -9.559680475147502,
+            13.84277598765956
+          ],
+          "ci95_t90_us": [
+            33.88327204051198,
+            50.422415772789414
+          ],
+          "ci95_phase_rad": [
+            -0.15704090292017048,
+            0.09769218789913969
+          ],
+          "n_particles": 1024,
+          "ess": 932.5124404039484,
+          "updates": 5,
+          "resampling_count": 8
+        },
+        "resampling_count": 8
+      }
+    ],
+    "comparisons": [
+      {
+        "low": 128,
+        "high": 256,
+        "delta_in_tolerances": 0.0018676827645856973,
+        "t90_in_tolerances": 0.13710105189435862,
+        "phase_in_tolerances": 0.016224495786080463
+      },
+      {
+        "low": 256,
+        "high": 512,
+        "delta_in_tolerances": 0.00039426555075427816,
+        "t90_in_tolerances": 0.0943710936773021,
+        "phase_in_tolerances": 0.01054272475275487
+      },
+      {
+        "low": 512,
+        "high": 1024,
+        "delta_in_tolerances": 0.00011478427032464348,
+        "t90_in_tolerances": 0.020312251370207802,
+        "phase_in_tolerances": 0.00504891012527723
+      }
+    ]
+  },
+  "prior": {
+    "delta_hz": [
+      -234.375,
+      234.375
+    ],
+    "t90_us": [
+      33.22450262354482,
+      51.167473344047366
+    ],
+    "phase_center_rad": 0.0,
+    "phase_half_width_rad": 3.141592653589793
+  },
+  "tolerances": {
+    "delta_hz": 117.1875,
+    "t90_us": 5.980990240167515,
+    "phase_deg": 8.758508388852093
+  },
+  "tolerance_basis": {
+    "frequency_repeat_scatter_hz": 1.9759789182638117,
+    "fid_resolution_hz": 78.125,
+    "rabi_profile_half_width_us": 2.9904951200837573,
+    "phase_repeat_scatter_deg_approx": 2.9195027962840308,
+    "tolerance_rule": "pilot repeat scatter and Rabi profile; frozen before A-E; reference must independently resolve it",
+    "prior_scope": "fid frequency shift, t90 at 100 percent RF, circular phase relative to pilot gauge"
+  },
+  "particle_count": 512,
+  "design_mc_samples": 12,
+  "candidate_pool": [
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "rabi",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "rabi",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "rabi",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "rabi",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "rabi",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 8000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 15.624223649734631
+    }
+  ],
+  "fixed_schedule": [
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 0.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "rabi",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 90.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 180.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "fid",
+      "width_us": 21.098,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 42.196,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 63.294,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 84.392,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 126.588,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    },
+    {
+      "family": "phase",
+      "width_us": 168.784,
+      "amplitude_pct": 100.0,
+      "phase_deg": 270.0,
+      "feature_windows_s": [
+        [
+          0.0,
+          0.000488888888888889
+        ],
+        [
+          0.0014471111111111113,
+          0.0019360000000000002
+        ],
+        [
+          0.0028942222222222225,
+          0.003383111111111112
+        ],
+        [
+          0.004341333333333334,
+          0.004830222222222224
+        ],
+        [
+          0.005788444444444445,
+          0.006277333333333334
+        ],
+        [
+          0.007235555555555556,
+          0.007724444444444445
+        ]
+      ],
+      "sample_hz": 10000,
+      "sample_count": 16000,
+      "drive_frequency_shift_hz": 0.0,
+      "demodulation_shift_hz": 0.0,
+      "delay_us": 0.0,
+      "readout_width_us": 0.0,
+      "readout_phase_deg": 0.0,
+      "coherent_delay_verified": false,
+      "estimated_wall_seconds": 17.286006399895996
+    }
+  ],
+  "block_method_order": [
+    [
+      "E",
+      "D",
+      "C",
+      "A",
+      "B"
+    ],
+    [
+      "E",
+      "B",
+      "D",
+      "A",
+      "C"
+    ],
+    [
+      "C",
+      "B",
+      "D",
+      "E",
+      "A"
+    ]
+  ],
+  "acquisitions_per_method": 24,
+  "reference_acquisitions_per_block": 8,
+  "heldout_controls_per_method": 2,
+  "coherent_delay_status": "UNVERIFIED; no Ramsey tasks submitted",
+  "frequency_mechanism": "complex FID fit and frozen feature likelihood",
+  "comparison_scope": "effective single-H-spin short-pulse response; not multi-qubit gate fidelity",
+  "server_fft_as_primary_input": false,
+  "internal_device_repetitions": "UNKNOWN"
+}

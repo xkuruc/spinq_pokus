@@ -1,0 +1,2606 @@
+{
+  "experiment": "01_bayes_kalibracia",
+  "units": {
+    "frequency": "Hz",
+    "t90": "microseconds",
+    "relative_phase": "degrees"
+  },
+  "origin": "new independent pilot and per-method real Windows FID acquisitions",
+  "validity": "short H pulses on this session/device under frozen measured multiplet and receiver gauge",
+  "persistent_device_calibration_modified": false,
+  "absolute_transmitter_phase_identified": false,
+  "reference_measurements_not_used_for_candidate_selection": true,
+  "blocks": {
+    "block_0": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 19.299725523338356,
+        "frequency_hz": 348.31713105159946,
+        "t90_us": 41.84726181084505,
+        "relative_phase_rad": -0.09214860489979859,
+        "relative_phase_deg": -5.279726148776997,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.197203875444683,
+          "t90_us": 0.7209318609546647,
+          "phase_deg": 3.939734694898078
+        },
+        "ci95": {
+          "delta_hz": [
+            7.153205927466777,
+            31.446245119209934
+          ],
+          "t90_us": [
+            40.43423536337391,
+            43.26028825831619
+          ],
+          "phase_rad": [
+            -0.22692083537860874,
+            0.04262362557901156
+          ]
+        },
+        "weighted_rss": 47.05470604476902,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "quality": {
+        "status": "VALIDATED",
+        "reference_parameter_precision_resolved": true,
+        "return_control_whitened_difference": 1.252858201698861,
+        "return_control_drift_limit": 12.0,
+        "drift_control_valid": true,
+        "reference_fit_status": "FIT_OK",
+        "reference_uncertainty": {
+          "delta_hz": 6.197203875444683,
+          "t90_us": 0.7209318609546647,
+          "phase_deg": 3.939734694898078
+        },
+        "reason": ""
+      }
+    },
+    "block_1": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 16.67111476905049,
+        "frequency_hz": 345.6885202973116,
+        "t90_us": 41.95442621644494,
+        "relative_phase_rad": -0.0868516441448457,
+        "relative_phase_deg": -4.976232653271766,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.188814516418035,
+          "t90_us": 0.7248733515155087,
+          "phase_deg": 3.9367968169479433
+        },
+        "ci95": {
+          "delta_hz": [
+            4.541038316871141,
+            28.80119122122984
+          ],
+          "t90_us": [
+            40.533674447474546,
+            43.37517798541534
+          ],
+          "phase_rad": [
+            -0.22152337436288283,
+            0.04782008607319144
+          ]
+        },
+        "weighted_rss": 34.78938813022431,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "quality": {
+        "status": "VALIDATED",
+        "reference_parameter_precision_resolved": true,
+        "return_control_whitened_difference": 3.2090750341480856,
+        "return_control_drift_limit": 12.0,
+        "drift_control_valid": true,
+        "reference_fit_status": "FIT_OK",
+        "reference_uncertainty": {
+          "delta_hz": 6.188814516418035,
+          "t90_us": 0.7248733515155087,
+          "phase_deg": 3.9367968169479433
+        },
+        "reason": ""
+      }
+    },
+    "block_2": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 7.651621246150539,
+        "frequency_hz": 336.66902677441163,
+        "t90_us": 42.11469818962877,
+        "relative_phase_rad": -0.07173780113004025,
+        "relative_phase_deg": -4.1102732363001335,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.169358904066844,
+          "t90_us": 0.7311957449860516,
+          "phase_deg": 3.931926126900879
+        },
+        "ci95": {
+          "delta_hz": [
+            -4.440322205820475,
+            19.743564698121553
+          ],
+          "t90_us": [
+            40.68155452945611,
+            43.54784184980143
+          ],
+          "phase_rad": [
+            -0.20624291257487348,
+            0.06276731031479299
+          ]
+        },
+        "weighted_rss": 37.68069289008714,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "quality": {
+        "status": "VALIDATED",
+        "reference_parameter_precision_resolved": true,
+        "return_control_whitened_difference": 1.909922037986964,
+        "return_control_drift_limit": 12.0,
+        "drift_control_valid": true,
+        "reference_fit_status": "FIT_OK",
+        "reference_uncertainty": {
+          "delta_hz": 6.169358904066844,
+          "t90_us": 0.7311957449860516,
+          "phase_deg": 3.931926126900879
+        },
+        "reason": ""
+      }
+    }
+  },
+  "methods": {
+    "block_0_E": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 16.205744842286865,
+        "frequency_hz": 345.223150370548,
+        "t90_us": 41.79916760295236,
+        "relative_phase_rad": -0.09123391115519519,
+        "relative_phase_deg": -5.227318057664205,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 5.230353077019978,
+          "t90_us": 0.8213808738166763,
+          "phase_deg": 3.27402724033016
+        },
+        "ci95": {
+          "delta_hz": [
+            5.954252811327709,
+            26.45723687324602
+          ],
+          "t90_us": [
+            40.18926109027167,
+            43.40907411563305
+          ],
+          "phase_rad": [
+            -0.20323331923693555,
+            0.02076549692654517
+          ]
+        },
+        "weighted_rss": 47.297970226015835,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 15.785572459330204,
+        "mean_t90_us": 41.93494442362195,
+        "mean_phase_rad": -0.0913610881044592,
+        "var_delta_hz2": 35.123459573553006,
+        "var_t90_us2": 0.7332915888008041,
+        "var_phase_rad2": 0.0032952152876379814,
+        "phase_resultant": 0.9983538269496558,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          3.136226347573088,
+          27.28951963563026
+        ],
+        "ci95_t90_us": [
+          40.28888568088537,
+          43.701149459543686
+        ],
+        "ci95_phase_rad": [
+          -0.20372941254153432,
+          0.021750210296767047
+        ],
+        "n_particles": 512,
+        "ess": 489.579316767856,
+        "updates": 8,
+        "resampling_count": 17
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.33376477746958877,
+        "controls": [
+          {
+            "key": "b0_E_control0",
+            "complex_feature_rmse": 0.27221267824641,
+            "relative_complex_error": 0.4567872730765848,
+            "same_command_model_error": 0.2724829031554673,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 5.279726148776997,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939395,
+            "passes": true
+          },
+          {
+            "key": "b0_E_control1",
+            "complex_feature_rmse": 0.12558738902508373,
+            "relative_complex_error": 0.21074228186259275,
+            "same_command_model_error": 0.12548834564976666,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 95.279726148777,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939393,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_0_D": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 27.820900609621365,
+        "frequency_hz": 356.8383061378825,
+        "t90_us": 41.56853197307787,
+        "relative_phase_rad": -0.09382847099474168,
+        "relative_phase_deg": -5.375975386164359,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 5.2575798033441075,
+          "t90_us": 0.8408096629017763,
+          "phase_deg": 3.2870911582880136
+        },
+        "ci95": {
+          "delta_hz": [
+            17.516044195066915,
+            38.12575702417581
+          ],
+          "t90_us": [
+            39.92054503379038,
+            43.21651891236535
+          ],
+          "phase_rad": [
+            -0.2062747755043688,
+            0.01861783351488544
+          ]
+        },
+        "weighted_rss": 41.50453049424112,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 27.518617560331226,
+        "mean_t90_us": 41.60002770831778,
+        "mean_phase_rad": -0.08932816455902662,
+        "var_delta_hz2": 36.74221770780593,
+        "var_t90_us2": 0.7818823850665002,
+        "var_phase_rad2": 0.0040447384535825725,
+        "phase_resultant": 0.9979796992049503,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          15.793186891863149,
+          39.53053889969224
+        ],
+        "ci95_t90_us": [
+          39.905137682240806,
+          43.429698042042126
+        ],
+        "ci95_phase_rad": [
+          -0.21100156311170792,
+          0.04251410391598398
+        ],
+        "n_particles": 512,
+        "ess": 473.4457825444325,
+        "updates": 8,
+        "resampling_count": 15
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.21365911898116755,
+        "controls": [
+          {
+            "key": "b0_D_control0",
+            "complex_feature_rmse": 0.1242457964447847,
+            "relative_complex_error": 0.2084910185478847,
+            "same_command_model_error": 0.12452788750869852,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 5.279726148776997,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939395,
+            "passes": true
+          },
+          {
+            "key": "b0_D_control1",
+            "complex_feature_rmse": 0.1304054359238579,
+            "relative_complex_error": 0.21882721941445038,
+            "same_command_model_error": 0.1306635972496557,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 95.279726148777,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939393,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_0_C": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 6.331450947297455,
+        "frequency_hz": 335.3488564755586,
+        "t90_us": 41.78125860535349,
+        "relative_phase_rad": -0.04426283854046398,
+        "relative_phase_deg": -2.536073837637587,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.517836791485913,
+          "t90_us": 0.7464423441920279,
+          "phase_deg": 4.133563360906462
+        },
+        "ci95": {
+          "delta_hz": [
+            -6.443509164014936,
+            19.106411058609844
+          ],
+          "t90_us": [
+            40.318231610737115,
+            43.24428559996987
+          ],
+          "phase_rad": [
+            -0.1856656478962,
+            0.09713997081527204
+          ]
+        },
+        "weighted_rss": 32.24991298250691,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 6.1312155651968485,
+        "mean_t90_us": 41.84218736475476,
+        "mean_phase_rad": -0.039167803330727224,
+        "var_delta_hz2": 60.90788552478909,
+        "var_t90_us2": 0.5886201472826235,
+        "var_phase_rad2": 0.00534938294040855,
+        "phase_resultant": 0.9973289036632476,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          -9.828927133254606,
+          21.854783255835663
+        ],
+        "ci95_t90_us": [
+          40.27167018527002,
+          43.31503168297614
+        ],
+        "ci95_phase_rad": [
+          -0.19465665559983059,
+          0.09818062908070102
+        ],
+        "n_particles": 512,
+        "ess": 395.34294761561245,
+        "updates": 8,
+        "resampling_count": 14
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.2277830164789902,
+        "controls": [
+          {
+            "key": "b0_C_control0",
+            "complex_feature_rmse": 0.14377599487587972,
+            "relative_complex_error": 0.24126372458587816,
+            "same_command_model_error": 0.139355717245623,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 5.279726148776997,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939395,
+            "passes": true
+          },
+          {
+            "key": "b0_C_control1",
+            "complex_feature_rmse": 0.12770891124757203,
+            "relative_complex_error": 0.21430230837210226,
+            "same_command_model_error": 0.11972993605090872,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 95.279726148777,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939393,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_0_A": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 8.288560168096362,
+        "frequency_hz": 337.3059656963575,
+        "t90_us": 41.838367634123045,
+        "relative_phase_rad": -0.04733601758375139,
+        "relative_phase_deg": -2.7121540265060076,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.52104374117151,
+          "t90_us": 0.7475947924928719,
+          "phase_deg": 4.133359738679324
+        },
+        "ci95": {
+          "delta_hz": [
+            -4.492685564599796,
+            21.06980590079252
+          ],
+          "t90_us": [
+            40.37308184083702,
+            43.303653427409074
+          ],
+          "phase_rad": [
+            -0.18873186133803177,
+            0.09405982617052899
+          ]
+        },
+        "weighted_rss": 18.944359703742094,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": null,
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.2689154893440998,
+        "controls": [
+          {
+            "key": "b0_A_control0",
+            "complex_feature_rmse": 0.16654002969590412,
+            "relative_complex_error": 0.27946297914171003,
+            "same_command_model_error": 0.18034505012927268,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 5.279726148776997,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939395,
+            "passes": true
+          },
+          {
+            "key": "b0_A_control1",
+            "complex_feature_rmse": 0.1539689244317573,
+            "relative_complex_error": 0.25836799954648954,
+            "same_command_model_error": 0.14619337008404099,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 95.279726148777,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939393,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_0_B": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 16,
+        "delta_hz": 10.674013249250427,
+        "frequency_hz": 339.69141877751156,
+        "t90_us": 41.9084109449229,
+        "relative_phase_rad": -0.06320290979808174,
+        "relative_phase_deg": -3.6212599843761217,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 4.033127685727415,
+          "t90_us": 0.7412315545860838,
+          "phase_deg": 2.5668289874579333
+        },
+        "ci95": {
+          "delta_hz": [
+            2.769082985224694,
+            18.57894351327616
+          ],
+          "t90_us": [
+            40.455597097934174,
+            43.361224791911624
+          ],
+          "phase_rad": [
+            -0.1510101594449571,
+            0.02460433984879362
+          ]
+        },
+        "weighted_rss": 61.31378758622328,
+        "degrees_of_freedom": 189,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": null,
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.5286912639010926,
+        "controls": [
+          {
+            "key": "b0_B_control0",
+            "complex_feature_rmse": 0.4090696753403206,
+            "relative_complex_error": 0.686440553396573,
+            "same_command_model_error": 0.4144443843975768,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 5.279726148776997,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939395,
+            "passes": true
+          },
+          {
+            "key": "b0_B_control1",
+            "complex_feature_rmse": 0.22105499491452238,
+            "relative_complex_error": 0.3709419744056123,
+            "same_command_model_error": 0.23071937033365722,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.84726181084505,
+              "amplitude_pct": 100.0,
+              "phase_deg": 95.279726148777,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5430591375939393,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_1_E": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 7.516578580150562,
+        "frequency_hz": 336.5339841084117,
+        "t90_us": 41.82934997916927,
+        "relative_phase_rad": -0.08703257099254458,
+        "relative_phase_deg": -4.986598998045518,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 5.226344579843631,
+          "t90_us": 0.8630163040084242,
+          "phase_deg": 3.2359032217451627
+        },
+        "ci95": {
+          "delta_hz": [
+            -2.7270567963429544,
+            17.76021395664408
+          ],
+          "t90_us": [
+            40.13783802331276,
+            43.520861935025785
+          ],
+          "phase_rad": [
+            -0.1977278153634212,
+            0.023662673378332055
+          ]
+        },
+        "weighted_rss": 42.397940307221575,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 8.080867600497996,
+        "mean_t90_us": 41.95333456203623,
+        "mean_phase_rad": -0.09250231239272537,
+        "var_delta_hz2": 34.14391080539966,
+        "var_t90_us2": 0.7635336740735094,
+        "var_phase_rad2": 0.003460506734743009,
+        "phase_resultant": 0.9982713212908472,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          -2.873348707571166,
+          19.15194832933239
+        ],
+        "ci95_t90_us": [
+          40.39141334693377,
+          43.7387908343455
+        ],
+        "ci95_phase_rad": [
+          -0.20446787843905323,
+          0.029825679613489697
+        ],
+        "n_particles": 512,
+        "ess": 489.8558979275925,
+        "updates": 8,
+        "resampling_count": 12
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.32581284819428763,
+        "controls": [
+          {
+            "key": "b1_E_control0",
+            "complex_feature_rmse": 0.24437449779331638,
+            "relative_complex_error": 0.4101416875721582,
+            "same_command_model_error": 0.24445602856785778,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.976232653271766,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          },
+          {
+            "key": "b1_E_control1",
+            "complex_feature_rmse": 0.14388328513727675,
+            "relative_complex_error": 0.2414840088164171,
+            "same_command_model_error": 0.14392071243100338,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.97623265327177,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_1_B": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 16,
+        "delta_hz": 4.070341964209841,
+        "frequency_hz": 333.08774749247095,
+        "t90_us": 41.83764698256725,
+        "relative_phase_rad": -0.054016941976834154,
+        "relative_phase_deg": -3.094942797475651,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 4.026834674749498,
+          "t90_us": 0.7414343813473003,
+          "phase_deg": 2.5665978793386826
+        },
+        "ci95": {
+          "delta_hz": [
+            -3.8222539982991757,
+            11.962937926718858
+          ],
+          "t90_us": [
+            40.38443559512654,
+            43.29085837000796
+          ],
+          "phase_rad": [
+            -0.1418162857723959,
+            0.0337824018187276
+          ]
+        },
+        "weighted_rss": 54.49696870840819,
+        "degrees_of_freedom": 189,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": null,
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.3269989679157657,
+        "controls": [
+          {
+            "key": "b1_B_control0",
+            "complex_feature_rmse": 0.22484526573604957,
+            "relative_complex_error": 0.37736514065223337,
+            "same_command_model_error": 0.23433564219408268,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.976232653271766,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          },
+          {
+            "key": "b1_B_control1",
+            "complex_feature_rmse": 0.16482596732673943,
+            "relative_complex_error": 0.27663279517929806,
+            "same_command_model_error": 0.15555369790272378,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.97623265327177,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_1_D": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 19.559178302745106,
+        "frequency_hz": 348.57658383100625,
+        "t90_us": 41.713427740000846,
+        "relative_phase_rad": -0.10127814888480913,
+        "relative_phase_deg": -5.8028104879971485,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 5.222496157379377,
+          "t90_us": 0.8523736566085625,
+          "phase_deg": 3.317524015385276
+        },
+        "ci95": {
+          "delta_hz": [
+            9.323085834281528,
+            29.795270771208685
+          ],
+          "t90_us": [
+            40.042775373048066,
+            43.384080106953625
+          ],
+          "phase_rad": [
+            -0.2147655143664231,
+            0.01220921659680485
+          ]
+        },
+        "weighted_rss": 42.64160040046422,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 18.726111233975484,
+        "mean_t90_us": 41.756069874934695,
+        "mean_phase_rad": -0.09122466098007113,
+        "var_delta_hz2": 27.82842807340379,
+        "var_t90_us2": 0.7956651005375927,
+        "var_phase_rad2": 0.00330349731678487,
+        "phase_resultant": 0.9983495710961975,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          8.217791108078284,
+          28.374144707838337
+        ],
+        "ci95_t90_us": [
+          40.196501300419705,
+          43.48136055659132
+        ],
+        "ci95_phase_rad": [
+          -0.212781524617617,
+          0.016856381004219045
+        ],
+        "n_particles": 512,
+        "ess": 387.13329917130085,
+        "updates": 8,
+        "resampling_count": 17
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.3418230607485143,
+        "controls": [
+          {
+            "key": "b1_D_control0",
+            "complex_feature_rmse": 0.18641589130925962,
+            "relative_complex_error": 0.3128678685470381,
+            "same_command_model_error": 0.18981806996820072,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.976232653271766,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          },
+          {
+            "key": "b1_D_control1",
+            "complex_feature_rmse": 0.22092060403246855,
+            "relative_complex_error": 0.3707782529499906,
+            "same_command_model_error": 0.22486041947646818,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.97623265327177,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_1_A": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 13.882922105526971,
+        "frequency_hz": 342.9003276337881,
+        "t90_us": 41.891187425952864,
+        "relative_phase_rad": -0.06099021861694176,
+        "relative_phase_deg": -3.4944821183309838,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.532685721483606,
+          "t90_us": 0.7470826346313032,
+          "phase_deg": 4.1340300472252975
+        },
+        "ci95": {
+          "delta_hz": [
+            1.0788580914191037,
+            26.686986119634838
+          ],
+          "t90_us": [
+            40.42690546207551,
+            43.35546938983022
+          ],
+          "phase_rad": [
+            -0.2024089925898398,
+            0.08042855535595628
+          ]
+        },
+        "weighted_rss": 48.53860345816964,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": null,
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.2934780462668468,
+        "controls": [
+          {
+            "key": "b1_A_control0",
+            "complex_feature_rmse": 0.18874604478330115,
+            "relative_complex_error": 0.3167786410980831,
+            "same_command_model_error": 0.1970221771475703,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.976232653271766,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          },
+          {
+            "key": "b1_A_control1",
+            "complex_feature_rmse": 0.1609796833881692,
+            "relative_complex_error": 0.2701774514356105,
+            "same_command_model_error": 0.15475486896181326,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.97623265327177,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_1_C": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 13.687113149725466,
+        "frequency_hz": 342.7045186779866,
+        "t90_us": 42.035418514579675,
+        "relative_phase_rad": -0.05815900468081736,
+        "relative_phase_deg": -3.3322655088924344,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.530882309118783,
+          "t90_us": 0.75224490896284,
+          "phase_deg": 4.133095037084119
+        },
+        "ci95": {
+          "delta_hz": [
+            0.8865838238526518,
+            26.48764247559828
+          ],
+          "t90_us": [
+            40.56101849301251,
+            43.50981853614684
+          ],
+          "phase_rad": [
+            -0.19954579340292922,
+            0.0832277840412945
+          ]
+        },
+        "weighted_rss": 27.364436225530675,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 14.072683952406058,
+        "mean_t90_us": 42.109749307284865,
+        "mean_phase_rad": -0.06131548662000917,
+        "var_delta_hz2": 48.252733587734575,
+        "var_t90_us2": 0.5645395214160003,
+        "var_phase_rad2": 0.00540209869603674,
+        "phase_resultant": 0.9973023645929078,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          0.05302772975229057,
+          27.8752040317565
+        ],
+        "ci95_t90_us": [
+          40.490117618961015,
+          43.624955917258674
+        ],
+        "ci95_phase_rad": [
+          -0.20789719139789842,
+          0.07487332050478601
+        ],
+        "n_particles": 512,
+        "ess": 450.4145563888444,
+        "updates": 8,
+        "resampling_count": 13
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.3300248368554529,
+        "controls": [
+          {
+            "key": "b1_C_control0",
+            "complex_feature_rmse": 0.21367145988534678,
+            "relative_complex_error": 0.3586117779667092,
+            "same_command_model_error": 0.20683268267286856,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.976232653271766,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          },
+          {
+            "key": "b1_C_control1",
+            "complex_feature_rmse": 0.17960557685422338,
+            "relative_complex_error": 0.3014378957441967,
+            "same_command_model_error": 0.1713995075018238,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 41.95442621644494,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.97623265327177,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.543316345237445,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_2_C": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 14.391706643894231,
+        "frequency_hz": 343.40911217215535,
+        "t90_us": 41.738750576306735,
+        "relative_phase_rad": -0.091960748660179,
+        "relative_phase_deg": -5.268962779091597,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.535876620049398,
+          "t90_us": 0.7421831703901235,
+          "phase_deg": 4.135213765692216
+        },
+        "ci95": {
+          "delta_hz": [
+            1.581388468597412,
+            27.202024819191053
+          ],
+          "t90_us": [
+            40.28407156234209,
+            43.19342959027138
+          ],
+          "phase_rad": [
+            -0.2334200158110189,
+            0.04949851849066089
+          ]
+        },
+        "weighted_rss": 18.02944815634338,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 14.227317858135264,
+        "mean_t90_us": 41.78163266604169,
+        "mean_phase_rad": -0.09034324230535648,
+        "var_delta_hz2": 40.08414321114525,
+        "var_t90_us2": 0.5476520339833267,
+        "var_phase_rad2": 0.005752524035819136,
+        "phase_resultant": 0.9971273111414584,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          1.914152114856831,
+          26.593460913989468
+        ],
+        "ci95_t90_us": [
+          40.24600937160032,
+          43.14170600211949
+        ],
+        "ci95_phase_rad": [
+          -0.2301026647052793,
+          0.05186995171034203
+        ],
+        "n_particles": 512,
+        "ess": 430.9425328135174,
+        "updates": 8,
+        "resampling_count": 12
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.17713511771760282,
+        "controls": [
+          {
+            "key": "b2_C_control0",
+            "complex_feature_rmse": 0.08515417908193858,
+            "relative_complex_error": 0.14300489125423912,
+            "same_command_model_error": 0.08866105241695206,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.1102732363001335,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          },
+          {
+            "key": "b2_C_control1",
+            "complex_feature_rmse": 0.1258007806195239,
+            "relative_complex_error": 0.21126534418096649,
+            "same_command_model_error": 0.13079582268390597,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.11027323630013,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_2_B": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 16,
+        "delta_hz": 1.4351499882342167,
+        "frequency_hz": 330.45255551649535,
+        "t90_us": 41.87518125629506,
+        "relative_phase_rad": -0.08113242936392284,
+        "relative_phase_deg": -4.648545784196049,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 4.026427370919599,
+          "t90_us": 0.7439568836358167,
+          "phase_deg": 2.567645816116857
+        },
+        "ci95": {
+          "delta_hz": [
+            -6.456647658768198,
+            9.32694763523663
+          ],
+          "t90_us": [
+            40.41702576436886,
+            43.33333674822126
+          ],
+          "phase_rad": [
+            -0.16896762145586308,
+            0.006702762728017397
+          ]
+        },
+        "weighted_rss": 57.67730579978763,
+        "degrees_of_freedom": 189,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": null,
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.4003792425225853,
+        "controls": [
+          {
+            "key": "b2_B_control0",
+            "complex_feature_rmse": 0.22801052575844322,
+            "relative_complex_error": 0.38291274477008036,
+            "same_command_model_error": 0.22528464012682187,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.1102732363001335,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          },
+          {
+            "key": "b2_B_control1",
+            "complex_feature_rmse": 0.24881184611198032,
+            "relative_complex_error": 0.4178457402750902,
+            "same_command_model_error": 0.2458215509696222,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.11027323630013,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_2_D": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": -5.776363917907992,
+        "frequency_hz": 323.24104161035314,
+        "t90_us": 41.63643275828389,
+        "relative_phase_rad": -0.11587684515366448,
+        "relative_phase_deg": -6.639254170595942,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 5.210892544704126,
+          "t90_us": 0.860365358695271,
+          "phase_deg": 3.286103792519986
+        },
+        "ci95": {
+          "delta_hz": [
+            -15.989713305528078,
+            4.436985469712094
+          ],
+          "t90_us": [
+            39.95011665524116,
+            43.322748861326616
+          ],
+          "phase_rad": [
+            -0.22828937340748734,
+            -0.003464316899841613
+          ]
+        },
+        "weighted_rss": 31.92622768851526,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": -6.506793360995601,
+        "mean_t90_us": 41.62605746988702,
+        "mean_phase_rad": -0.11167847912522855,
+        "var_delta_hz2": 28.76037552509922,
+        "var_t90_us2": 0.6659304052972207,
+        "var_phase_rad2": 0.00354823838285733,
+        "phase_resultant": 0.9982274868116195,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          -16.739010179492844,
+          4.150327536248406
+        ],
+        "ci95_t90_us": [
+          40.136736696035264,
+          43.37686853602795
+        ],
+        "ci95_phase_rad": [
+          -0.22413193435776613,
+          0.008889662460028536
+        ],
+        "n_particles": 512,
+        "ess": 408.30763101186864,
+        "updates": 8,
+        "resampling_count": 15
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.3932324412944175,
+        "controls": [
+          {
+            "key": "b2_D_control0",
+            "complex_feature_rmse": 0.1662157555209763,
+            "relative_complex_error": 0.2791368115961325,
+            "same_command_model_error": 0.17576953861089914,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.1102732363001335,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          },
+          {
+            "key": "b2_D_control1",
+            "complex_feature_rmse": 0.30209529920065864,
+            "relative_complex_error": 0.5073280709927024,
+            "same_command_model_error": 0.2904660397067083,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.11027323630013,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_2_E": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": 4.895393501072634,
+        "frequency_hz": 333.91279902933377,
+        "t90_us": 41.78454311414192,
+        "relative_phase_rad": -0.10363384645946594,
+        "relative_phase_deg": -5.937782016834188,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 5.2065312830952095,
+          "t90_us": 0.8201161429621305,
+          "phase_deg": 3.2904165855447283
+        },
+        "ci95": {
+          "delta_hz": [
+            -5.309407813793976,
+            15.100194815939245
+          ],
+          "t90_us": [
+            40.17711547393614,
+            43.391970754347696
+          ],
+          "phase_rad": [
+            -0.21619390869223665,
+            0.008926215773304769
+          ]
+        },
+        "weighted_rss": 35.1473901094538,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": {
+        "mean_delta_hz": 4.958659411238642,
+        "mean_t90_us": 41.83651818423581,
+        "mean_phase_rad": -0.10331513821599465,
+        "var_delta_hz2": 30.751450192408804,
+        "var_t90_us2": 0.7386312416342383,
+        "var_phase_rad2": 0.0036991489830678673,
+        "phase_resultant": 0.9981520163232435,
+        "phase_identified": true,
+        "ci95_delta_hz": [
+          -5.430746189314263,
+          17.180280307248665
+        ],
+        "ci95_t90_us": [
+          40.331032843564934,
+          43.61847280696671
+        ],
+        "ci95_phase_rad": [
+          -0.22731239053147423,
+          0.01105219494018339
+        ],
+        "n_particles": 512,
+        "ess": 460.20308497385776,
+        "updates": 8,
+        "resampling_count": 14
+      },
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.2970660630379454,
+        "controls": [
+          {
+            "key": "b2_E_control0",
+            "complex_feature_rmse": 0.19603959667820506,
+            "relative_complex_error": 0.32922190674301066,
+            "same_command_model_error": 0.18530760256880768,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.1102732363001335,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          },
+          {
+            "key": "b2_E_control1",
+            "complex_feature_rmse": 0.15774434048974534,
+            "relative_complex_error": 0.26491021933288017,
+            "same_command_model_error": 0.1636019889947143,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.11027323630013,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    },
+    "block_2_A": {
+      "fit": {
+        "status": "FIT_OK",
+        "reason": "",
+        "n_acquisitions": 8,
+        "delta_hz": -9.30379311936722,
+        "frequency_hz": 319.7136124088939,
+        "t90_us": 42.101224490070166,
+        "relative_phase_rad": -0.03675086841806463,
+        "relative_phase_deg": -2.1056696537957316,
+        "phase_identified": "True",
+        "stderr": {
+          "delta_hz": 6.503061768747957,
+          "t90_us": 0.7629200393638293,
+          "phase_deg": 4.13686452162546
+        },
+        "ci95": {
+          "delta_hz": [
+            -22.049794186113218,
+            3.4422079473787743
+          ],
+          "t90_us": [
+            40.60590121291706,
+            43.59654776722327
+          ],
+          "phase_rad": [
+            -0.1782666053762214,
+            0.10476486854009215
+          ]
+        },
+        "weighted_rss": 51.038170601220855,
+        "degrees_of_freedom": 93,
+        "jacobian_rank": 3,
+        "overdispersion_scale": 1.0,
+        "boundary_parameters": [],
+        "multistart_count": 8,
+        "uncertainty_scope": "conditional local linear CI; reference drift and model error separate"
+      },
+      "online_posterior": null,
+      "control_quality": {
+        "status": "VALIDATED",
+        "relative_complex_error_mean": 0.25360485186161386,
+        "controls": [
+          {
+            "key": "b2_A_control0",
+            "complex_feature_rmse": 0.1711310429461892,
+            "relative_complex_error": 0.2873913699901431,
+            "same_command_model_error": 0.1612902816267726,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 4.1102732363001335,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          },
+          {
+            "key": "b2_A_control1",
+            "complex_feature_rmse": 0.13089377287747528,
+            "relative_complex_error": 0.21981833373308463,
+            "same_command_model_error": 0.12282379305205857,
+            "ideal_target": {
+              "family": "return_control",
+              "width_us": 42.11469818962877,
+              "amplitude_pct": 100.0,
+              "phase_deg": 94.11027323630013,
+              "feature_windows_s": [
+                [
+                  0.0,
+                  0.000488888888888889
+                ],
+                [
+                  0.0014471111111111113,
+                  0.0019360000000000002
+                ],
+                [
+                  0.0028942222222222225,
+                  0.003383111111111112
+                ],
+                [
+                  0.004341333333333334,
+                  0.004830222222222224
+                ],
+                [
+                  0.005788444444444445,
+                  0.006277333333333334
+                ],
+                [
+                  0.007235555555555556,
+                  0.007724444444444445
+                ]
+              ],
+              "sample_hz": 10000,
+              "sample_count": 16000,
+              "drive_frequency_shift_hz": 0.0,
+              "demodulation_shift_hz": 0.0,
+              "delay_us": 0.0,
+              "readout_width_us": 0.0,
+              "readout_phase_deg": 0.0,
+              "coherent_delay_verified": false,
+              "estimated_wall_seconds": null
+            },
+            "threshold": 1.5442650748628632,
+            "passes": true
+          }
+        ],
+        "scope": "heldout exported complex FID response to reference-defined 90-degree target; not quantum gate fidelity",
+        "frequency_rf_correction_applied": false,
+        "frequency_control_limit": "per-pulse RF carrier mapping outside established H envelope unverified; frequency validated against independent FID reference"
+      }
+    }
+  }
+}

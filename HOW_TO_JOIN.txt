@@ -1,0 +1,6 @@
+The numbered files are consecutive byte ranges of the full results.zip.
+Windows PowerShell, in this directory:
+$parts = Get-ChildItem results.zip.part* | Sort-Object Name
+$out = [IO.File]::Create('results.zip')
+try { foreach ($part in $parts) { $inputFile = [IO.File]::OpenRead($part.FullName); try { $inputFile.CopyTo($out) } finally { $inputFile.Dispose() } } } finally { $out.Dispose() }
+On macOS/Linux: cat results.zip.part* > results.zip
