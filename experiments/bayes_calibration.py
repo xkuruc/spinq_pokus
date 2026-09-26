@@ -413,7 +413,13 @@ def _pilot_response_model(pilot: PilotSignalModel, rabi: dict[str, Any],
     )
     theta = np.asarray([[0., t90, 0.]], float)
     cov = pilot.feature_covariance_re_im
-    noise_scale = math.sqrt(float(np.trace(cov)) / 2)
+    # RMSE below is averaged across complex windows, so its noise scale must
+    # also be per complex window, not the aggregate over all windows.
+    noise_scale = math.sqrt(float(np.trace(cov)) / len(pilot.feature_windows_s))
+    coherent_fit_error = float(pilot.diagnostics[
+        "pilot_fit_coherent_relative_residual_rms"])
+    if not math.isfinite(coherent_fit_error) or coherent_fit_error > .35:
+        raise ValueError("Pilot multiplet fit misses the measured coherent FID window")
     alternatives = []
     for detection_sign in (1, -1):
         trial = replace(base_model, detection_sign=detection_sign)
@@ -431,8 +437,8 @@ def _pilot_response_model(pilot: PilotSignalModel, rabi: dict[str, Any],
             estimate = predict_complex(theta, c, trial)[0]
             rms = float(np.sqrt(np.mean(np.abs(y - estimate)**2)))
             magnitude = float(np.sqrt(np.mean(np.abs(y)**2)))
-            threshold = max(5 * noise_scale, .3 * magnitude,
-                            2.5 * pilot.diagnostics["pilot_fit_relative_residual_rms"] * magnitude)
+            threshold = max(5 * noise_scale,
+                            min(.5, max(.3, 2.5 * coherent_fit_error)) * magnitude)
             checks.append({"candidate": candidate_dict(c), "complex_feature_rmse": rms,
                            "observed_feature_rms": magnitude,
                            "threshold": threshold, "passes": rms <= threshold})
@@ -448,6 +454,8 @@ def _pilot_response_model(pilot: PilotSignalModel, rabi: dict[str, Any],
                    "pulse_detuning_origin_hz": 0.,
                    "pulse_detuning_origin_scope": "model convention, not independently measured RF carrier offset",
                    "fid_frequency_source": "complex FID; no unverified Ramsey delay submitted",
+                   "holdout_threshold_rule": "complex RMSE per feature <= max(5x per-feature noise, capped coherent-fit allowance)",
+                   "pilot_coherent_fit_relative_error": coherent_fit_error,
                    "receiver_gauge": "fixed independent pilot coefficient; only relative phase inferable"}
 
 
@@ -640,6 +648,12 @@ class BayesRun:
         self.pilot = identify_pilot_multiplet(repeats)
         self.data["pilot"]["signal"] = self.pilot.to_dict()
         self.save()
+        self.event("Pilot FID: "
+                   f"coherent_window={self.pilot.diagnostics['pilot_feature_coherence_horizon_ms']:.2f} ms, "
+                   f"samples_per_feature={self.pilot.diagnostics['feature_window_sample_counts']}, "
+                   f"coherent_fit_relative_error="
+                   f"{self.pilot.diagnostics['pilot_fit_coherent_relative_residual_rms']:.3f}, "
+                   f"status={self.pilot.status}")
         if self.pilot.status != "IDENTIFIED":
             raise ValueError(f"Pilot multiplet unresolved: {self.pilot.status}; "
                              f"{self.pilot.diagnostics}")

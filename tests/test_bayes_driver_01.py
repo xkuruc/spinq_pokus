@@ -43,7 +43,8 @@ def synthetic_pilot():
         pilot_task_ids=("a", "b", "c"), pilot_residual_rms=.01,
         status="IDENTIFIED",
         diagnostics={"spectral_resolution_hz": 10.,
-                     "pilot_fit_relative_residual_rms": .01})
+                     "pilot_fit_relative_residual_rms": .01,
+                     "pilot_fit_coherent_relative_residual_rms": .01})
 
 
 class DriverNumericalTests(unittest.TestCase):
@@ -94,6 +95,12 @@ class DriverNumericalTests(unittest.TestCase):
         wrong = [(setting, -signal) for setting, signal in heldout]
         with self.assertRaisesRegex(ValueError, "independent pilot"):
             _pilot_response_model(pilot, {"t90_us": 40.}, train, wrong)
+        # A noise-only tail can make the full-FID residual ratio large. It
+        # must not turn a reversed physical phase response into a pass.
+        noisy_tail = replace(pilot, diagnostics={**pilot.diagnostics,
+            "pilot_fit_relative_residual_rms": .9})
+        with self.assertRaisesRegex(ValueError, "independent pilot"):
+            _pilot_response_model(noisy_tail, {"t90_us": 40.}, train, wrong)
 
     def test_data_driven_prior_has_separate_tolerances(self):
         pilot = synthetic_pilot()

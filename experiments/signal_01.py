@@ -416,9 +416,8 @@ def fixed_pilot_projection(record: RawFIDRecord, pilot: PilotSignalModel,
     return selected, residual_rms
 
 
-def _feature_windows(signal: np.ndarray, noise_covariance: np.ndarray,
-                     sample_hz: float, frequencies: Sequence[float],
-                     primary: int) -> tuple[tuple[float, float], ...]:
+def _coherence_horizon(signal: np.ndarray, noise_covariance: np.ndarray,
+                       sample_hz: float) -> float:
     noise_rms = math.sqrt(float(np.trace(noise_covariance)))
     smoothed = np.sqrt(np.convolve(np.abs(signal) ** 2,
                                   np.ones(max(16, int(sample_hz / 100))) /
@@ -429,9 +428,13 @@ def _feature_windows(signal: np.ndarray, noise_covariance: np.ndarray,
     # All established acquisition modes contain at least 4000 points at
     # 10 kHz; keep the likelihood vector within their common first 0.25 s.
     # Longer tails remain available to the separate full-FID model check.
-    horizon = min(float((active[-1] + 1) / sample_hz), 0.25, len(signal) / sample_hz)
-    if horizon < 0.012:
-        raise SignalIdentificationError("Pilot FID coherence window is too short for six phase features")
+    return min(float((active[-1] + 1) / sample_hz), 0.25, len(signal) / sample_hz)
+
+
+def _feature_windows(signal: np.ndarray, noise_covariance: np.ndarray,
+                     sample_hz: float, frequencies: Sequence[float],
+                     primary: int) -> tuple[tuple[float, float], ...]:
+    horizon = _coherence_horizon(signal, noise_covariance, sample_hz)
     separation = max((abs(f - frequencies[primary]) for i, f in enumerate(frequencies)
                       if i != primary), default=0.)
     width = min(horizon / 18, 0.004, 1 / (4 * separation) if separation else math.inf)
@@ -439,8 +442,17 @@ def _feature_windows(signal: np.ndarray, noise_covariance: np.ndarray,
     centers = np.linspace(width / 2, 0.85 * horizon, 6)
     windows_s = tuple((float(center - width / 2), float(center + width / 2)) for center in centers)
     grid = np.arange(len(signal)) / sample_hz
-    if any(np.count_nonzero((grid >= start) & (grid < end)) < 2 for start, end in windows_s):
-        raise SignalIdentificationError("Pilot feature window has fewer than two FID samples")
+    sample_counts = [int(np.count_nonzero((grid >= start) & (grid < end)))
+                     for start, end in windows_s]
+    # The coherence duration is measured, not a fixed 12 ms requirement.
+    # Six disjoint windows need at least four actual clock samples each; this
+    # retains the frozen 12-real-dimensional likelihood on short-lived FIDs.
+    if any(start < 0 or end <= start or (i and start < windows_s[i - 1][1]) or
+           sample_counts[i] < 4 for i, (start, end) in enumerate(windows_s)):
+        raise SignalIdentificationError(
+            "Pilot FID coherence has fewer than four samples in one of six "
+            f"disjoint phase windows: horizon={1000 * horizon:.2f} ms, "
+            f"samples={sample_counts}")
     return windows_s
 
 
@@ -503,6 +515,22 @@ def identify_pilot_multiplet(records: Sequence[RawFIDRecord], *, max_components:
         raise SignalIdentificationError("Primary pilot mode is not separated from noise")
     features_windows = _feature_windows(mean_fid - fit["baseline"], covariance,
                                         sample_hz, fit["frequencies_hz"], primary)
+    coherence_horizon = _coherence_horizon(mean_fid - fit["baseline"],
+                                            covariance, sample_hz)
+    coherent_end = max(end for _, end in features_windows)
+    coherent_ix = mean_record.time_seconds < coherent_end
+    coherent_time = mean_record.time_seconds[coherent_ix]
+    coherent_signal = mean_fid[coherent_ix]
+    coherent_prediction = np.full(len(coherent_time), fit["baseline"], complex)
+    for coefficient, frequency, rate in zip(coefficients, fit["frequencies_hz"],
+                                             fit["decay_per_s"]):
+        coherent_prediction += coefficient * np.exp(
+            (-rate + 2j * np.pi * frequency) * coherent_time)
+    coherent_residual_rms = float(np.sqrt(np.mean(
+        np.abs(coherent_signal - coherent_prediction) ** 2)))
+    coherent_signal_rms = float(np.sqrt(np.mean(
+        np.abs(coherent_signal - fit["baseline"]) ** 2)))
+    coherent_relative_residual = coherent_residual_rms / max(coherent_signal_rms, 1e-30)
     preliminary = PilotSignalModel(
         sample_hz=sample_hz, bands_hz=bands, primary_component_index=primary,
         component_frequencies_hz=fit["frequencies_hz"],
@@ -522,8 +550,9 @@ def identify_pilot_multiplet(records: Sequence[RawFIDRecord], *, max_components:
     # Three pilot repetitions provide at most rank two in feature space.
     # Keep their measured common-mode drift but add an independent-sample
     # positive floor. The floor is deliberately conservative, not 16000 shots.
-    width_counts = [np.count_nonzero((records[0].time_seconds[:n] >= a) &
-                                     (records[0].time_seconds[:n] < b)) for a, b in features_windows]
+    width_counts = [int(np.count_nonzero((records[0].time_seconds[:n] >= a) &
+                                          (records[0].time_seconds[:n] < b)))
+                    for a, b in features_windows]
     rotation = np.array([[reference.real, reference.imag],
                          [-reference.imag, reference.real]], float) / abs(reference) ** 2
     normalized_sample_cov = rotation @ covariance @ rotation.T
@@ -547,6 +576,11 @@ def identify_pilot_multiplet(records: Sequence[RawFIDRecord], *, max_components:
         **diagnostics,
         "pilot_fit_residual_rms": fit["residual_rms"],
         "pilot_fit_relative_residual_rms": fit["relative_residual_rms"],
+        "pilot_fit_coherent_residual_rms": coherent_residual_rms,
+        "pilot_fit_coherent_relative_residual_rms": coherent_relative_residual,
+        "pilot_fit_coherent_samples": int(np.count_nonzero(coherent_ix)),
+        "pilot_feature_coherence_horizon_ms": 1000 * coherence_horizon,
+        "pilot_feature_last_end_ms": 1000 * coherent_end,
         "pilot_band_edge_components": list(edge),
         "pilot_decay_edge_components": list(decay_edge),
         "feature_window_sample_counts": width_counts,

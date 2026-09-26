@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from experiments.signal_01 import (SignalIdentificationError,
+from experiments.signal_01 import (SignalIdentificationError, _feature_windows,
     demodulated_features, estimate_pilot_rabi, estimate_signal,
     fixed_pilot_projection, identify_pilot_multiplet)
 from spinq_local.core import RawFIDRecord
@@ -126,6 +126,19 @@ class BayesSignalTests(unittest.TestCase):
         self.assertEqual(len(pilot.component_frequencies_hz), 2)
         self.assertLess(abs(pilot.component_frequencies_hz[0] + 1700), 2.)
         self.assertLess(pilot.diagnostics["active_points"], 2000)
+
+    def test_six_features_follow_measured_short_coherence_and_fail_if_undersampled(self):
+        t = np.arange(16_000) / FS
+        short_signal = 400 * np.exp(-270 * t)
+        covariance = np.eye(2) * 15**2
+        windows = _feature_windows(short_signal, covariance, FS, (-125., 330.), 1)
+        self.assertEqual(len(windows), 6)
+        self.assertLess(windows[-1][1], .012)
+        self.assertTrue(all(np.count_nonzero((t >= a) & (t < b)) >= 4
+                            for a, b in windows))
+        with self.assertRaisesRegex(SignalIdentificationError, "fewer than four samples"):
+            _feature_windows(300 * np.exp(-270 * t), np.eye(2) * 20**2,
+                             FS, (-125., 330.), 1)
 
 
 if __name__ == "__main__":
