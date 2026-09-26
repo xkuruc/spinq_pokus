@@ -77,6 +77,11 @@ class SavedReanalysisTests(unittest.TestCase):
                 "other": {"phase": "sent_unconfirmed"}}), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "Unresolved hardware journal"):
                 load_saved_records(source)
+            journal.write_text(json.dumps({
+                "pilot_40_r0": {"phase": "completed"}, "other": None}),
+                encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "INVALID_ENTRY"):
+                load_saved_records(source)
 
     def test_clipped_legacy_b_reference_becomes_diagnostic_only(self):
         data = {"pilot": {"reference_frequency_hz": -1570.673828125,

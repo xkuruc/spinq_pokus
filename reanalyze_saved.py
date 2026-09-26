@@ -66,7 +66,8 @@ def load_saved_records(source: Path) -> dict[str, list[RawFIDRecord]]:
     history = json.loads(journal.read_text(encoding="utf-8"))
     completed = {key for key, entry in history.items()
                  if isinstance(entry, dict) and entry.get("phase") == "completed"}
-    uncertain = {key: entry.get("phase") for key, entry in history.items()
+    uncertain = {key: entry.get("phase") if isinstance(entry, dict) else "INVALID_ENTRY"
+                 for key, entry in history.items()
                  if not isinstance(entry, dict) or entry.get("phase") != "completed"}
     if uncertain:
         raise ValueError(f"Unresolved hardware journal entries: {uncertain}")
