@@ -250,12 +250,26 @@ def _physical_e(session:LocalSession,results:Results):
 
 def _finalize(out:Path,results:Results,*,upload:bool,mark_finished:bool=True):
     _copy_docs(out)
+    journal=out/"data"/"hardware_journal.json"
+    if journal.is_file():
+        completed=[entry for entry in json.loads(journal.read_text(encoding="utf-8")).values()
+                   if entry.get("phase")=="completed"]
+        if completed:
+            results.data["hardware_results_present"]=True
+            results.data["budgets"]["acquisitions_used"]=max(
+                results.data["budgets"]["acquisitions_used"],len(completed))
+    complete=(results.data["state"].startswith("COMPLETED") and
+              results.data["hardware_results_present"] and bool(results.data["rows"]))
+    if not complete and results.data["upload"]["status"]=="NOT_ATTEMPTED":
+        results.data["upload"]={"status":"UPLOAD_SKIPPED_INCOMPLETE",
+                                "reason":"No completed physical comparison rows"}
     if mark_finished:results.data["finished_utc"]=utc_now()
     results.save()
     plots_from_results(out,results.data)
     archive=bundle_complete(out)
     if upload:
-        results.data["upload"]=publish_results(ROOT,archive,f"benchmark/{out.name}")
+        if complete:
+            results.data["upload"]=publish_results(ROOT,archive,f"benchmark/{out.name}")
         results.save()
     print(f"Report: {out/'REPORT.md'}",flush=True)
     print(f"Archive: {archive}",flush=True)
@@ -283,6 +297,8 @@ def main():
         "limits_origin":"finite software study envelope, not certified device rating",
         "analysis_location":"same Windows host CPU"}
     results=Results(out,config,preflight)
+    results.data["state"]="RUNNING"
+    results.data["upload"]={"status":"NOT_ATTEMPTED"}
     results.data["torch_optional_ready"]=bool(preflight.get("torch",{}).get("ready"))
     results.save()
     failed=False
@@ -295,6 +311,12 @@ def main():
             print("Pilot: independent FID, noise, Rabi and acquisition lengths",flush=True)
             pilot=_run_guarded(results,"A",session.pilot)
             if pilot is not None:
+                recovered=[error for error in results.data["errors"] if
+                    error.startswith("A: IncompleteFID: Exported axis inconsistent with uniform requested sampling")]
+                if recovered:
+                    results.data.setdefault("recovered_errors",[]).extend(recovered)
+                    results.data["errors"]=[error for error in results.data["errors"] if error not in recovered]
+                    results.save()
                 try:session.vendor_fft_control()
                 except Exception as exc:
                     results.data["errors"].append(
@@ -316,6 +338,8 @@ def main():
                 _run_guarded(results,"D",lambda:_offline_analysis(session,results,preflight))
                 _run_guarded(results,"E",lambda:_physical_e(session,results))
             else:
+                failed=True
+                results.data["state"]="FAILED_PILOT"
                 for module in "BCDEFGH":
                     results.module(module,"DEPENDENCY_FAILED",
                         "Primary pilot failed; no valid frozen physical model")
@@ -332,7 +356,8 @@ def main():
         results.data["errors"].append(f"GLOBAL: {type(exc).__name__}: {redact(str(exc))}")
         results.data["errors"].append(traceback.format_exc(limit=4))
     else:
-        results.data["state"]="COMPLETED_WITH_EXPLICIT_LIMITATIONS"
+        if not failed:
+            results.data["state"]="COMPLETED_WITH_EXPLICIT_LIMITATIONS"
     finally:
         for module in "ABCDEFGH":
             if results.data["modules"][module]["status"] in ("PENDING","RUNNING"):

@@ -7,6 +7,7 @@ task/group/path/qubit/step information. It never treats exported FID as ADC.
 
 from __future__ import annotations
 
+import gzip
 import json
 import math
 from dataclasses import dataclass, field
@@ -205,6 +206,27 @@ def _chart_series(events: Iterable[dict[str, Any]], task_id: str) -> tuple[dict[
     return charts, finished, task_finished
 
 
+def uniform_axis_step(axis: np.ndarray) -> tuple[float, float, float]:
+    """Check spacing against an endpoint slope, allowing float32 chart rounding.
+
+    SpinQ exports each x value as a float32. At 16,000 points the median of
+    adjacent rounded differences is biased, even when every ideal x is on a
+    perfectly uniform grid. The endpoint slope avoids accumulating that bias.
+    A deviation above 0.2% of one sample step still fails closed.
+    """
+    if axis.ndim != 1 or len(axis) < 2 or not np.all(np.isfinite(axis)):
+        raise ValueError("Original chart axis is missing or nonfinite")
+    if np.any(np.diff(axis) <= 0):
+        raise ValueError("Original chart axis is not increasing")
+    step = float((axis[-1] - axis[0]) / (len(axis) - 1))
+    predicted = axis[0] + np.arange(len(axis), dtype=np.float64) * step
+    residual = float(np.max(np.abs(axis - predicted)))
+    tolerance = 0.002 * step
+    if residual > tolerance:
+        raise ValueError("Exported axis inconsistent with uniform requested sampling")
+    return step, residual, tolerance
+
+
 def assemble_fid(events: Iterable[dict[str, Any]], task_id: str, path: str = "0",
                  qubit: str = "0", step: str = "NMRSIG", *, key: str = "",
                  parameters_sent: dict | None = None, metadata: dict | None = None) -> RawFIDRecord:
@@ -234,20 +256,19 @@ def assemble_fid(events: Iterable[dict[str, Any]], task_id: str, path: str = "0"
     expected = int(params.get("sampleCount", len(axis)))
     if len(axis) not in (expected, expected - 1):
         raise IncompleteFID(f"Chart has {len(axis)} points; request asked {expected}")
-    delta = np.diff(axis)
-    if np.any(delta <= 0):
-        raise IncompleteFID("Original chart axis is not increasing")
-    # Use the configured per-experiment clock, not rounded protobuf x deltas.
-    # The historical 10 kHz mode exported an x step near 0.1, consistent with
-    # milliseconds; that consistency is recorded, not treated as ADC proof.
-    scale_s = (1.0 / fs) / float(np.median(delta))
-    relative_spread = float(np.max(np.abs(axis - (axis[0] + np.arange(len(axis)) * np.median(delta)))
-                            / max(1.0, abs(axis[-1]))))
-    if relative_spread > 1e-4:
-        raise IncompleteFID("Exported axis inconsistent with uniform requested sampling")
+    try:
+        step, axis_residual, axis_tolerance = uniform_axis_step(axis)
+    except ValueError as exc:
+        raise IncompleteFID(str(exc)) from exc
+    # Use this experiment's requested clock for local analysis. The exported
+    # axis supports a consistent inferred unit, not independent ADC proof.
+    scale_s = (1.0 / fs) / step
     record_meta = dict(metadata or {})
     record_meta["axis_contract"] = {
-        "configured_sample_hz": fs, "original_step_median": float(np.median(delta)),
+        "configured_sample_hz": fs, "original_step_endpoint": step,
+        "original_step_median": float(np.median(np.diff(axis))),
+        "uniformity_max_deviation": axis_residual,
+        "uniformity_tolerance": axis_tolerance,
         "seconds_per_original_axis_unit_inferred": scale_s,
         "time_seconds_origin": "requested sampleFre and uniform original axis consistency",
         "physical_ADC_clock_independently_verified": False,
@@ -261,9 +282,11 @@ def assemble_fid(events: Iterable[dict[str, Any]], task_id: str, path: str = "0"
 
 def _events_for_task(path: Path, task_id: str) -> list[dict[str, Any]]:
     events = []
-    if not path.exists():
+    source_path = path if path.exists() else path.with_suffix(path.suffix + ".gz")
+    if not source_path.exists():
         return events
-    with path.open("r", encoding="utf-8") as source:
+    opener = gzip.open if source_path.suffix == ".gz" else open
+    with opener(source_path, "rt", encoding="utf-8") as source:
         for line in source:
             event = json.loads(line)
             body = event.get("payload", {}).get("chart_data") or event.get("payload", {}).get("json_data") or {}
@@ -337,6 +360,12 @@ def run_raw(spec: ExperimentSpec, *, key: str, hardware: LiveHardware,
                     "error": str(exc), "events_received": len(events)})
         raise
     record.save(raw_root)
+    previous_error = raw_root / f"{key}.error.json"
+    if previous_error.exists():
+        recovery = json.loads(previous_error.read_text(encoding="utf-8"))
+        recovery["status"] = "RECOVERED_FROM_SAVED_EVENTS"
+        recovery["resolution"] = "FID reassembled and validated from original decoded task events"
+        atomic_json(previous_error, recovery)
     charts, _, _ = _chart_series(events, task_id)
     _save_vendor(charts, record, output / "vendor_reference")
     return record

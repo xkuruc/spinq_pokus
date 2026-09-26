@@ -80,6 +80,11 @@ class Results:
         for module in MODULES:
             item=d["modules"][module]
             lines.append(f"- **{module}**: {item['status']} — {item.get('reason','')}")
+        if not d["rows"]:
+            lines.extend(["", "Zatiaľ nevzniklo žiadne porovnanie. Ak hardvérová úloha skončila, "
+                          "jej pôvodný dekódovaný výstup je v `data/<kľúč>.json` "
+                          "a udalosti v `data/events.jsonl.gz`; opraviteľný beh pokračuje "
+                          "s `--resume` bez opakovania dokončenej úlohy."])
         lines.extend(["", "## Porovnanie", "",
                       "| Modul | Metóda | Referencia | Úloha | Blok | Akvizície | Čas (s) | Chyba | CI | Tolerancia | Stav |",
                       "|---|---|---|---|---:|---:|---:|---:|---|---:|---|"])
@@ -101,6 +106,9 @@ class Results:
             "", "```json",json.dumps(d.get("frozen_plan",{}),ensure_ascii=False,indent=2),"```",""])
         if d["errors"]:
             lines.extend(["## Chyby",""]+[f"- {e}" for e in d["errors"]]+[""])
+        if d.get("recovered_errors"):
+            lines.extend(["## Opravené chyby pri pokračovaní",""]+
+                         [f"- {e}" for e in d["recovered_errors"]]+[""])
         return "\n".join(lines)
 
 
@@ -200,13 +208,15 @@ def bundle_complete(out:Path) -> Path:
         for path in sorted(out.rglob("*")):
             if not path.is_file() or path.name in {"results.zip","results.zip.tmp","events.jsonl"} or path.name.endswith(".tmp"):
                 continue
-            # data/<task>.json duplicates the full decoded chart arrays. The
-            # raw NPZ, sanitized event JSONL.GZ and vendor_reference preserve
-            # them without a second large JSON copy. Keep control journals.
+            # On a validated task, raw NPZ and events retain the arrays. If
+            # validation failed, the decoded SDK task JSON is the only simple
+            # browsable copy of that measurement and must remain in the ZIP.
             if path.parent == out/"data" and path.name.endswith(".json") and path.name not in {
                 "hardware_journal.json","initial_telemetry.json","recorder_status.json"} and not (
                 path.name.endswith(".error.json") or path.name.endswith(".payload_mismatch.json")):
-                continue
+                key=path.stem
+                if (out/"raw"/f"{key}.json").is_file() and (out/"raw"/f"{key}.npz").is_file():
+                    continue
             archive.write(path,path.relative_to(out).as_posix())
     os.replace(temporary,out/"results.zip")
     return out/"results.zip"

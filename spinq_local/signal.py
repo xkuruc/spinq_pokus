@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import least_squares
 
-from .core import RawFIDRecord
+from .core import RawFIDRecord, uniform_axis_step
 
 
 @dataclass(frozen=True)
@@ -49,9 +49,7 @@ def validate_axis(record: RawFIDRecord) -> AxisContract:
     fs = float(record.parameters_sent["sampleFre"])
     if not np.allclose(np.diff(t), 1 / fs, rtol=1e-8, atol=1e-12):
         raise ValueError("Derived time axis does not match this experiment's sampleFre")
-    dx = float(np.median(np.diff(x)))
-    if np.max(np.abs(x - (x[0] + dx * np.arange(len(x))))) > max(1e-4, 1e-5 * abs(x[-1])):
-        raise ValueError("Original exported axis lacks uniform-spacing evidence")
+    dx, _, _ = uniform_axis_step(x)
     return AxisContract(fs, len(x), dx, (1/fs)/dx, False)
 
 
