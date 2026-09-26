@@ -1,32 +1,34 @@
-# Reálne meranie Gemini Lab na Windows
+# Reálne merania Gemini Lab na Windows
 
-Program `spinq_live_suite.py` používa existujúci SpinQLabLink, ktorý sa na
-tomto Windows počítači už pripájal k `172.19.20.100:8181`. Tablet zostáva
-pripojený k prístroju cez USB. Na vývojovom Macu neprebehlo žiadne meranie.
-Potrebuje Python 3.11+ a nainštalovaný SpinQLabLink 1.0.2 v tom istom
-`.venv`; ďalšie balíky neinštaluje. Ak nájde inú verziu SDK, uloží report
-a zastaví hardvérové požiadavky, kým sa nepotvrdí kompatibilita adaptéra.
+`spinq_live_suite.py` používa nainštalovaný SpinQLabLink na tvojom Windows
+počítači. Tablet zostáva pripojený k prístroju cez USB. Na vývojovom Macu sa
+žiadne meranie nespustilo. Skript potrebuje Python 3.11+ a SpinQLabLink 1.0.2
+v existujúcom `.venv`; neinštaluje ďalšie balíky.
 
-## Známy pracovný bod
+## Čo znamená pracovný bod a limit
 
-Predvolená konfigurácia zopakuje **najviac jedno** fyzikálne meranie, ktoré
-už podľa tvojho výstupu na tomto prístroji skončilo úspešne: vodíkový kanál,
-pulz 40 µs, amplitúda 100 %, fáza 90°, detuning 0, bez gradientu, príprava
-zapnutá, 10 000 vzoriek/s, 16 000 bodov, oneskorenie vzorkovania 0.
-Číselná hodnota `relaxation_delay_value = 15.0` zostáva presne ako pri
-starom úspešnom pokuse. [Oficiálny príklad](https://doc.spinq.cn/doc/SpinQLAB_Link/en/experiment/Research_Experiment.html)
-ju označuje za sekundy, no zdroj SDK 1.0.2 ju opisuje ako mikrosekundy;
-jednotku preto nevyhlasujeme za potvrdenú a hodnotu automaticky nemeníme.
+**Pracovný bod** je nastavenie, pri ktorom už zariadenie vrátilo signál.
+Tvoj fyzikálny experiment úspešne použil H kanál, 40 µs pulz, 100 % amplitúdu,
+90° fázu, nulový detuning a gradient, prípravu zapnutú, 10 000 vzoriek/s,
+16 000 bodov a nulové oneskorenie vzorkovania. Číselná hodnota relaxácie
+zostáva 15. [Príklad SpinQ](https://doc.spinq.cn/doc/SpinQLAB_Link/en/experiment/Research_Experiment.html)
+hovorí o sekundách, [zdroj SDK](https://raw.githubusercontent.com/SpinQTech/spinqlablink/main/spinqlablink/experiment/exp_layer_physical.py)
+o mikrosekundách; jednotka zostáva NEOVERENÁ a skript toto číslo nemení.
 
-Toto **nie je** bezpečný rozsah parametrov. Verejná dokumentácia neuvádza
-potvrdené prevádzkové limity pre opakovania, súčet RF záťaže alebo teplotu
-tohto konkrétneho prístroja. Preto predvolené `historical_baseline_only = true`
-nedovolí opakovania, Rabi sken ani zmeny nastavení. Program stále vyžaduje
-čerstvý stav pripojenia, lock, konečnú teplotu a prázdnu frontu alebo
-potvrdené výhradné používanie. Nameranú teplotu uloží, ale bez známeho
-intervalu ju nevydáva za schválenú.
+**Prevádzkový limit** je výrobcom alebo pracoviskom určená hranica pre
+konkrétny prístroj, napríklad prípustná RF záťaž alebo teplota. Tieto údaje
+nemáme. Rozsahy, ktoré prijíma Python API, nie sú dôkazom bezpečného
+prevádzkového rozsahu. Skript ich preto nenazýva prevádzkovými limitmi.
 
-## Spustenie známeho bodu
+Predvolená konfigurácia používa namiesto toho **obmedzený plán jednej
+výskumnej série**: malé zmeny okolo predošlého 40 µs merania, najviac 40
+požiadaviek a najviac 1500 µs súčtu *požadovaných* H pulzov v tomto spustení.
+Sú to softvérové brzdy experimentu, nie záruka bezpečnosti hardvéru; vnútorné
+prípravné pulzy a interné opakovania do súčtu nevidíme. Séria kontroluje
+pripojenie, lock, čerstvú konečnú teplotu a frontu, ale bez výrobného rozsahu
+neoznačuje teplotu za schválenú.
+
+## Ako spustiť ďalšie experimenty
 
 V PowerShelli v priečinku repozitára:
 
@@ -35,43 +37,32 @@ git pull
 .\.venv\Scripts\python.exe .\spinq_live_suite.py --config .\live_suite.example.toml
 ```
 
-Konfigurácia už obsahuje adresu tvojho tabletu a známy bod. Pred každým
-opätovným spustením skontroluj na tablete, že predchádzajúca úloha skončila.
-Ak server neposiela stav fronty, skript sa bezpečne zastaví. Iba keď je
-prístroj naozaj vyhradený pre teba, skopíruj príklad do `live_suite.toml`,
-nastav tam `exclusive_use_confirmed = true` a spusti ho s týmto lokálnym
-súborom.
+Predvolený plán postupne skúsi základný NMR signál, fyzikálny FID, 10
+samostatných opakovaní, malé zmeny H pulzu s návratom na základný bod,
+rozdelenie H pulzu na dva segmenty, frekvenčný a demodulačný posun, zmeny
+vzorkovania a krátky Rabi sken 38/40/42 µs s kontrolným meraním vybraného
+bodu. Každé meranie má vlastné dáta a výsledok; serverom vrátený FID sa
+spracuje aj lokálne. Ak prehliadka stavu, lock, fronta, SDK alebo experiment
+zlyhá, ďalšie požiadavky sa neposielajú naslepo.
 
-Heslo nedávaj do súboru. Program sa naň opýta skrytou výzvou; pri starom
-nastavení fungovalo `anyword`.
+P kanál, vypnutie prípravy, meranie bez RF, zmenu hodnoty relaxácie,
+gradienty a trvalé nastavenia skript preskočí s dôvodom: ich význam alebo
+pracovný bod zatiaľ nie je overený. Keďže si už spustil Rabi so šírkami
+40–200 µs, tento plán skúša iba malé zmeny okolo 40 µs. Študijné medze sú
+uvedené priamo v `spinq_live_suite.py`; zmena konfigurácie mimo nich sa
+neodošle.
 
-## Až keď získaš prevádzkové limity
+Heslo nedávaj do súboru. Skript sa naň opýta skrytou výzvou. Predvolený
+príklad predpokladá, že počas merania prístroj používaš iba ty. Ak ho môže
+používať aj niekto iný, nastav v lokálnej kópii konfigurácie
+`exclusive_use_confirmed = false`; bez čerstvej prázdnej fronty sa potom
+experiment neodošle.
+Pred opätovným spustením po prerušení skontroluj na tablete, že stará úloha
+skončila; softvérový rozpočet sa medzi spusteniami nesčítava.
 
-Na celú sériu by bolo treba pre tento konkrétny prístroj doložiť povolené
-amplitúdy a šírky RF pulzov, RF čas na úlohu aj za sériu, rozsah teploty,
-limity odberu a posunov frekvencií a potvrdiť význam času relaxácie.
-Hodnoty z Python validátora sú rozsahy vstupov, nie bezpečné prevádzkové
-limity. Až po overení môžeš nastaviť `historical_baseline_only = false`,
-doplniť `[limits]` a upraviť `repeat_count`, `max_experiments`, prestávku a
-jednotlivé `[features]`. Bez týchto údajov širšiu sériu nespúšťaj.
-
-Vznikne nový `results\DATUM_live_suite\results.zip` s `REPORT.md`,
-`results.json`, redigovanými prijatými udalosťami, kompletnými pôvodnými
-dekódovanými krivkami, lokálnou analýzou, SVG náhľadmi a chybami.
-Priebeh sa ukladá po každom kroku. Výstupný adresár sa nikdy neprepisuje.
-`results/` a `live_suite.toml` Git ignoruje. Program nič neposiela do cloudu.
-
-Pri potvrdených limitoch možno zapnúť NMR experiment, opakovania, malé zmeny
-pulzov a akvizície s návratom na baseline a krátky Rabi sken. Presný počet
-závisí od zapnutých schopností, limitov, stavu prístroja a rozpočtu. P kanál,
-vypnutie prípravy, meranie bez RF, frekvenčné/demodulačné posuny a
-viacsegmentový pulz sú štandardne vypnuté, pretože ich pracovný bod alebo
-význam zatiaľ nie je potvrdený. Gradienty, trvalé shimovanie, lock a
-firmvér program nemení.
-
-V predvolenom režime sa neúplné limity vzťahujú na všetky ďalšie prípady;
-v reporte ich uvidíš ako NEOVERENÉ. Pri timeoute alebo strate locku zastaví nové
-požiadavky; odpojenie klienta nie je potvrdenie zastavenia úlohy na prístroji.
-Stavy a presné dôvody sú v `REPORT.md`.
-Ak po násilnom ukončení zostane lokálny súbor `.spinq_live_gemini.lock`,
-odstráň ho až po kontrole fronty a stavu úlohy na tablete.
+Každé spustenie vytvorí nový `results\DATUM_live_suite\results.zip` s
+`REPORT.md`, `results.json`, prijatými dekódovanými číselnými dátami,
+udalosťami, lokálnou analýzou, náhľadmi a chybami. Výsledky sa ukladajú
+priebežne a Git ich ignoruje. Ak zostane lokálny súbor
+`.spinq_live_gemini.lock` po násilnom ukončení, odstráň ho až po kontrole
+fronty a stavu úlohy na tablete.

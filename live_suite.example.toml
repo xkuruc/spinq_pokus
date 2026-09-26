@@ -1,24 +1,25 @@
-# Copy to live_suite.toml. This preset can run ONE exact physical-layer request
-# previously completed on this same device, subject to live status and queue checks.
-# That observation does not establish safe limits for repeats or changed settings.
+# Finite real-hardware research plan. Run unchanged first. The software plan
+# bounds below are NOT manufacturer/device operating limits. No calibration,
+# gradient, shim or firmware write is attempted.
 host = "172.19.20.100"
 port = 8181
 account = "anyword"
 password_env = "SPINQ_AUDIT_PASSWORD"
 baseline_verified = true
-historical_baseline_only = true
+historical_baseline_only = false
+bounded_study_enabled = true
 hardware_lock_path = "~/.spinq_live_gemini.lock"
 
 [operation]
-repeat_count = 0
-max_experiments = 1
+repeat_count = 10
+max_experiments = 40
 pause_seconds = 10
 timeout_seconds = 180
 status_max_age_seconds = 120
 queue_max_age_seconds = 120
-# Set true only when you have confirmed exclusive use of the tablet/device.
-# If the server does not publish queue updates, this is needed to continue.
-exclusive_use_confirmed = false
+# This live-run preset assumes that you have reserved this instrument for the
+# run. Set false if others may submit jobs; then a fresh empty queue is required.
+exclusive_use_confirmed = true
 
 [baseline]
 # Values previously used by spinq_lab_control.py, not a safety approval.
@@ -36,7 +37,8 @@ relaxation_delay_value = 15.0
 make_pps = true
 
 [deltas]
-# Test changes, not hardware limits. Each is checked against [limits].
+# Small test changes around the earlier completed 40 µs measurement.
+# The code enforces a finite study envelope and a 1500 µs requested RF budget.
 amplitude_pct = 2.0
 phase_deg = 5.0
 width_us = 2.0
@@ -50,22 +52,24 @@ relaxation_delay_value = 1.0
 rabi_width_us = 2.0
 
 [features]
-# Enable only after their meaning and working point are confirmed locally.
-multi_segment_verified = false
-frequency_shift_verified = false
-demod_shift_verified = false
-sampling_variants_verified = false
+# "verified" here means the SDK field meaning is documented enough to test;
+# the physical effect is determined only by the returned live measurement.
+multi_segment_verified = true
+frequency_shift_verified = true
+demod_shift_verified = true
+sampling_variants_verified = true
 relaxation_variant_verified = false
 state_initialization_off_verified = false
 p_channel_verified = false
 no_rf_verified = false
-rabi_scan_verified = false
+rabi_scan_verified = true
 
 # Add [phosphorus_baseline] with width_us, amplitude_pct, phase_deg,
 # detuning_hz after a P-channel working point is established.
 
 [limits]
-# Needed only if historical_baseline_only=false for a wider measurement series.
+# Not used by bounded_study_enabled=true. These optional fields are for a
+# separate site-approved operating-envelope mode, if such limits become known.
 # Fill with documented local operating limits; never infer from this preset.
 # Do not copy Python validator maxima and call them safety limits.
 # max_pulse_amplitude_pct = ...

@@ -51,6 +51,12 @@ HISTORICAL_PHYSICAL_BASELINE: dict[str, Any] = {
     "gradient": [],
 }
 
+# Research envelope for this one finite study, based on the operator's completed
+# 40-200 µs/100% experiments and small proposed changes around the 40 µs point.
+# These are TEST PLAN bounds, not a manufacturer's hardware safety ratings.
+STUDY_MAX_REQUESTED_RF_US = 42.0
+STUDY_MAX_CUMULATIVE_REQUESTED_RF_US = 1500.0
+
 
 def number(value: Any) -> bool:
     return type(value) in (int, float) and math.isfinite(value)
@@ -227,6 +233,8 @@ def check_case(case: dict[str, Any], config: dict[str, Any], cumulative_requeste
                 case["params"] != HISTORICAL_PHYSICAL_BASELINE or cumulative_requested_rf != 0):
             raise ValueError("bez potvrdených limitov je povolený iba jeden presný historický fyzikálny baseline")
         return 40.0
+    if config.get("bounded_study_enabled") is True:
+        return check_bounded_study_case(case, cumulative_requested_rf)
     limits = config.get("limits", {})
     missing = [key for key in REQUIRED_LIMITS if not number(limits.get(key))]
     if missing:
@@ -270,6 +278,40 @@ def check_case(case: dict[str, Any], config: dict[str, Any], cumulative_requeste
         raise ValueError("demodulačný posun mimo limitu")
     if limits["min_temperature_c"] >= limits["max_temperature_c"]:
         raise ValueError("neplatný interval teploty")
+    return requested_rf
+
+
+def check_bounded_study_case(case: dict[str, Any], cumulative_requested_rf: float) -> float:
+    """Guard a finite research plan, without representing its bounds as device limits."""
+    p = case["params"]
+    if case["kind"] not in {"nmr", "physical", "rabi"}:
+        raise ValueError("neznámy typ študijného experimentu")
+    if (set(p) != set(HISTORICAL_PHYSICAL_BASELINE) or
+            p["compute_type"] != 0 or p["stepList"] != [] or p["gradient"] != [] or
+            p["samplePath"] != 0 or p["makePps"] is not True or
+            p["relaxation_time"] != 15 or
+            p["p_freShift"] != 0 or p["p_freDemo"] != 0 or
+            p["h_freShift"] not in (0, 10) or p["h_freDemo"] not in (0, 10) or
+            type(p["sampleFre"]) is not int or p["sampleFre"] not in (10000, 20000) or
+            type(p["sampleCount"]) is not int or p["sampleCount"] not in (15000, 16000) or
+            type(p["sampleDelay"]) is not int or p["sampleDelay"] not in (0, 100)):
+        raise ValueError("požiadavka je mimo obmedzeného výskumného plánu")
+    pulse_container = p["pulse"]
+    if set(pulse_container) != {"hPulse", "pPulse"} or pulse_container["pPulse"] != []:
+        raise ValueError("P kanál nemá potvrdený pracovný bod")
+    pulses = pulse_container["hPulse"]
+    if not isinstance(pulses, list) or not 1 <= len(pulses) <= 2:
+        raise ValueError("výskumný plán povoľuje jeden alebo dva H pulzy")
+    for pulse in pulses:
+        if set(pulse) != {"width", "am", "phase", "freshift"} or not all(number(v) for v in pulse.values()):
+            raise ValueError("pulz má neznáme alebo neplatné polia")
+        if (not 20 <= pulse["width"] <= 42 or
+                pulse["am"] not in (98, 100) or pulse["phase"] not in (90, 95) or
+                pulse["freshift"] not in (0, 10)):
+            raise ValueError("pulz je mimo malých plánovaných zmien")
+    requested_rf = sum(pulse["width"] for pulse in pulses)
+    if requested_rf > STUDY_MAX_REQUESTED_RF_US or cumulative_requested_rf + requested_rf > STUDY_MAX_CUMULATIVE_REQUESTED_RF_US:
+        raise ValueError("vyčerpaný softvérový rozpočet RF požiadaviek tejto série")
     return requested_rf
 
 
@@ -455,7 +497,7 @@ def markdown_report(result: dict[str, Any]) -> str:
              f"SDK: {result.get('environment', {}).get('sdk_version') or 'NEZNÁME'}", "",
              f"Pokusy o skutočné experimenty: {result.get('real_hardware_attempts', 0)}; potvrdene dokončené: {result.get('real_hardware_completed', 0)}.",
              "Ak je počet 0, prístroj sa týmto programom nemeral. Prijaté údaje sú dekódované chart body; RAW ADC nie je potvrdené.",
-             "Historický 40 µs baseline je iba skorší úspešný pokus na tomto prístroji, nie schválený limit pre ďalšiu sériu.",
+             "40 µs baseline bol na tomto prístroji úspešný. Hranice výskumnej série sú softvérový rozpočet, nie certifikované limity prístroja.",
              "", "## Testy", ""]
     for row in result.get("tests", []):
         lines += [f"### {row['id']} — {row.get('status', 'NEOVERENÉ')}", "",
@@ -539,7 +581,9 @@ def main() -> int:
         result["static_findings"] = {
             "raw_adc": "NEZNÁME; decoded chart float32 is not ADC proof",
             "server_fft_disable": "no verified option in installed SDK 1.0.2",
-            "operating_limits": "not supplied or established; historical mode permits only one exact operator-reported completed request",
+            "operating_limits": "manufacturer/device operating limits not supplied or established; bounded study uses a finite software test plan, not a hardware safety rating",
+            "bounded_study_requested_rf_budget_us": STUDY_MAX_CUMULATIVE_REQUESTED_RF_US,
+            "requested_rf_caveat": "known configured H pulse widths only; hidden preparation and internal repetitions are not counted",
             "relaxation_delay_units": "official experiment page says seconds; SDK source describes microseconds; numeric baseline value 15 is unchanged",
             "internal_repeat_count": "NEZNÁME",
             "receiver_gain_and_filters": "NEZNÁME",
@@ -550,6 +594,8 @@ def main() -> int:
         checkpoint(out, result)
         result["execution_scope"] = ("one_exact_historical_physical_baseline" if
                                      config.get("historical_baseline_only") is True else
+                                     "finite_bounded_research_study" if
+                                     config.get("bounded_study_enabled") is True else
                                      "configured_series_requiring_operating_limits")
         checkpoint(out, result)
         password = os.environ.get(config.get("password_env", "SPINQ_AUDIT_PASSWORD"))
@@ -631,7 +677,8 @@ def main() -> int:
                 row["preflight_temperature_c"] = temperature
                 if not number(temperature):
                     raise RuntimeError("čerstvá teplota chýba alebo nie je konečná")
-                if config.get("historical_baseline_only") is not True:
+                if (config.get("historical_baseline_only") is not True and
+                        config.get("bounded_study_enabled") is not True):
                     limits = config["limits"]
                     if not limits["min_temperature_c"] <= temperature <= limits["max_temperature_c"]:
                         raise RuntimeError("teplota je mimo potvrdeného rozsahu")

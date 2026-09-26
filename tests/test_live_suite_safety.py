@@ -16,6 +16,7 @@ class HistoricalBaselineSafetyTests(unittest.TestCase):
         self.baseline = next(case for case in self.cases if case["id"] == "physical_baseline")
 
     def test_only_one_exact_historical_physical_request_is_allowed(self):
+        self.config["historical_baseline_only"] = True
         self.assertEqual(self.baseline["params"], HISTORICAL_PHYSICAL_BASELINE)
         self.assertEqual(check_case(self.baseline, self.config, 0), 40.0)
         for case in self.cases:
@@ -26,6 +27,7 @@ class HistoricalBaselineSafetyTests(unittest.TestCase):
             check_case(self.baseline, self.config, 40)
 
     def test_editing_historical_request_does_not_bypass_missing_limits(self):
+        self.config["historical_baseline_only"] = True
         for field, value in (("width", 41), ("am", 99), ("phase", 91)):
             changed = copy.deepcopy(self.baseline)
             changed["params"]["pulse"]["hPulse"][0][field] = value
@@ -35,6 +37,26 @@ class HistoricalBaselineSafetyTests(unittest.TestCase):
         changed["params"]["relaxation_time"] = 16
         with self.assertRaises(ValueError):
             check_case(changed, self.config, 0)
+
+    def test_bounded_study_covers_real_series_and_rejects_larger_changes(self):
+        self.assertIs(self.config["bounded_study_enabled"], True)
+        total = 0.0
+        for case in self.cases:
+            if case.get("enabled") is False:
+                continue
+            with self.subTest(case=case["id"]):
+                total += check_case(case, self.config, total)
+        self.assertLessEqual(total + 42, 1500)  # final independent Rabi control
+        changed = copy.deepcopy(self.baseline)
+        changed["params"]["pulse"]["hPulse"][0]["width"] = 80
+        with self.assertRaises(ValueError):
+            check_case(changed, self.config, 0)
+        changed = copy.deepcopy(self.baseline)
+        changed["params"]["pulse"]["pPulse"] = [{"width": 40, "am": 100, "phase": 90, "freshift": 0}]
+        with self.assertRaises(ValueError):
+            check_case(changed, self.config, 0)
+        with self.assertRaises(ValueError):
+            check_case(self.baseline, self.config, 1490)
 
 
 if __name__ == "__main__":
