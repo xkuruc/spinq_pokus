@@ -1,0 +1,91 @@
+{
+  "started_utc": "2026-09-26T13:34:09.884267+00:00",
+  "state": "COMPLETED_WITH_EXPLICIT_LIMITATIONS",
+  "config": {
+    "host": "172.19.20.100",
+    "port": 8181,
+    "blocks": 10,
+    "seed": 260926,
+    "max_tasks": 280,
+    "max_requested_rf_us": 20000.0,
+    "sdk_required": "spinqlablink==1.0.2",
+    "sample_hz": 10000,
+    "per_task_historical_span_us": 200.0,
+    "preparation": "makePps=True, existing relaxation_time=15; internal RF UNKNOWN",
+    "limits_origin": "finite software study envelope, not certified device rating",
+    "analysis_location": "same Windows host CPU"
+  },
+  "preflight": {
+    "checked_utc": "2026-09-26T13:34:02.463827+00:00",
+    "python": "3.13.15",
+    "sdk": {
+      "ready": true,
+      "version": "1.0.2"
+    },
+    "numeric": {
+      "ready": true,
+      "numpy": "2.5.3",
+      "scipy": "1.18.1",
+      "scikit_learn": "1.9.1",
+      "matplotlib": "3.11.2"
+    },
+    "torch": {
+      "ready": true,
+      "version": "2.14.0+cpu",
+      "device": "cpu",
+      "backward_verified": true
+    }
+  },
+  "modules": {
+    "A": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "IncompleteFID: Exported axis inconsistent with uniform requested sampling"
+    },
+    "B": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    },
+    "C": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    },
+    "D": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    },
+    "E": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    },
+    "F": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    },
+    "G": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    },
+    "H": {
+      "status": "DEPENDENCY_FAILED",
+      "reason": "Primary pilot failed; no valid frozen physical model"
+    }
+  },
+  "rows": [],
+  "errors": [
+    "A: IncompleteFID: Exported axis inconsistent with uniform requested sampling"
+  ],
+  "pilot": {},
+  "frozen_plan": {},
+  "budgets": {
+    "acquisitions_used": 0,
+    "rf_duration_us_used": 0.0
+  },
+  "raw_source": "exported complex FID; raw ADC unverified",
+  "server_processing_offload_unverified": true,
+  "hardware_results_present": false,
+  "upload": {
+    "status": "NOT_ATTEMPTED"
+  },
+  "torch_optional_ready": true,
+  "finished_utc": "2026-09-26T13:34:18.942959+00:00"
+}
