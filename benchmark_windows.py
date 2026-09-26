@@ -438,10 +438,15 @@ class Benchmark:
             for rep in range(6):
                 row,y,fit=self.acquire(f"denoise_{family}_{rep}",phase=phase)
                 collected[family].append({"key":row["key"],"signal":y,"wall_seconds":row["wall_seconds"]})
+            # The server sometimes returns 15,999 of 16,000 chart points.
+            # Align analysis copies only; each original decoded chart stays intact.
+            common=min(len(x["signal"]) for x in collected[family])
+            for x in collected[family]: x["signal"]=x["signal"][:common]
         for family in ("train_0","train_90","validation_180"):
             collect_family(family)
         split={family:{"block":blocks[family],"phase_deg":families[family],
-                       "inputs":[x["key"] for x in rows[:3]],"references":[x["key"] for x in rows[3:]]}
+                       "inputs":[x["key"] for x in rows[:3]],"references":[x["key"] for x in rows[3:]],
+                       "analysis_points":len(rows[0]["signal"])}
                for family,rows in collected.items()}
         atomic_json(self.results.out/"data"/"denoise_split.json",split)
         stability={}
@@ -461,6 +466,8 @@ class Benchmark:
         model_path=self.results.out/"models"/"complex_fid_noise2noise.pt"
         train_started=time.monotonic()
         training=train_complex_denoiser(train,validation,model_path,seed=self.seed)
+        model_path=Path(training["model_path"])
+        learned_method=training["backend"]
         train_seconds=time.monotonic()-train_started
         val_rows=collected["validation_180"]
         val_source=val_rows[0]["signal"]
@@ -480,7 +487,8 @@ class Benchmark:
             rows=collected[family]
             split[family]={"block":blocks[family],"phase_deg":families[family],
                            "inputs":[x["key"] for x in rows[:3]],
-                           "references":[x["key"] for x in rows[3:]]}
+                           "references":[x["key"] for x in rows[3:]],
+                           "analysis_points":len(rows[0]["signal"])}
             early=np.mean(np.stack([x["signal"] for x in rows[:3]]),axis=0)
             late=np.mean(np.stack([x["signal"] for x in rows[3:]]),axis=0)
             stability[family]=float(np.linalg.norm(early-late)/max(np.linalg.norm(early),1e-9))
@@ -499,7 +507,7 @@ class Benchmark:
             neural_output=apply_complex_denoiser(source,model_path)
             inference_seconds=time.monotonic()-inference_started
             candidates={"window_fft_fit":source,"hankel_rank2":hankel_denoise(source),
-                        "torch_noise2noise":neural_output,
+                        learned_method:neural_output,
                         "three_acquisition_average":np.mean(np.stack([x["signal"] for x in test[:3]]),axis=0)}
             metrics={}
             for method,signal in candidates.items():
@@ -517,7 +525,7 @@ class Benchmark:
                                  "signed_frequency_bias_hz":signed_freq,
                                  "combined_error":error,"input_acquisitions":3 if method=="three_acquisition_average" else 1}
             rotated=apply_complex_denoiser(source*1j,model_path)
-            metrics["torch_noise2noise"]["rotation_equivariance_relative_error"]=float(
+            metrics[learned_method]["rotation_equivariance_relative_error"]=float(
                 np.linalg.norm(rotated-1j*neural_output)/max(np.linalg.norm(neural_output),1e-9))
             baseline=metrics["window_fft_fit"]["combined_error"]
             for method,m in metrics.items():
@@ -527,7 +535,7 @@ class Benchmark:
                     requested_samples=16000*(paid+3),
                     wall_seconds=sum(x["wall_seconds"] for x in test[:paid])+sum(x["wall_seconds"] for x in test[3:]),
                     compute_seconds=(train_seconds+inference_seconds if test_block==0 else inference_seconds)
-                        if method=="torch_noise2noise" else None,
+                        if method==learned_method else None,
                     error=m["combined_error"],uncertainty=reference_frequency_se,
                     improvement_vs_baseline=(baseline-m["combined_error"])/baseline if baseline else None,
                     status="PILOT",reason="held-out phase family and independent block; finite reference average, not clean truth")

@@ -21,6 +21,8 @@ Ak vetva na GitHube naozaj neexistuje, iba opakuj vytvorenie archívu a odoslani
 .\run_windows.cmd --resume .\results\<UTC_run_id> --upload-only
 ```
 
+Ak PyTorch vo Windowse nevie načítať svoju DLL, odšumovanie automaticky použije komplexný lineárny Noise2Noise FIR filter trénovaný na rovnakých nezávislých FID opakovaniach. Výstupy uvedú skutočný názov metódy a dôvod náhrady. Pôvodné surové dekódované grafy sa nemenia; pri občasnom 15 999-bodovom grafe sa iba analytické kópie v rámci jednej rodiny zarovnajú na spoločnú dĺžku.
+
 Pokračovanie po prerušení:
 
 ```powershell

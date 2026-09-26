@@ -127,7 +127,9 @@ def report(data):
         "Nezmeraná väzba H–P je významné obmedzenie modelu.",
         "Voľný FID poskytuje T2*, nie echo T2. SDK 1.0.2 neodhaľuje jednotlivo nastaviteľné echo časy; "
         "adaptívne echo sa preto bez overenej podpory nevykoná.",
-        "Hankel a Noise2Noise sa učia z nezávislých opakovaní; referenčný priemer nie je bezšumová pravda.",
+        "Hankel je pevná numerická metóda. Noise2Noise sa učí z nezávislých opakovaní; "
+        "referenčný priemer nie je bezšumová pravda. Ak PyTorch nefunguje, použije sa "
+        "explicitne označený komplexný lineárny FIR filter naučený bez PyTorch.",
         "Nie je preukázané, že serverová FFT sa dá vypnúť, takže jej prenosový čas môže zostať.",
         "", "## Témy", ""])
     for name,blocks in data.get("topics",{}).items():
