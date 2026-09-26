@@ -34,10 +34,22 @@ from spinq_audit.safety import HardwareLock
 
 REQUIRED_LIMITS = (
     "max_pulse_amplitude_pct", "max_single_pulse_width_us", "max_requested_rf_us_per_task",
-    "max_cumulative_requested_rf_us", "min_relaxation_us", "max_relaxation_us", "max_sample_count",
+    "max_cumulative_requested_rf_us", "min_relaxation_value", "max_relaxation_value", "max_sample_count",
     "max_sample_frequency_hz", "max_sample_delay_us", "max_abs_detuning_hz",
     "max_abs_frequency_shift", "max_abs_demod_shift", "min_temperature_c", "max_temperature_c",
 )
+
+# Exact physical-layer request that the operator already ran successfully on
+# this Gemini Lab. This is an observation, not a certified operating envelope.
+HISTORICAL_PHYSICAL_BASELINE: dict[str, Any] = {
+    "compute_type": 0, "relaxation_time": 15.0, "stepList": [],
+    "samplePath": 0, "h_freShift": 0, "p_freShift": 0,
+    "h_freDemo": 0, "p_freDemo": 0, "makePps": True,
+    "sampleFre": 10000, "sampleCount": 16000, "sampleDelay": 0,
+    "pulse": {"hPulse": [{"width": 40.0, "am": 100.0,
+                          "phase": 90.0, "freshift": 0.0}], "pPulse": []},
+    "gradient": [],
+}
 
 
 def number(value: Any) -> bool:
@@ -83,7 +95,7 @@ def physical_baseline(config: dict[str, Any]) -> dict[str, Any]:
     if b.get("sample_path", 0) != 0:
         raise ValueError("H baseline vyžaduje sample_path=0; P má samostatný pracovný bod")
     return {
-        "compute_type": 0, "relaxation_time": b.get("relaxation_delay_us"), "stepList": [],
+        "compute_type": 0, "relaxation_time": b.get("relaxation_delay_value"), "stepList": [],
         "samplePath": b.get("sample_path", 0), "h_freShift": 0, "p_freShift": 0,
         "h_freDemo": 0, "p_freDemo": 0, "makePps": b.get("make_pps"),
         "sampleFre": b.get("sample_frequency_hz"), "sampleCount": b.get("sample_count"),
@@ -148,7 +160,7 @@ def make_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
         ("sample_frequency_hz", "sampleFre", "sample_frequency", "sampling_variants_verified"),
         ("sample_count", "sampleCount", "sample_count", "sampling_variants_verified"),
         ("sample_delay_us", "sampleDelay", "sample_delay", "sampling_variants_verified"),
-        ("relaxation_delay_us", "relaxation_time", "relaxation_delay", "relaxation_variant_verified"),
+        ("relaxation_delay_value", "relaxation_time", "relaxation_delay", "relaxation_variant_verified"),
     ):
         delta = deltas.get(key)
         if features.get(feature) is not True:
@@ -210,6 +222,11 @@ def make_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
 def check_case(case: dict[str, Any], config: dict[str, Any], cumulative_requested_rf: float) -> float:
     if config.get("baseline_verified") is not True:
         raise ValueError("baseline_verified nie je true; známy pracovný bod nebol potvrdený")
+    if config.get("historical_baseline_only") is True:
+        if (case["id"] != "physical_baseline" or case["kind"] != "physical" or
+                case["params"] != HISTORICAL_PHYSICAL_BASELINE or cumulative_requested_rf != 0):
+            raise ValueError("bez potvrdených limitov je povolený iba jeden presný historický fyzikálny baseline")
+        return 40.0
     limits = config.get("limits", {})
     missing = [key for key in REQUIRED_LIMITS if not number(limits.get(key))]
     if missing:
@@ -241,7 +258,7 @@ def check_case(case: dict[str, Any], config: dict[str, Any], cumulative_requeste
         raise ValueError("sampleFre/sampleCount/sampleDelay musia byť celé čísla")
     if not all(number(p.get(key)) for key in ("relaxation_time", "sampleFre", "sampleCount", "sampleDelay")):
         raise ValueError("akvizičné hodnoty chýbajú alebo nie sú konečné")
-    if (not limits["min_relaxation_us"] <= p["relaxation_time"] <= limits["max_relaxation_us"] or
+    if (not limits["min_relaxation_value"] <= p["relaxation_time"] <= limits["max_relaxation_value"] or
             not 1 <= p["sampleCount"] <= limits["max_sample_count"] or
             not 1 <= p["sampleFre"] <= limits["max_sample_frequency_hz"] or
             not 0 <= p["sampleDelay"] <= limits["max_sample_delay_us"] or
@@ -434,9 +451,11 @@ def repeat_statistics(result: dict[str, Any]) -> dict[str, Any]:
 def markdown_report(result: dict[str, Any]) -> str:
     lines = ["# Séria testov SpinQ Gemini Lab", "", f"Začiatok: {result['started_utc']}",
              f"Stav série: {result.get('state', 'running')}",
+             f"Rozsah: {result.get('execution_scope', 'NEOVERENÉ')}",
              f"SDK: {result.get('environment', {}).get('sdk_version') or 'NEZNÁME'}", "",
              f"Pokusy o skutočné experimenty: {result.get('real_hardware_attempts', 0)}; potvrdene dokončené: {result.get('real_hardware_completed', 0)}.",
              "Ak je počet 0, prístroj sa týmto programom nemeral. Prijaté údaje sú dekódované chart body; RAW ADC nie je potvrdené.",
+             "Historický 40 µs baseline je iba skorší úspešný pokus na tomto prístroji, nie schválený limit pre ďalšiu sériu.",
              "", "## Testy", ""]
     for row in result.get("tests", []):
         lines += [f"### {row['id']} — {row.get('status', 'NEOVERENÉ')}", "",
@@ -520,12 +539,18 @@ def main() -> int:
         result["static_findings"] = {
             "raw_adc": "NEZNÁME; decoded chart float32 is not ADC proof",
             "server_fft_disable": "no verified option in installed SDK 1.0.2",
+            "operating_limits": "not supplied or established; historical mode permits only one exact operator-reported completed request",
+            "relaxation_delay_units": "official experiment page says seconds; SDK source describes microseconds; numeric baseline value 15 is unchanged",
             "internal_repeat_count": "NEZNÁME",
             "receiver_gain_and_filters": "NEZNÁME",
             "gradient_and_shim_write": "not attempted; units and limits unconfirmed",
             "cross_channel_timing": "NEZNÁME; a separate P path is not proof of simultaneous H/P timing",
             "t1_t2": "client experiment classes exist; live long scan not in this budget",
         }
+        checkpoint(out, result)
+        result["execution_scope"] = ("one_exact_historical_physical_baseline" if
+                                     config.get("historical_baseline_only") is True else
+                                     "configured_series_requiring_operating_limits")
         checkpoint(out, result)
         password = os.environ.get(config.get("password_env", "SPINQ_AUDIT_PASSWORD"))
         if password is None:
@@ -603,9 +628,13 @@ def main() -> int:
                 if not status or status.get("connected") is not True or status.get("lockState") is not True:
                     raise RuntimeError("čerstvý stav/lock chýba alebo nevyhovuje; séria zastavená")
                 temperature = status.get("temperature")
-                limits = config["limits"]
-                if not number(temperature) or not limits["min_temperature_c"] <= temperature <= limits["max_temperature_c"]:
-                    raise RuntimeError("teplota chýba alebo je mimo schváleného rozsahu")
+                row["preflight_temperature_c"] = temperature
+                if not number(temperature):
+                    raise RuntimeError("čerstvá teplota chýba alebo nie je konečná")
+                if config.get("historical_baseline_only") is not True:
+                    limits = config["limits"]
+                    if not limits["min_temperature_c"] <= temperature <= limits["max_temperature_c"]:
+                        raise RuntimeError("teplota je mimo potvrdeného rozsahu")
                 if adapter.lock_lost_observed or adapter.decoder_failures or not recorder.status()["complete"]:
                     raise RuntimeError("strata locku alebo prijatých udalostí; séria zastavená")
                 queue_fresh = (adapter.queue is not None and

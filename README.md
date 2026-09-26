@@ -205,10 +205,11 @@ spusti `git pull`. Opravený skript číta stav priamo z experimentu.
 
 ## Reálne automatické merania na Windows
 
-Nový [stručný návod](LIVE_WINDOWS.md) a `spinq_live_suite.py` spúšťajú
-na pripojenom Windows počítači reálnu meraciu sériu. Potrebujú lokálny
-`live_suite.toml` s potvrdeným pracovným bodom a prevádzkovými limitmi.
-Po jeho vyplnení stačí jeden príkaz; výsledkom je `results.zip`.
+Podľa [stručného návodu](LIVE_WINDOWS.md) môže `spinq_live_suite.py` na
+pripojenom Windows počítači zopakovať **jeden presný, už úspešne použitý**
+fyzikálny pokus bez vymýšľania prevádzkových limitov. Predvolená konfigurácia
+nepovolí Rabi sken, opakovania ani zmeny parametrov. Výsledkom je
+`results.zip`. Širšia séria vyžaduje potvrdené limity pre konkrétny prístroj.
 
 ## Audit SDK, NMR dát a budúcej kalibrácie
 

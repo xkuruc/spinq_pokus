@@ -1,16 +1,17 @@
-# Copy to live_suite.toml and fill the operating limits verified for your device.
-# The program will connect and report status, but will not send experiments until
-# baseline_verified=true and every required [limits] value is present.
+# Copy to live_suite.toml. This preset can run ONE exact physical-layer request
+# previously completed on this same device, subject to live status and queue checks.
+# That observation does not establish safe limits for repeats or changed settings.
 host = "172.19.20.100"
 port = 8181
 account = "anyword"
 password_env = "SPINQ_AUDIT_PASSWORD"
-baseline_verified = false
+baseline_verified = true
+historical_baseline_only = true
 hardware_lock_path = "~/.spinq_live_gemini.lock"
 
 [operation]
-repeat_count = 10
-max_experiments = 40
+repeat_count = 0
+max_experiments = 1
 pause_seconds = 10
 timeout_seconds = 180
 status_max_age_seconds = 120
@@ -29,7 +30,9 @@ sample_path = 0
 sample_frequency_hz = 10000
 sample_count = 16000
 sample_delay_us = 0
-relaxation_delay_us = 15.0
+# Exact numeric SDK field sent before. Official docs say seconds; SDK source
+# describes microseconds, so the unit is unresolved. Do not vary this value.
+relaxation_delay_value = 15.0
 make_pps = true
 
 [deltas]
@@ -43,7 +46,7 @@ demod_shift = 10
 sample_frequency_hz = 10000
 sample_count = 1000
 sample_delay_us = 100
-relaxation_delay_us = 1.0
+relaxation_delay_value = 1.0
 rabi_width_us = 2.0
 
 [features]
@@ -51,25 +54,26 @@ rabi_width_us = 2.0
 multi_segment_verified = false
 frequency_shift_verified = false
 demod_shift_verified = false
-sampling_variants_verified = true
-relaxation_variant_verified = true
+sampling_variants_verified = false
+relaxation_variant_verified = false
 state_initialization_off_verified = false
 p_channel_verified = false
 no_rf_verified = false
-rabi_scan_verified = true
+rabi_scan_verified = false
 
 # Add [phosphorus_baseline] with width_us, amplitude_pct, phase_deg,
 # detuning_hz after a P-channel working point is established.
 
 [limits]
-# Fill all fields below with documented local operating limits.
+# Needed only if historical_baseline_only=false for a wider measurement series.
+# Fill with documented local operating limits; never infer from this preset.
 # Do not copy Python validator maxima and call them safety limits.
 # max_pulse_amplitude_pct = ...
 # max_single_pulse_width_us = ...
 # max_requested_rf_us_per_task = ...
 # max_cumulative_requested_rf_us = ...
-# min_relaxation_us = ...
-# max_relaxation_us = ...
+# min_relaxation_value = ...
+# max_relaxation_value = ...
 # max_sample_count = ...
 # max_sample_frequency_hz = ...
 # max_sample_delay_us = ...
