@@ -1,4 +1,4 @@
-"""Publish a completed results ZIP to a new branch without touching the checkout.
+"""Publish final benchmark summaries without touching the working checkout.
 
 No credentials are written to the result or to the temporary Git repository.
 """
@@ -6,6 +6,7 @@ No credentials are written to the result or to the temporary Git repository.
 from __future__ import annotations
 
 import os
+import json
 import shutil
 import subprocess
 import sys
@@ -15,8 +16,8 @@ from urllib.parse import urlsplit
 
 from spinq_audit.common import redact
 
-PART_BYTES = 80 * 1024 * 1024
 GIT_TIMEOUT_SECONDS = 900
+PART_BYTES = 80 * 1024 * 1024
 
 
 def _git(args: list[str], cwd: Path, env: dict[str, str]) -> str:
@@ -45,31 +46,58 @@ def _remote(repo: Path, env: dict[str, str]) -> str:
     return url
 
 
-def _parts(zip_path: Path, destination: Path) -> list[str]:
-    if zip_path.stat().st_size <= PART_BYTES:
-        shutil.copyfile(zip_path, destination / "results.zip")
+def _summary_files(out: Path, destination: Path) -> list[str]:
+    """Copy only analysis outputs; FID charts and models stay on the Windows PC."""
+    data=json.loads((out/"results.json").read_text(encoding="utf-8"))
+    if data.get("state")=="running":
+        raise ValueError("Benchmark is still running; summary upload refused")
+    names=[]
+    for name in ("REPORT.md","comparison.csv"):
+        source=out/name
+        if not source.is_file(): raise FileNotFoundError(source)
+        shutil.copyfile(source,destination/name)
+        names.append(name)
+    summary={key:value for key,value in data.items() if key not in ("upload","environment")}
+    (destination/"summary.json").write_text(
+        json.dumps(summary,ensure_ascii=False,indent=2,allow_nan=False),encoding="utf-8")
+    names.append("summary.json")
+    charts=sorted((out/"plots").glob("*.png")) if (out/"plots").exists() else []
+    if charts:
+        (destination/"plots").mkdir()
+        for chart in charts:
+            shutil.copyfile(chart,destination/"plots"/chart.name)
+            names.append("plots/"+chart.name)
+    (destination/"README.md").write_text(
+        "# Gemini Lab benchmark: analyzed results\n\n"
+        "This branch contains the final report, comparison table, machine-readable "
+        "summary and plots. The decoded FID/FFT charts, models and full ZIP remain "
+        "on the acquisition computer in the matching results directory.\n",
+        encoding="utf-8")
+    names.append("README.md")
+    return names
+
+
+def _archive_parts(zip_path: Path, destination: Path) -> list[str]:
+    """Compatibility path for the separate, older live-suite command."""
+    if zip_path.stat().st_size<=PART_BYTES:
+        shutil.copyfile(zip_path,destination/"results.zip")
         return ["results.zip"]
-    names = []
+    names=[]
     with zip_path.open("rb") as source:
-        index = 1
-        while True:
-            chunk = source.read(PART_BYTES)
-            if not chunk:
-                break
-            name = f"results.zip.part{index:04d}"
-            (destination / name).write_bytes(chunk)
+        for index in range(1,10000):
+            chunk=source.read(PART_BYTES)
+            if not chunk: break
+            name=f"results.zip.part{index:04d}"
+            (destination/name).write_bytes(chunk)
             names.append(name)
-            index += 1
-    (destination / "HOW_TO_JOIN.txt").write_text(
-        "Súbory results.zip.part0001, part0002, ... spoj v číselnom poradí "
-        "do results.zip. Lokálny pôvodný results.zip zostáva celý.\n",
+    (destination/"HOW_TO_JOIN.txt").write_text(
+        "Spoj results.zip.part0001, part0002, ... v číselnom poradí do results.zip.\n",
         encoding="utf-8")
     names.append("HOW_TO_JOIN.txt")
     return names
 
 
-def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object]:
-    """Push only the completed result archive; return status without raising."""
+def _publish(repo: Path, branch: str, payload) -> dict[str, object]:
     env = os.environ.copy()
     env.update({"GIT_TERMINAL_PROMPT": "0", "GCM_INTERACTIVE": "never"})
     # Keep the normal Git credential configuration. Askpass is a noninteractive
@@ -93,16 +121,17 @@ def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object
             _git(["remote", "add", "origin", remote], work, env)
             existing = _git(["ls-remote", "--heads", "origin", f"refs/heads/{branch}"], work, env)
             if existing:
-                # A resumed measurement creates a fast-forward update to the
-                # same result branch. Never force-push or alter the main checkout.
+                # A resumed analysis creates a fast-forward update to the same
+                # dedicated branch. Never force-push or alter the main checkout.
                 _git(["fetch", "-q", "--depth=1", "origin", f"refs/heads/{branch}"], work, env)
                 _git(["checkout", "-q", "-b", branch, "FETCH_HEAD"], work, env)
-                for old in work.glob("results.zip*"):
-                    old.unlink()
-                (work / "HOW_TO_JOIN.txt").unlink(missing_ok=True)
+                for old in work.iterdir():
+                    if old.name==".git": continue
+                    if old.is_dir(): shutil.rmtree(old)
+                    else: old.unlink()
             else:
                 _git(["checkout", "-q", "-b", branch], work, env)
-            files = _parts(zip_path, work)
+            files = payload(work)
             _git(["add", "-A"], work, env)
             unchanged = subprocess.run(["git", "diff", "--cached", "--quiet"],
                 cwd=work, env=env, stdin=subprocess.DEVNULL,
@@ -110,7 +139,7 @@ def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object
             if existing and unchanged:
                 return {"status": "UPLOAD_SUCCEEDED", "branch": branch,
                         "files": files, "remote_source": "git remote origin",
-                        "note": "identical archive already present"}
+                        "note": "identical publication already present"}
             _git(["-c", "user.name=SpinQ Results", "-c",
                   "user.email=spinq-results@users.noreply.github.com", "commit", "-q",
                   "-m", f"Gemini Lab results {branch.rsplit('/', 1)[-1]}"], work, env)
@@ -135,3 +164,13 @@ def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object
                 reason = reason.replace(secret, "[REDACTED_TOKEN]")
         return {"status": "UPLOAD_FAILED", "branch": branch,
                 "reason": reason[:1200]}
+
+
+def publish_summary(repo: Path, out: Path, branch: str) -> dict[str, object]:
+    """Publish report, table, plots and compact JSON; never upload raw charts."""
+    return _publish(repo,branch,lambda work:_summary_files(out,work))
+
+
+def publish_results(repo: Path, zip_path: Path, branch: str) -> dict[str, object]:
+    """Compatibility API for the separate legacy live suite."""
+    return _publish(repo,branch,lambda work:_archive_parts(zip_path,work))

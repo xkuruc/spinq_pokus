@@ -98,8 +98,7 @@ def aggregate_rows(rows, frozen_plan=None):
 def report(data):
     lines=["# SpinQ Gemini Lab — experimentálny benchmark", "",
            f"Začiatok: {data['started_utc']}; stav: **{data['state']}**; režim: **{data['study_phase']}**.",
-           f"Skutočné hardvérové údaje: {'áno' if data['hardware_results_present'] else 'nie'}.",
-           f"Upload: {data.get('upload',{}).get('status','NOT_ATTEMPTED')}.", "",
+           f"Skutočné hardvérové údaje: {'áno' if data['hardware_results_present'] else 'nie'}.", "",
            "Výstupy `data/` sú dekódované grafy SpinQLabLink, nie potvrdený RAW ADC. "
            "Interný počet opakovaní a skryté prípravné RF pulzy SDK neoznamuje.",
            "Kladné zlepšenie znamená nižšiu chybu pri rovnakom definovanom rozpočte. "
@@ -191,6 +190,7 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
                 ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"pulse_convergence.png",dpi=140)
                 status["pulse_convergence"]="CREATED"
             else:
+                (out/"plots"/"pulse_convergence.png").unlink(missing_ok=True)
                 status["pulse_convergence"]="SKIPPED_NO_EVALUATIONS"
             plt.close(fig)
         if robust:
@@ -212,6 +212,7 @@ def plot_comparisons(out:Path,rows:list[dict],topics:dict|None=None):
                 ax.legend();fig.tight_layout();fig.savefig(out/"plots"/"robustness.png",dpi=140)
                 status["robustness"]="CREATED"
             else:
+                (out/"plots"/"robustness.png").unlink(missing_ok=True)
                 status["robustness"]="SKIPPED_NO_READINGS"
             plt.close(fig)
         denoise_blocks=[b.get("metrics",{}) for b in topics.get("denoising",{}).values() if b.get("metrics")]

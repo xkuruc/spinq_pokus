@@ -23,7 +23,7 @@ from pathlib import Path
 
 import numpy as np
 
-from publish_results import publish_results
+from publish_results import publish_summary
 from spinq_audit.common import atomic_json, utc_now
 from spinq_audit.safety import HardwareLock
 from spinq_benchmark.hardware import HardwareUncertain, LiveHardware, first_fid, physical_request
@@ -568,7 +568,7 @@ def main():
     ap.add_argument("--seed",type=int,default=240926)
     ap.add_argument("--no-upload",action="store_true")
     ap.add_argument("--upload-only",action="store_true",
-                    help="regenerate report/archive and retry upload; never connect to hardware")
+                    help="publish analyzed summary only; never connect to hardware")
     args=ap.parse_args()
     if args.upload_only:
         if args.resume is None: ap.error("--upload-only requires --resume results/<run_id>")
@@ -579,14 +579,13 @@ def main():
         result=Results(out,existing["config"])
         result.data["plots"]=plot_comparisons(out,result.data.get("rows",[]),result.data.get("topics",{}))
         result.save()
-        bundle(out)
         if not args.no_upload:
-            result.data["upload"]=publish_results(Path(__file__).resolve().parent,
-                out/"results.zip",f"benchmark/{out.name}")
-            result.save();bundle(out)
-        print(f"Archive: {out/'results.zip'}",flush=True)
+            result.data["upload"]=publish_summary(Path(__file__).resolve().parent,
+                out,f"benchmark-summary/{out.name}")
+            result.save()
+        print(f"Report: {out/'REPORT.md'}",flush=True)
         print(f"Upload: {result.data['upload'].get('status')}",flush=True)
-        return 0 if result.data["upload"].get("status")=="UPLOAD_SUCCEEDED" else 2
+        return 0 if args.no_upload or result.data["upload"].get("status")=="UPLOAD_SUCCEEDED" else 2
     if not 3<=args.blocks<=20: ap.error("blocks must be 3..20")
     stamp=datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_UTC")
     out=(args.resume or Path("results")/stamp).resolve()
@@ -645,10 +644,10 @@ def main():
         result.data["plots"]=plot_comparisons(out,result.data["rows"],result.data["topics"])
         result.save()
         bundle(out)
-        if not args.no_upload:
-            upload=publish_results(Path(__file__).resolve().parent,out/"results.zip",f"benchmark/{out.name}")
+        if not args.no_upload and not fatal:
+            upload=publish_summary(Path(__file__).resolve().parent,out,f"benchmark-summary/{out.name}")
             result.data["upload"]=upload
-            result.save();bundle(out)
+            result.save()
         print(f"Report: {out/'REPORT.md'}",flush=True)
         print(f"Archive: {out/'results.zip'}",flush=True)
         print(f"Upload: {result.data['upload'].get('status')}",flush=True)
