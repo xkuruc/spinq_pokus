@@ -1,0 +1,1 @@
+Súbory results.zip.part0001, part0002, ... spoj v číselnom poradí do results.zip. Lokálny pôvodný results.zip zostáva celý.
