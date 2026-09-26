@@ -22,6 +22,10 @@ class HardwareUncertain(RuntimeError):
     """Task might still be on the device; stop every further submission."""
 
 
+class QueuePreflightUnavailable(HardwareUncertain):
+    """No task was sent: remote queue ownership cannot be established yet."""
+
+
 class PreSubmissionFailure(HardwareUncertain):
     """Local checkpoint failed before run_experiment; this key was not sent."""
 
@@ -252,11 +256,14 @@ class LiveHardware:
         queue=self.adapter.queue
         fresh=bool(queue and (time.monotonic_ns()-queue[0])/1e9<=120)
         if fresh and queue[1].get("queue")!=[]:
-            raise HardwareUncertain("Server queue is occupied")
+            raise QueuePreflightUnavailable("Server queue is occupied")
         if not fresh and not self.exclusive:
-            raise HardwareUncertain("Queue unavailable and exclusive use not confirmed")
+            raise QueuePreflightUnavailable("Queue unavailable and exclusive use not confirmed")
         return {"temperature":status["temperature"],"queue_fresh":fresh,
-                "queue_empty":fresh and queue[1].get("queue")==[]}
+                "queue_empty":fresh and queue[1].get("queue")==[],
+                "exclusive_use_confirmed":self.exclusive,
+                "queue_basis":"fresh server push" if fresh else
+                              "runtime operator assertion; no fresh server queue push"}
 
     def measure(self,key,p,*,allow_idle_probe=False):
         """Configure -> submit -> terminal state -> paired FID and metadata.
@@ -274,6 +281,9 @@ class LiveHardware:
         preflight=self._preflight()
         wait=max(0.,self.pause-(time.monotonic()-self.last_finished))
         if wait:time.sleep(wait)
+        # A queue update may arrive during the relaxation pause. Avoid even
+        # registering a local experiment if ownership has since changed.
+        preflight=self._preflight()
         from spinqlablink import ExperimentType
         exp,pars=self.link.register_experiment(ExperimentType.PHYSICAL_LAYER_EXPERIMENT)
         terminal=False
@@ -287,6 +297,10 @@ class LiveHardware:
                 atomic_json(self.data/(key+".payload_mismatch.json"),
                             {"requested":p,"sdk_serialized":actual_payload})
                 raise RuntimeError("Final SDK physical payload mismatch")
+            # The inter-task pause and local SDK serialization take time.
+            # Recheck the live queue/status after both, immediately before
+            # the durable submission checkpoint and run_experiment().
+            preflight=self._preflight()
             self.adapter.own_task_ids.add(str(exp.id))
             self.adapter.pending_own_ack=True
             self.adapter.ack_mismatch=False

@@ -30,7 +30,8 @@ from scipy.optimize import least_squares
 from spinq_audit.adapter import verify_installed_sdk
 from spinq_audit.common import atomic_json, redact, utc_now
 from spinq_audit.safety import HardwareLock
-from spinq_benchmark.hardware import HardwareUncertain, LiveHardware
+from spinq_benchmark.hardware import (HardwareUncertain, LiveHardware,
+                                      QueuePreflightUnavailable)
 from spinq_local.core import (Capabilities, RawFIDRecord, Segment, SequenceIR,
                               compile_sequence, run_raw)
 from spinq_local.signal import validate_axis
@@ -499,7 +500,8 @@ def _particle_convergence(pilot_observations: Sequence[tuple[Candidate, np.ndarr
 
 class BayesRun:
     def __init__(self, repo: Path, out: Path, config: dict[str, Any], preflight: dict,
-                 *, resume: bool = False, read_only: bool = False):
+                 *, resume: bool = False, read_only: bool = False,
+                 exclusive_use_confirmed: bool = False):
         self.repo = Path(repo).resolve()
         self.out = prepare_output(Path(out).resolve())
         self.config = validate_config(config)
@@ -512,6 +514,7 @@ class BayesRun:
         self.hw: LiveHardware | None = None
         self.read_only = read_only
         self.resuming = resume
+        self.runtime_exclusive_use_confirmed = bool(exclusive_use_confirmed)
         target = self.out / "results.json"
         if target.is_file():
             if not resume:
@@ -1563,6 +1566,13 @@ class BayesRun:
             self.event("Run is already complete; use --reanalyze to rebuild its report")
             return 0
         try:
+            if self.runtime_exclusive_use_confirmed:
+                self.data.setdefault("exclusive_use_attestations", []).append({
+                    "utc": utc_now(), "source": "explicit --exclusive-use-confirmed flag",
+                    "scope": "this connection only; fresh nonempty server queue still blocks"})
+                self.save()
+                self.event("Exclusive device use confirmed for this run; "
+                           "a reported busy queue still blocks submission")
             connection_started = time.perf_counter()
             with HardwareLock(Path("~/.spinq_live_gemini.lock")), LiveHardware(
                  self.out, host=self.config["host"], port=self.config["port"],
@@ -1570,12 +1580,20 @@ class BayesRun:
                  pause_seconds=self.config["pause_seconds"],
                  max_tasks=self.config["max_tasks"],
                  max_requested_rf_us=self.config["max_requested_rf_us"],
-                 exclusive_use_confirmed=self.config["exclusive_use_confirmed"],
+                 exclusive_use_confirmed=(self.runtime_exclusive_use_confirmed or
+                                          self.config["exclusive_use_confirmed"]),
                  compact_result=True) as hardware:
                 self.hw = hardware
                 self.data.setdefault("connection_setup_seconds", []).append(
                     time.perf_counter() - connection_started)
                 self.save()
+                if not self.runtime_exclusive_use_confirmed and hardware.adapter.queue is None:
+                    deadline = time.monotonic() + 5.
+                    while hardware.adapter.queue is None and time.monotonic() < deadline:
+                        time.sleep(.1)
+                    if hardware.adapter.queue is None:
+                        self.event("Server sent no queue update after login; "
+                                   "waiting ended without submitting a task", kind="WARNING")
                 had_frozen_plan = (self.out / "plan.json").is_file()
                 self.run_pilot()
                 if self.resuming and had_frozen_plan:
@@ -1589,6 +1607,14 @@ class BayesRun:
             self.data["state"] = "INTERRUPTED"
             self.data["errors"].append("Operator interrupted; no next task was submitted")
             self.event("Interrupted; saved tasks can be resumed after checking the device", kind="ERROR")
+        except QueuePreflightUnavailable as exc:
+            self.data["state"] = "PAUSED_QUEUE"
+            self.data["errors"].append(f"QueuePreflightUnavailable: {redact(str(exc))}")
+            self.data["upload"] = {"status": "UPLOAD_DEFERRED_PRECHECK",
+                                   "reason": "No further task is submitted until queue/ownership is known"}
+            self.event(f"Queue precheck: {redact(str(exc))}; "
+                       "no new task submitted. If the device is exclusively yours "
+                       "and idle, rerun with --exclusive-use-confirmed", kind="ERROR")
         except HardwareUncertain as exc:
             self.data["state"] = "STOPPED_UNCERTAIN"
             self.data["errors"].append(f"HardwareUncertain: {redact(str(exc))}")
@@ -1606,7 +1632,7 @@ class BayesRun:
                 self.hw = None
             self.save()
             try:
-                self.finish(upload=True)
+                self.finish(upload=self.data["state"] != "PAUSED_QUEUE")
             except Exception as exc:
                 self.data["errors"].append(f"OutputFailure: {type(exc).__name__}: {redact(str(exc))}")
                 self.save()

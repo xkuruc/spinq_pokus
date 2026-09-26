@@ -29,6 +29,9 @@ def saved_config_for_reanalysis(out: Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Live, locally analyzed Bayesian SpinQ calibration")
     parser.add_argument("--config", type=Path, default=Path("config-01-bayes.json"))
+    parser.add_argument("--exclusive-use-confirmed", action="store_true",
+        help="I am the sole operator and no tablet/other client is running an experiment; "
+             "required only when the server has not sent a queue update")
     choice = parser.add_mutually_exclusive_group()
     choice.add_argument("--resume", type=Path, help="Continue this saved run without repeating completed tasks")
     choice.add_argument("--reanalyze", type=Path, help="Only recompute reports from saved raw FIDs")
@@ -71,7 +74,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"01 REANALYSIS FAILED: {type(exc).__name__}: {exc}", flush=True)
             return 2
     try:
-        session = BayesRun(repo, out, config, preflight, resume=bool(args.resume))
+        session = BayesRun(repo, out, config, preflight, resume=bool(args.resume),
+            exclusive_use_confirmed=args.exclusive_use_confirmed)
         return session.execute()
     except Exception as exc:
         print(f"01 START FAILED: {type(exc).__name__}: {exc}", flush=True)
