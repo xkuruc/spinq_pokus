@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import argparse
 import copy
-import getpass
 import importlib.metadata
 import json
 import math
 import os
 import platform
+import shutil
 import statistics
 import sys
 import time
@@ -31,6 +31,7 @@ from spinq_audit.discovery import discover
 from spinq_audit.probes import _configure_physical, wait_terminal
 from spinq_audit.recorder import EventRecorder
 from spinq_audit.safety import HardwareLock
+from publish_results import publish_results
 
 REQUIRED_LIMITS = (
     "max_pulse_amplitude_pct", "max_single_pulse_width_us", "max_requested_rf_us_per_task",
@@ -54,8 +55,9 @@ HISTORICAL_PHYSICAL_BASELINE: dict[str, Any] = {
 # Research envelope for this one finite study, based on the operator's completed
 # 40-200 µs/100% experiments and small proposed changes around the 40 µs point.
 # These are TEST PLAN bounds, not a manufacturer's hardware safety ratings.
-STUDY_MAX_REQUESTED_RF_US = 42.0
-STUDY_MAX_CUMULATIVE_REQUESTED_RF_US = 1500.0
+STUDY_MAX_REQUESTED_RF_US = 200.0
+STUDY_MAX_CUMULATIVE_REQUESTED_RF_US = 6000.0
+PREVIOUSLY_COMPLETED_RABI_WIDTHS_US = (40, 80, 120, 160, 200)
 
 
 def number(value: Any) -> bool:
@@ -119,7 +121,7 @@ def make_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
               "purpose": "základný NMR signál cez oficiálny typ"},
              {"id": "physical_baseline", "kind": "physical", "params": copy.deepcopy(base),
               "purpose": "kompletný FID fyzikálnej vrstvy"}]
-    count = config.get("operation", {}).get("repeat_count", 10)
+    count = config.get("operation", {}).get("repeat_count", 20)
     if type(count) is not int or not 0 <= count <= 30:
         raise ValueError("repeat_count musí byť celé číslo 0..30")
     for index in range(count):
@@ -147,6 +149,10 @@ def make_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
             changed(name, lambda p, d=delta, f=updater: f(p, d))
         else:
             changed(name, lambda p: None, enabled=False, reason=f"chýba kladná deltas.{key}")
+
+    for relative in (90, 180, 270):
+        changed(f"phase_relative_{relative}",
+                lambda p, angle=relative: hp(p).__setitem__("phase", (hp(p)["phase"]+angle)%360))
 
     if features.get("multi_segment_verified") is True:
         def split_pulse(p: dict[str, Any]) -> None:
@@ -211,17 +217,26 @@ def make_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
             cases.append({"id": name+"_return", "kind": "physical", "params": copy.deepcopy(base),
                           "purpose": "nezávislý návrat na baseline po zmene", "return_for": name})
 
-    width_delta = deltas.get("rabi_width_us")
-    if number(width_delta) and width_delta > 0 and features.get("rabi_scan_verified") is True:
-        for label, width in (("low", hp(base)["width"]-width_delta),
-                             ("center", hp(base)["width"]), ("high", hp(base)["width"]+width_delta)):
+    if features.get("frequency_scan_enabled") is True:
+        for detuning in (-20, -10, 0, 10, 20):
+            params = copy.deepcopy(base)
+            hp(params)["freshift"] = detuning
+            label = f"frequency_scan_{'m' if detuning < 0 else 'p'}{abs(detuning)}"
+            cases.append({"id": label, "kind": "physical", "params": params,
+                          "purpose": "päťbodová odozva na malé rozladenie H pulzu"})
+        cases.append({"id": "frequency_scan_return", "kind": "physical", "params": copy.deepcopy(base),
+                      "return_for": "frequency_scan_p20", "purpose": "návrat po frekvenčnom skene"})
+
+    if features.get("rabi_scan_verified") is True:
+        for label, width in zip(("low2", "low", "center", "high", "high2"),
+                                PREVIOUSLY_COMPLETED_RABI_WIDTHS_US):
             params = copy.deepcopy(base)
             hp(params)["width"] = width
             cases.append({"id": "rabi_"+label, "kind": "rabi", "params": params,
                           "purpose": "krátky Rabi sken; výber ďalšieho bodu lokálne"})
     else:
         cases.append({"id": "rabi_scan", "kind": "rabi", "params": copy.deepcopy(base),
-                      "enabled": False, "skip_reason": "Rabi rozsah nebol potvrdený alebo chýba deltas.rabi_width_us"})
+                      "enabled": False, "skip_reason": "Rabi rozsah nebol potvrdený"})
     return cases
 
 
@@ -234,7 +249,7 @@ def check_case(case: dict[str, Any], config: dict[str, Any], cumulative_requeste
             raise ValueError("bez potvrdených limitov je povolený iba jeden presný historický fyzikálny baseline")
         return 40.0
     if config.get("bounded_study_enabled") is True:
-        return check_bounded_study_case(case, cumulative_requested_rf)
+        return check_bounded_study_case(case, config, cumulative_requested_rf)
     limits = config.get("limits", {})
     missing = [key for key in REQUIRED_LIMITS if not number(limits.get(key))]
     if missing:
@@ -281,11 +296,20 @@ def check_case(case: dict[str, Any], config: dict[str, Any], cumulative_requeste
     return requested_rf
 
 
-def check_bounded_study_case(case: dict[str, Any], cumulative_requested_rf: float) -> float:
+def check_bounded_study_case(case: dict[str, Any], config: dict[str, Any],
+                             cumulative_requested_rf: float) -> float:
     """Guard a finite research plan, without representing its bounds as device limits."""
     p = case["params"]
-    if case["kind"] not in {"nmr", "physical", "rabi"}:
+    if case["kind"] not in {"nmr", "physical", "rabi", "shape"}:
         raise ValueError("neznámy typ študijného experimentu")
+    p_variants = config.get("_runtime_p_variants", {})
+    if case["id"] in p_variants:
+        expected_p = p_variants[case["id"]]
+        if (case["kind"] != "physical" or p != expected_p or
+                cumulative_requested_rf + expected_p["pulse"]["pPulse"][0]["width"] >
+                STUDY_MAX_CUMULATIVE_REQUESTED_RF_US):
+            raise ValueError("P pokus nie je presne odvodený z čerstvých kalibračných údajov")
+        return expected_p["pulse"]["pPulse"][0]["width"]
     if (set(p) != set(HISTORICAL_PHYSICAL_BASELINE) or
             p["compute_type"] != 0 or p["stepList"] != [] or p["gradient"] != [] or
             p["samplePath"] != 0 or p["makePps"] is not True or
@@ -300,19 +324,219 @@ def check_bounded_study_case(case: dict[str, Any], cumulative_requested_rf: floa
     if set(pulse_container) != {"hPulse", "pPulse"} or pulse_container["pPulse"] != []:
         raise ValueError("P kanál nemá potvrdený pracovný bod")
     pulses = pulse_container["hPulse"]
+    if case["kind"] == "shape":
+        expected = [100*math.exp(-((10*i-20)**2)/(2*10**2)) for i in range(4)]
+        if (case["id"] != "shape_gaussian_h" or len(pulses) != 4 or
+                any(set(pulse) != {"width", "am", "phase", "freshift"} or
+                    not all(number(value) for value in pulse.values()) or
+                    pulse["width"] != 10 or pulse["phase"] != 90 or
+                    pulse["freshift"] != 0 or abs(pulse["am"]-expected[i]) > 1e-6
+                    for i, pulse in enumerate(pulses))):
+            raise ValueError("tvarovaný pulz nie je presný štvordielny plán")
+        if cumulative_requested_rf + 40 > STUDY_MAX_CUMULATIVE_REQUESTED_RF_US:
+            raise ValueError("vyčerpaný softvérový RF rozpočet")
+        return 40.0
     if not isinstance(pulses, list) or not 1 <= len(pulses) <= 2:
         raise ValueError("výskumný plán povoľuje jeden alebo dva H pulzy")
     for pulse in pulses:
         if set(pulse) != {"width", "am", "phase", "freshift"} or not all(number(v) for v in pulse.values()):
             raise ValueError("pulz má neznáme alebo neplatné polia")
-        if (not 20 <= pulse["width"] <= 42 or
-                pulse["am"] not in (98, 100) or pulse["phase"] not in (90, 95) or
-                pulse["freshift"] not in (0, 10)):
+        allowed_width = (pulse["width"] in PREVIOUSLY_COMPLETED_RABI_WIDTHS_US
+                         if case["kind"] == "rabi" else 20 <= pulse["width"] <= 44)
+        if (not allowed_width or
+                pulse["am"] not in (98, 100) or pulse["phase"] not in (0, 90, 95, 180, 270) or
+                pulse["freshift"] not in (-20, -10, 0, 10, 20)):
             raise ValueError("pulz je mimo malých plánovaných zmien")
     requested_rf = sum(pulse["width"] for pulse in pulses)
     if requested_rf > STUDY_MAX_REQUESTED_RF_US or cumulative_requested_rf + requested_rf > STUDY_MAX_CUMULATIVE_REQUESTED_RF_US:
         raise ValueError("vyčerpaný softvérový rozpočet RF požiadaviek tejto série")
     return requested_rf
+
+
+def device_snapshot(device: Any, latest: dict[str, tuple[int, dict[str, Any]]]) -> dict[str, Any]:
+    """Read SDK accessors while marking whether their source arrived this session."""
+    origin = {"params": "s_post_device_param", "lock": "s_post_lock_data",
+              "status": "s_post_device_info"}
+    getters = {
+        "to_dict": ("mixed", device.to_dict),
+        "params.to_dict": ("params", device.params.to_dict),
+        "get_frequencies": ("lock", device.get_frequencies),
+        "get_temperature": ("status", device.get_temperature),
+        "is_locked": ("status", device.is_locked),
+        "get_pulse_amplitudes": ("params", device.get_pulse_amplitudes),
+        "get_pulse_phases": ("params", device.get_pulse_phases),
+        "get_qubit_params": ("params", device.get_qubit_params),
+        "get_shimming_values": ("params", device.get_shimming_values),
+        "lock_data": ("lock", lambda: vars(device.lock_data)),
+        "status": ("status", lambda: vars(device.status)),
+        "params.pulse_param": ("params", lambda: device.params.pulse_param),
+        "params.pps_param": ("params", lambda: device.params.pps_param),
+        "params.sample_param": ("params", lambda: device.params.sample_param),
+        "params.shimming_param": ("params", lambda: device.params.shimming_param),
+    }
+    values = {}
+    for name, (family, getter) in getters.items():
+        required = list(origin.values()) if family == "mixed" else [origin[family]]
+        observed = [key for key in required if key in latest]
+        try:
+            value = redact(getter())
+            error = None
+        except Exception as exc:
+            value, error = None, str(redact(str(exc)))
+        values[name] = {"value": value, "error": error,
+                        "source_messages_this_session": observed,
+                        "provenance": "server_update_seen" if len(observed) == len(required)
+                        else "cached_or_sdk_default_possible"}
+    return {"captured_utc": utc_now(), "device_id_candidate": redact(device.device_id),
+            "device_type_candidate": redact(device.device_type), "accessors": values}
+
+
+def append_p_channel_cases(cases: list[dict[str, Any]], config: dict[str, Any],
+                           device: Any, latest: dict[str, tuple[int, dict[str, Any]]]) -> str:
+    """Use only explicit fresh P calibration fields; otherwise document a skip."""
+    if "s_post_device_param" not in latest or "s_post_lock_data" not in latest:
+        return "P: v tejto relácii neprišli kalibračné parametre aj frekvencie"
+    params = device.params.to_dict()
+    pulse = params.get("pulseParam", {})
+    pps = params.get("ppsParam", {})
+    if not isinstance(pulse, dict) or not isinstance(pps, dict):
+        return "P: kalibračné skupiny pulseParam/ppsParam nemajú očakávaný tvar"
+    required = ((pulse, "am_Q2"), (pulse, "phaseQ2_0"), (pps, "width_Q2"))
+    if any(key not in group or not number(group[key]) for group, key in required):
+        return "P: chýba explicitná amplitúda, fáza alebo šírka v čerstvej kalibrácii"
+    amplitude, phase, width = float(pulse["am_Q2"]), float(pulse["phaseQ2_0"]), float(pps["width_Q2"])
+    frequency = device.get_frequencies().get("P")
+    if not (0 < amplitude <= 100 and 0 <= phase <= 360 and 1 <= width <= 44 and
+            number(frequency) and frequency > 0):
+        return "P: kalibračné hodnoty nie sú konečné alebo sú mimo úzkeho plánu; jednotky/rozsah nemožno potvrdiť"
+    base = physical_baseline(config)
+    base["samplePath"] = 1
+    base["pulse"] = {"hPulse": [], "pPulse": [{"width": width, "am": amplitude,
+                                              "phase": phase, "freshift": 0.0}]}
+    config["_runtime_p_baseline"] = base
+    config["_runtime_p_variants"] = {"p_baseline": copy.deepcopy(base)}
+    cases.append({"id": "p_baseline", "kind": "physical", "params": copy.deepcopy(base),
+                  "purpose": "P pracovný bod odvodený z čerstvých parametrov; účinok sa ešte len overí"})
+    for index in range(config["operation"]["repeat_count"]):
+        repeat_id = f"p_repeat_{index+1:02d}"
+        config["_runtime_p_variants"][repeat_id] = copy.deepcopy(base)
+        cases.append({"id": repeat_id, "kind": "physical",
+                      "params": copy.deepcopy(base), "requires_verified": "p_baseline",
+                      "purpose": "identický P experiment pre drift a denoising"})
+    candidates = []
+    for label, field, value in (
+            ("p_amplitude", "am", amplitude-2),
+            ("p_phase", "phase", (phase+5)%360),
+            ("p_width", "width", width+2),
+            ("p_detuning", "freshift", 10),
+            ("p_phase_relative_90", "phase", (phase+90)%360),
+            ("p_phase_relative_180", "phase", (phase+180)%360),
+            ("p_phase_relative_270", "phase", (phase+270)%360)):
+        changed = copy.deepcopy(base)
+        changed["pulse"]["pPulse"][0][field] = value
+        valid = (0 < changed["pulse"]["pPulse"][0]["am"] <= 100 and
+                 1 <= changed["pulse"]["pPulse"][0]["width"] <= 44)
+        candidates.append((label, changed, valid))
+    for label, field in (("p_frequency_shift", "p_freShift"),
+                         ("p_demod_shift", "p_freDemo")):
+        changed = copy.deepcopy(base)
+        changed[field] = 10
+        candidates.append((label, changed, True))
+    for label, changed, valid in candidates:
+        cases.append({"id": label, "kind": "physical", "params": changed,
+                      "enabled": valid, "skip_reason": "zmena presahuje úzky P plán",
+                      "requires_verified": "p_baseline", "purpose": "jedna malá P zmena voči baseline"})
+        if valid:
+            config["_runtime_p_variants"][label] = copy.deepcopy(changed)
+            return_id = label+"_return"
+            config["_runtime_p_variants"][return_id] = copy.deepcopy(base)
+            cases.append({"id": return_id, "kind": "physical", "params": copy.deepcopy(base),
+                          "return_for": label, "requires_verified": "p_baseline",
+                          "purpose": "návrat na čerstvý P pracovný bod"})
+    return "P: kandidát pracovného bodu odvodený z čerstvej telemetrie; nepovažovať za bezpečnostnú certifikáciu"
+
+
+def append_frequency_cases(cases: list[dict[str, Any]], config: dict[str, Any],
+                           device: Any, latest: dict[str, tuple[int, dict[str, Any]]]) -> str:
+    if "s_post_lock_data" not in latest:
+        return "custom_freq: chýbajú čerstvé H/P frekvencie"
+    frequencies = device.get_frequencies()
+    h, p = frequencies.get("H"), frequencies.get("P")
+    if not (number(h) and number(p) and 1e6 < h < 100e6 and 1e6 < p < 100e6):
+        return "custom_freq: H/P frekvencie nie sú v rozsahu vyžadovanom SDK"
+    config["_runtime_frequency_hz"] = {"H": h, "P": p}
+    base = physical_baseline(config)
+    cases.append({"id": "nmr_custom_frequency", "kind": "nmr", "params": copy.deepcopy(base),
+                  "custom_frequency_hz": {"H": h, "P": p},
+                  "purpose": "výslovné použitie čerstvej aktuálnej frekvencie bez rozladenia"})
+    cases.append({"id": "nmr_custom_frequency_return", "kind": "nmr",
+                  "params": copy.deepcopy(base), "return_for": "nmr_custom_frequency",
+                  "purpose": "návrat na automatický výber frekvencie"})
+    return "custom_freq: pripravené z čerstvých frekvencií zariadenia"
+
+
+def append_shape_case(cases: list[dict[str, Any]], config: dict[str, Any],
+                      device: Any, latest: dict[str, tuple[int, dict[str, Any]]]) -> dict[str, Any]:
+    """Check SDK waveform math locally, then schedule one small real shape test."""
+    try:
+        from spinqlablink import WaveformGenerator
+        generated = WaveformGenerator.generate(0, WaveformGenerator.GAUSSIAN,
+                                               4, 40, 90, 100, 0)
+        if len(generated) != 4:
+            raise ValueError("generátor nevrátil štyri segmenty")
+        expected = [100*math.exp(-((10*i-20)**2)/(2*10**2)) for i in range(4)]
+        observed = [pulse.amplitude for pulse in generated]
+        if any(abs(a-b) > 1e-6 for a, b in zip(expected, observed)):
+            raise ValueError("generovaný tvar nesúhlasí s lokálnou Gaussovou funkciou")
+        base = physical_baseline(config)
+        base["pulse"]["hPulse"] = [pulse.to_dict() for pulse in generated]
+        sample = device.params.sample_param if "s_post_device_param" in latest else {}
+        sample_kind = next((sample[key] for key in ("calibrate_sample", "calibrateSample", "sampleType", "sample_type")
+                            if isinstance(sample, dict) and key in sample), None)
+        if sample_kind not in (0, "0", "CH3PO(CH2CH3)2"):
+            cases.append({"id": "shape_gaussian_h", "kind": "shape", "params": base,
+                          "enabled": False, "skip_reason": "typ vzorky pre SHAPE_PULSE calibrate_sample=0 nebol čerstvo potvrdený"})
+            return {"status": "local_math_checked_live_skipped", "expected_amplitudes": expected,
+                    "sdk_amplitudes": observed, "sample_kind_received": sample_kind,
+                    "physical_rf_output_measured": False}
+        cases.append({"id": "shape_gaussian_h", "kind": "shape", "params": base,
+                      "purpose": "živé meranie štvordielneho H tvaru s celkovou šírkou 40 µs"})
+        return {"status": "local_math_checked_not_rf_output", "expected_amplitudes": expected,
+                "sdk_amplitudes": observed, "segment_width_us": 10}
+    except Exception as exc:
+        cases.append({"id": "shape_gaussian_h", "kind": "shape", "params": physical_baseline(config),
+                      "enabled": False, "skip_reason": "WaveformGenerator zlyhal: "+str(redact(str(exc)))})
+        return {"status": "NEOVERENÉ", "reason": str(redact(str(exc)))}
+
+
+SKIPPED_CAPABILITIES: tuple[tuple[str, str, str], ...] = (
+    ("pps_custom", "QUANTUM_SYSTEM_INITIALIZATION / using_custom_pps / pps_json",
+     "čerstvá telemetria nedodáva úplnú overenú PPS sekvenciu; vlastný JSON by bol odhad"),
+    ("pauli_type1", "PHYSICAL_LAYER_EXPERIMENT(type_setting=1, stepList)",
+     "vnútorné prípravné/čítacie pulzy pre Pauliho krok nemajú známy RF rozpočet"),
+    ("physical_tomography_type2", "PHYSICAL_LAYER_EXPERIMENT(type_setting=2)",
+     "vnútorné kroky tomografie a ich RF rozpočet nie sú z klienta obmedziteľné"),
+    ("state_tomography", "QUANTUM_STATE_TOMOGRAPHY",
+     "nie je doložená bezpečná vlastná PPS a počet vnútorných meraní"),
+    ("quantum_gates", "QUANTUM_GATES_AND_CIRCUIT / Circuit / Gate / CustomGate",
+     "vnútorná príprava a mapovanie vlastnej brány na pulzy nie sú potvrdené"),
+    ("circuit_layer", "CIRCUIT_LAYER_EXPERIMENT",
+     "mapovanie obvodu a prípravných pulzov na hardvér nie je potvrdené"),
+    ("numerical_optimization", "NUMERICAL_OPTIMIZATION_PULSE",
+     "počet interných optimalizačných meraní nie je cez SDK obmedziteľný"),
+    ("t1", "QUANTUM_DECOHERENCE_T1", "SDK neposkytuje voľbu jednotlivých oneskorení ani počet vnútorných bodov"),
+    ("t2", "QUANTUM_DECOHERENCE_T2", "SDK neposkytuje voľbu jednotlivých oneskorení ani počet vnútorných bodov"),
+    ("spin_echo", "SPIN_ECHO", "zoznam pulzov nešpecifikuje overené echo časovanie"),
+    ("dynamic_decoupling", "DYNAMIC_DECOUPLING", "sekvencia a jej vnútorné opakovania nie sú potvrdené"),
+    ("gradient_write", "Gradient / append_gradient", "mapovanie cievok a povolené napätie nemáme doložené"),
+    ("shim_write", "set_device_params / shimmingParam", "lokálny setter nie je doložený hardvérový zápis; trvalé nastavenie sa nemení"),
+    ("receiver_adc", "SpinQLabLink / Device", "v skúmanom SDK nie je doložený priamy ADC stream ani nastavenie prijímacieho zisku"),
+    ("server_fft_disable", "SpinQLabLink / experiment parameters", "SDK neponúka overený prepínač serverovej FFT alebo fitovania"),
+    ("sample_path_both", "PHYSICAL_LAYER_EXPERIMENT(samplePath=-1)",
+     "súčasné časovanie H/P a význam oboch kanálov pri type_setting=0 nie sú potvrdené"),
+    ("task_abort", "SpinQLabLink / deregister_experiment", "SDK nepreukazuje fyzické zastavenie úlohy; pri timeoute sa ďalšia neposiela"),
+    ("realtime_feedback", "SpinQLabLink / experiment events", "SDK sprístupňuje priebežné udalosti, nie doloženú spätnú väzbu meniacu bežiacu úlohu"),
+)
 
 
 def wait_recorded(recorder: EventRecorder, seconds: float = 8) -> None:
@@ -350,6 +574,11 @@ def scientific_metrics(analysis: dict[str, Any], scientific_path: Path) -> dict[
     if not real or not imag or len(real) != len(imag):
         return {"fid_status": "unpaired_or_absent", "raw_adc_confirmed": False}
     signal = [complex(re[1], im[1]) for re, im in zip(real, imag)]
+    atomic_json(scientific_path.with_name("complex_fid.json"), {
+        "identity": pair["identity"], "axis_unit": "NEOVERENÉ",
+        "complex_format": "[real, imaginary] in received absolute scale",
+        "axis_as_received": [point[0] for point in real],
+        "re_im": [[z.real, z.imag] for z in signal]})
     length = 1 << (len(signal)-1).bit_length()
     spectrum = _fft(signal + [0j]*(length-len(signal)))
     magnitudes = [abs(v) for v in spectrum]
@@ -471,9 +700,9 @@ def effect(current: dict[str, Any], baseline: dict[str, Any] | None,
             "claim_scope": "observed decoded FID change, not RF waveform or persistent calibration"}
 
 
-def repeat_statistics(result: dict[str, Any]) -> dict[str, Any]:
+def repeat_statistics(result: dict[str, Any], prefix: str = "repeat_") -> dict[str, Any]:
     rows = [row.get("returned", {}).get("metrics", {}) for row in result.get("tests", [])
-            if row.get("id", "").startswith("repeat_")]
+            if row.get("id", "").startswith(prefix)]
     rows = [row for row in rows if row.get("fid_status") == "paired"]
     if len(rows) < 2:
         return {"status": "NEOVERENÉ", "paired_repeats": len(rows)}
@@ -490,10 +719,66 @@ def repeat_statistics(result: dict[str, Any]) -> dict[str, Any]:
             "independence_of_internal_acquisitions": "unknown"}
 
 
+def readiness_summary(result: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    rows = {row["id"]: row for row in result.get("tests", [])}
+    def verified(*names: str) -> list[str]:
+        return [name for name in names if rows.get(name, {}).get("status") == "OVERENÉ"]
+    h_repeats = len(verified(*(f"repeat_{i:02d}" for i in range(1, 31))))
+    p_repeats = len(verified(*(f"p_repeat_{i:02d}" for i in range(1, 31))))
+    return {
+        "adaptive_calibration": {"evidence": verified("rabi_low2", "rabi_low", "rabi_center",
+                                                       "rabi_high", "rabi_high2", "rabi_control"),
+                                 "missing": "identifikovateľnosť a zlepšenie nad prirodzenou variabilitou",},
+        "complex_fid_denoising": {"evidence": {"h_repeats": h_repeats, "p_repeats": p_repeats},
+                                  "missing": "nezávislá bezšumová pravda a známe interné spracovanie"},
+        "learned_pps": {"evidence": verified("physical_baseline"),
+                        "missing": "overená kompletná PPS sekvencia a nezávislá tomografia"},
+        "robust_pulses": {"evidence": verified("multi_segment_h", "shape_gaussian_h",
+                                                  "phase_relative_90", "phase_relative_180", "phase_relative_270"),
+                          "missing": "meranie skutočného RF výstupu a viac stavov"},
+        "drift_compensation": {"evidence": verified("physical_baseline", "final_reference"),
+                               "missing": "dlhšie časové rady a oddelenie driftu od zmeny vzorky"},
+        "ai_shimming": {"evidence": "read-only shim hodnoty iba ak dorazili v tejto relácii",
+                        "missing": "mapovanie ciest, povolené napätia a bezpečný reverzibilný zápis"},
+        "agent_control": {"evidence": "sekvenčné merania s návratovým stavom a lokálnym výberom Rabi bodu",
+                          "missing": "spoľahlivé prerušenie úlohy, globálna RF záťaž a hardvérové limity"},
+    }
+
+
+def frequency_response(metrics_by_id: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    offsets = (-20, -10, 0, 10, 20)
+    names = [f"frequency_scan_{'m' if offset < 0 else 'p'}{abs(offset)}" for offset in offsets]
+    values = [metrics_by_id.get(name, {}).get("peak_magnitude") for name in names]
+    response = {"detuning_hz_requested": offsets, "local_fft_peak_magnitude": values,
+                "uncertainty": "NEOVERENÉ: päť bodov, neznáma os kalibrácie a interné priemerovanie"}
+    if not all(number(value) for value in values):
+        response.update(status="NEOVERENÉ", reason="chýba niektorý párovaný FID")
+        return response
+    index = max(range(5), key=lambda i: values[i])
+    response["best_measured_offset_hz"] = offsets[index]
+    if index in (0, 4):
+        response.update(status="NEOVERENÉ", reason="maximum je na okraji skenu; rezonancia nie je ohraničená")
+        return response
+    left, center, right = values[index-1:index+2]
+    denominator = left-2*center+right
+    if denominator >= 0 or denominator == 0:
+        response.update(status="NEOVERENÉ", reason="lokálna odozva nie je konkávne maximum")
+        return response
+    vertex = offsets[index] + 5*(left-right)/denominator
+    if not offsets[index-1] <= vertex <= offsets[index+1]:
+        response.update(status="NEOVERENÉ", reason="parabolický vrchol je mimo susedných bodov")
+        return response
+    response.update(status="exploratory_local_fit", peak_offset_hz_estimate=vertex,
+                    reason="len lokálny parabolický odhad, nie kalibrovaná rezonancia")
+    return response
+
+
 def markdown_report(result: dict[str, Any]) -> str:
     lines = ["# Séria testov SpinQ Gemini Lab", "", f"Začiatok: {result['started_utc']}",
              f"Stav série: {result.get('state', 'running')}",
              f"Rozsah: {result.get('execution_scope', 'NEOVERENÉ')}",
+             f"Odoslanie výsledkov: {result.get('upload', {}).get('status', 'NEZAČATÉ')}; "
+             f"dôvod: {result.get('upload', {}).get('reason', '—')}",
              f"SDK: {result.get('environment', {}).get('sdk_version') or 'NEZNÁME'}", "",
              f"Pokusy o skutočné experimenty: {result.get('real_hardware_attempts', 0)}; potvrdene dokončené: {result.get('real_hardware_completed', 0)}.",
              "Ak je počet 0, prístroj sa týmto programom nemeral. Prijaté údaje sú dekódované chart body; RAW ADC nie je potvrdené.",
@@ -501,13 +786,14 @@ def markdown_report(result: dict[str, Any]) -> str:
              "", "## Testy", ""]
     for row in result.get("tests", []):
         lines += [f"### {row['id']} — {row.get('status', 'NEOVERENÉ')}", "",
+                  f"- API: {row.get('api', 'NEOVERENÉ')}",
                   f"- Poslané: `{json.dumps(row.get('sent'), ensure_ascii=False, default=str)}`" if row.get("sent") is not None else "- Poslané: nič",
                   f"- Vrátené: `{json.dumps(row.get('returned'), ensure_ascii=False, default=str)}`" if row.get("returned") is not None else "- Vrátené: nič",
                   f"- Účinok: `{json.dumps(row.get('effect'), ensure_ascii=False, default=str)}`" if row.get("effect") is not None else "- Účinok: NEOVERENÉ",
                   f"- Dôvod: {row.get('reason', '—')}", ""]
     lines += ["## Čo vieme ovládať a získať", "",
-              "Fyzikálne účinky sú uvedené pri jednotlivých testoch. Skutočne prijaté polia sú v measurement/*/field_catalog.json.",
-              "Úplné pôvodné dekódované číselné grafy sú v measurement/*/original_scientific.json a events.jsonl.gz.",
+              "Fyzikálne účinky sú uvedené pri jednotlivých testoch. Skutočne prijaté polia sú v data/*/field_catalog.json.",
+              "Úplné pôvodné dekódované číselné grafy sú v data/*/original_scientific.json a data/events.jsonl.gz.",
               "Serverová FFT/fit sa podľa overeného SDK 1.0.2 nedá preukázateľne vypnúť; lokálna FFT a metriky sú oddelené.",
               "Interná akvizícia, príprava, ADC reťazec a fyzický RF výstup zostávajú NEZNÁME bez ďalších dôkazov.",
               "Opakovania nedávajú bezšumovú pravdu; denoising treba hodnotiť na nezávislých meraniach.",
@@ -515,8 +801,15 @@ def markdown_report(result: dict[str, Any]) -> str:
               "`"+json.dumps(result.get("repeat_statistics", {}), ensure_ascii=False, default=str)+"`",
               "", "## Lokálna kalibračná slučka", "",
               "`"+json.dumps(result.get("calibration_selection", {}), ensure_ascii=False, default=str)+"`",
+              "", "## Lokálne fity", "",
+              "Rabi: `"+json.dumps(result.get("rabi_fit", {}), ensure_ascii=False, default=str)+"`",
+              "Frekvenčná odozva: `"+json.dumps(result.get("frequency_response", {}), ensure_ascii=False, default=str)+"`",
               "", "## Chyby a zastavenia", ""]
     lines += [f"- {item}" for item in result.get("errors", [])] or ["- Žiadne zaznamenané."]
+    lines += ["", "## Pripravenosť na AI/ML výskum", ""]
+    for name, item in result.get("readiness", {}).items():
+        lines += [f"- **{name}**: dôkazy `{json.dumps(item.get('evidence'), ensure_ascii=False)}`; "
+                  f"chýba {item.get('missing', 'NEOVERENÉ')}"]
     return "\n".join(lines)+"\n"
 
 
@@ -531,9 +824,20 @@ def bundle(out: Path) -> None:
     temporary = out/"results.zip.tmp"
     with zipfile.ZipFile(temporary, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(out.rglob("*")):
-            if path.is_file() and path != archive_path and path != temporary and path.name != "events.jsonl" and not path.name.endswith(".tmp"):
+            if (path.is_file() and path != archive_path and path != temporary and
+                    path.name != "events.jsonl" and not path.name.endswith(".tmp") and
+                    not (path == out/"events.jsonl.gz" and (out/"data"/"events.jsonl.gz").exists())):
                 archive.write(path, str(path.relative_to(out)).replace("\\", "/"))
     os.replace(temporary, archive_path)
+
+
+def case_api(case: dict[str, Any]) -> str:
+    return case.get("api") or {
+        "physical": "register_experiment(PHYSICAL_LAYER_EXPERIMENT) / run_experiment",
+        "nmr": "register_experiment(NMR_PHENOMENON_AND_SIGNAL) / run_experiment",
+        "rabi": "register_experiment(RABI_OSCILLATIONS) / run_experiment",
+        "shape": "register_experiment(SHAPE_PULSE) / run_experiment",
+    }.get(case["kind"], "NEOVERENÉ")
 
 
 def main() -> int:
@@ -551,12 +855,15 @@ def main() -> int:
                               "errors": [], "real_hardware_attempts": 0, "real_hardware_completed": 0,
                               "raw_adc_confirmed": False}
     checkpoint(out, result)
-    link = adapter = recorder = None
+    link = adapter = recorder = device = device_observer = None
     connected = False
     exit_code = 0
     cases: list[dict[str, Any]] = []
     try:
         config = load_config(args.config)
+        config.pop("_runtime_p_baseline", None)
+        config.pop("_runtime_p_variants", None)
+        config.pop("_runtime_frequency_hz", None)
         cases = make_cases(config)
         result["planned_tests"] = [case["id"] for case in cases]
         checkpoint(out, result)
@@ -581,6 +888,7 @@ def main() -> int:
         result["static_findings"] = {
             "raw_adc": "NEZNÁME; decoded chart float32 is not ADC proof",
             "server_fft_disable": "no verified option in installed SDK 1.0.2",
+            "pulse_domain_analysis": "SDK utility opens a Qt event loop; omitted from unattended run; generated waveform checked against local Gaussian math, not physical RF output",
             "operating_limits": "manufacturer/device operating limits not supplied or established; bounded study uses a finite software test plan, not a hardware safety rating",
             "bounded_study_requested_rf_budget_us": STUDY_MAX_CUMULATIVE_REQUESTED_RF_US,
             "requested_rf_caveat": "known configured H pulse widths only; hidden preparation and internal repetitions are not counted",
@@ -588,6 +896,10 @@ def main() -> int:
             "internal_repeat_count": "NEZNÁME",
             "receiver_gain_and_filters": "NEZNÁME",
             "gradient_and_shim_write": "not attempted; units and limits unconfirmed",
+            "gradient_client_fields": "Gradient(path 0..13, voltage -1..1, duration µs) is an SDK declaration only; no coil mapping or hardware operating limit established",
+            "shim_read": "Device.get_shimming_values reads path0..13 from received shimmingParam when present; missing fields are not treated as zero measurements",
+            "t1_t2_delay_control": "SDK 1.0.2 experiment parameters do not expose per-point delays or internal acquisition count",
+            "phase_controls": "relative +90/+180/+270 degrees are scheduled around the observed H baseline; outcome requires measured FID",
             "cross_channel_timing": "NEZNÁME; a separate P path is not proof of simultaneous H/P timing",
             "t1_t2": "client experiment classes exist; live long scan not in this budget",
         }
@@ -599,14 +911,29 @@ def main() -> int:
                                      "configured_series_requiring_operating_limits")
         checkpoint(out, result)
         password = os.environ.get(config.get("password_env", "SPINQ_AUDIT_PASSWORD"))
-        if password is None:
-            password = getpass.getpass("Heslo SpinQ (iba v pamäti): ")
+        result["login_source"] = "environment" if password else "unavailable"
+        if not password and config.get("use_existing_demo_login") is True and config.get("account") == "anyword":
+            # This is the exact public fallback in the already working
+            # spinq_lab_control.py, not a newly guessed device credential.
+            password = "anyword"
+            result["login_source"] = "existing_spinq_lab_control_default"
+        if not password:
+            raise RuntimeError("Chýba neinteraktívne prihlásenie: nastav premennú hesla alebo použi existujúce demo prihlásenie")
         recorder = EventRecorder(out, max_events=256)
         link = SpinQLabLink(config["host"], config["port"], config["account"], password)
         del password
+        device = link.get_device()
+        result["observer_updates"] = []
+        def observed_device(_device: Any, update_type: str) -> None:
+            result["observer_updates"].append({"received_utc": utc_now(),
+                                               "type": update_type,
+                                               "source": "SDK register_observer callback"})
+        device_observer = observed_device
+        device.register_observer(device_observer)
         adapter = AuditAdapter(link, recorder, mode="active", owns_connection=True)
         adapter.attach()
-        if not link.connect() or not link.wait_for_login(timeout=10):
+        link.connect()  # SDK 1.0.2 returns None on successful connect().
+        if not link.get_connection() or not link.wait_for_login(timeout=10):
             raise RuntimeError("Spojenie alebo prihlásenie zlyhalo; nič sa nemeralo")
         connected = True
         result["state"] = "connected"
@@ -620,12 +947,35 @@ def main() -> int:
         atomic_json(out/"telemetry_field_catalog.json", field_catalog(
             {"message_type": kind, "as_received": body} for kind, body in result["device_observed"].items()))
         result["queue_observed"] = adapter.queue is not None
+        result["device_accessors"] = device_snapshot(device, adapter.latest)
+        result["telemetry_provenance"] = {kind: {"received_monotonic_ns": when,
+                                                  "source": "decoded server message",
+                                                  "snapshot_utc": utc_now()}
+                                          for kind, (when, _body) in adapter.latest.items()}
+        result["custom_frequency_basis"] = append_frequency_cases(cases, config, device, adapter.latest)
+        if "_runtime_frequency_hz" not in config:
+            cases.append({"id": "nmr_custom_frequency", "kind": "nmr", "params": physical_baseline(config),
+                          "enabled": False, "api": "NMR_PHENOMENON_AND_SIGNAL(custom_freq)",
+                          "skip_reason": result["custom_frequency_basis"]})
+        result["waveform_local_check"] = append_shape_case(cases, config, device, adapter.latest)
+        cases.append({"id": "final_reference", "kind": "physical", "params": physical_baseline(config),
+                      "purpose": "záverečný H referenčný FID pre oddelenie driftu"})
+        result["p_channel_basis"] = append_p_channel_cases(cases, config, device, adapter.latest)
+        if "_runtime_p_baseline" not in config:
+            cases.append({"id": "p_baseline", "kind": "physical", "params": physical_baseline(config),
+                          "enabled": False, "api": "PHYSICAL_LAYER_EXPERIMENT(samplePath=1)",
+                          "skip_reason": result["p_channel_basis"]})
+        for capability_id, api, reason in SKIPPED_CAPABILITIES:
+            cases.append({"id": capability_id, "kind": "capability", "api": api,
+                          "params": None, "enabled": False, "skip_reason": reason,
+                          "purpose": "preskúmanie dostupnosti bez neovereného hardvérového zásahu"})
+        result["planned_tests"] = [case["id"] for case in cases]
         checkpoint(out, result)
         max_experiments = operation.get("max_experiments", 0)
         pause = operation.get("pause_seconds", 0)
         timeout = operation.get("timeout_seconds", 0)
-        if type(max_experiments) is not int or not 1 <= max_experiments <= 100:
-            raise ValueError("operation.max_experiments musí byť 1..100")
+        if type(max_experiments) is not int or not 1 <= max_experiments <= 120:
+            raise ValueError("operation.max_experiments musí byť 1..120")
         if not number(pause) or not 1 <= pause <= 3600 or not number(timeout) or not 20 <= timeout <= 3600:
             raise ValueError("neplatná prestávka alebo deadline")
         if operation.get("max_experiments") is None:
@@ -640,6 +990,7 @@ def main() -> int:
         with HardwareLock(lock_path):
             for case in cases:
                 row: dict[str, Any] = {"id": case["id"], "kind": case["kind"], "purpose": case.get("purpose"),
+                                       "api": case_api(case),
                                        "status": "NEOVERENÉ", "sent": None, "returned": None,
                                        "effect": None, "reason": "nezačaté"}
                 result["tests"].append(row)
@@ -648,6 +999,13 @@ def main() -> int:
                     row["reason"] = case.get("skip_reason", "vypnuté v konfigurácii")
                     checkpoint(out, result)
                     continue
+                if case.get("requires_verified"):
+                    required = next((prior for prior in result["tests"]
+                                     if prior["id"] == case["requires_verified"]), None)
+                    if required is None or required["status"] != "OVERENÉ":
+                        row["reason"] = "predchádzajúci pracovný bod nemá overený signál"
+                        checkpoint(out, result)
+                        continue
                 if case.get("return_for"):
                     parent = next((prior for prior in result["tests"] if prior["id"] == case["return_for"]), None)
                     if parent is None or parent.get("sent") is None:
@@ -694,6 +1052,7 @@ def main() -> int:
                     raise RuntimeError("fronta nie je prázdna; cudzia úloha sa neovláda")
                 experiment_type = (ExperimentType.PHYSICAL_LAYER_EXPERIMENT if case["kind"] == "physical"
                                    else ExperimentType.RABI_OSCILLATIONS if case["kind"] == "rabi"
+                                   else ExperimentType.SHAPE_PULSE if case["kind"] == "shape"
                                    else ExperimentType.NMR_PHENOMENON_AND_SIGNAL)
                 experiment, params = link.register_experiment(experiment_type)
                 submitted = False
@@ -707,15 +1066,35 @@ def main() -> int:
                                                phase=pulse["phase"], detuning=pulse["freshift"])
                                          for path, channel in ((0, "hPulse"), (1, "pPulse"))
                                          for pulse in desired["pulse"][channel]]
-                        params.makePps = desired["makePps"]
                         params.samplePath = desired["samplePath"]
-                        params.custom_freq = False
+                        if case["kind"] == "shape":
+                            params.sampleFre = desired["sampleFre"]
+                            params.sampleCount = desired["sampleCount"]
+                            params.sampleDelay = desired["sampleDelay"]
+                            params.h_freShift = desired["h_freShift"]
+                            params.h_freDemo = desired["h_freDemo"]
+                        else:
+                            params.makePps = desired["makePps"]
+                            frequencies = case.get("custom_frequency_hz")
+                            params.custom_freq = frequencies is not None
+                            if frequencies is not None:
+                                if frequencies != config.get("_runtime_frequency_hz"):
+                                    raise ValueError("vlastné frekvencie sa líšia od čerstvej telemetrie")
+                                params.freq_h = frequencies["H"]/1e6
+                                params.freq_p = frequencies["P"]/1e6
                     wire = experiment.get_experiment_parameter()
                     actual = json.loads(wire["params"])
                     if case["kind"] == "physical" and actual != desired:
                         raise ValueError("SDK serializoval iný fyzikálny payload")
                     if actual.get("pulse") != desired["pulse"] or actual.get("samplePath") != desired["samplePath"]:
                         raise ValueError("finálny pulz/kanál sa zmenil pri serializácii")
+                    if case["kind"] == "shape" and (actual.get("sampleFre") != desired["sampleFre"] or
+                                                   actual.get("sampleCount") != desired["sampleCount"]):
+                        raise ValueError("SHAPE_PULSE serializoval iné vzorkovanie")
+                    if case.get("custom_frequency_hz") and (actual.get("custom_freq") is not True or
+                            abs(actual.get("freq_h", 0)-case["custom_frequency_hz"]["H"]) > 1 or
+                            abs(actual.get("freq_p", 0)-case["custom_frequency_hz"]["P"]) > 1):
+                        raise ValueError("SDK serializoval inú vlastnú frekvenciu")
                     row["sent"] = {"experiment_type": str(experiment_type), "params": actual,
                                    "sdk_task_id_before_ack": str(experiment.id),
                                    "phase": "prepared_not_sent"}
@@ -749,7 +1128,7 @@ def main() -> int:
                         checkpoint(out, result)
                         raise RuntimeError(row["reason"])
                     result["real_hardware_completed"] += 1
-                    measurement = out/"measurement"/case["id"]
+                    measurement = out/"data"/case["id"]
                     measurement.mkdir(parents=True, exist_ok=True)
                     sdk_result = experiment.get_result()
                     atomic_bytes(measurement/"sdk_result.json", json.dumps(redact(sdk_result),
@@ -794,18 +1173,33 @@ def main() -> int:
                             "requested": desired["sampleCount"], "received_fid": metric.get("points"),
                             "equal": metric.get("points") == desired["sampleCount"]
                             if number(metric.get("points")) else None}
+                    if number(metric.get("axis_check_as_received", {}).get("median_axis_step")):
+                        row["returned"]["sample_timing_comparison"] = {
+                            "requested_hz": desired["sampleFre"],
+                            "expected_seconds_per_sample": 1/desired["sampleFre"],
+                            "received_axis_step": metric["axis_check_as_received"]["median_axis_step"],
+                            "received_axis_unit": "NEOVERENÉ; porovnanie čísiel nie je dôkaz jednotky"}
                     if not row["returned"]["server_ack_observed"]:
                         raise RuntimeError("potvrdenie servera sa nezachytilo; ďalšie merania sa neposielajú")
-                    if case["id"] == "physical_baseline":
+                    if case["id"] in {"physical_baseline", "p_baseline"}:
                         last_baseline = metric
+                    if case["id"] == "final_reference":
+                        row["effect"] = effect(metric, metrics_by_id.get("physical_baseline"),
+                                               repeat_variability=result.get("repeat_statistics"))
                     if case["id"].startswith("repeat_") and metric.get("fid_status") == "paired":
                         last_baseline = metric
                         result["repeat_statistics"] = repeat_statistics(result)
+                    if case["id"].startswith("p_repeat_") and metric.get("fid_status") == "paired":
+                        last_baseline = metric
+                        result["p_repeat_statistics"] = repeat_statistics(result, "p_repeat_")
                     if case.get("return_for"):
                         original = next((r for r in result["tests"] if r["id"] == case["return_for"]), None)
                         if original and original.get("returned"):
+                            parent_baseline = (metrics_by_id.get("physical_baseline")
+                                               if case["return_for"] == "nmr_custom_frequency"
+                                               else last_baseline)
                             original["effect"] = effect(original["returned"].get("metrics", {}),
-                                                        last_baseline, metric, result.get("repeat_statistics"))
+                                                        parent_baseline, metric, result.get("repeat_statistics"))
                             if (original["returned"].get("transport_complete_confirmed") and
                                     analysis["transport_complete_confirmed"]):
                                 original["status"] = original["effect"]["status"]
@@ -813,11 +1207,14 @@ def main() -> int:
                                 original["status"] = "NEOVERENÉ"
                                 original["effect"]["reason"] += "; prenos kompletnosti grafov nie je potvrdený"
                         last_baseline = metric
-                    elif case["id"] not in {"physical_baseline"} and not case["id"].startswith("repeat_"):
-                        row["effect"] = effect(metric, last_baseline)
+                    elif case["id"] not in {"physical_baseline", "p_baseline", "final_reference"} and not case["id"].startswith(("repeat_", "p_repeat_")):
+                        h_reference = metrics_by_id.get("physical_baseline")
+                        comparison = (h_reference if case["id"].startswith("nmr_custom_frequency") or
+                                      case["kind"] == "shape" else last_baseline)
+                        row["effect"] = effect(metric, comparison)
                     complete_chart = analysis["transport_complete_confirmed"]
                     data_verified = (complete_chart and analysis["chart_count"] and
-                                     (case["kind"] != "physical" or metric.get("fid_status") == "paired"))
+                                     (case["kind"] not in {"physical", "shape"} or metric.get("fid_status") == "paired"))
                     if case["kind"] == "rabi" and number(metric.get("rabi_real_server_result")):
                         data_verified = True  # Scope: a server-derived scalar, not a complete FID.
                     row["status"] = "OVERENÉ" if data_verified else "NEOVERENÉ"
@@ -836,16 +1233,32 @@ def main() -> int:
                                      if row["status"] == "OVERENÉ" else "meranie skončilo, ale kompletný FID nebol potvrdený")
                     checkpoint(out, result)
                     print(f"{case['id']}: {row['status']} ({analysis['chart_count']} kriviek)", flush=True)
-                    if case["id"] == "rabi_high":
+                    if case["id"] == "frequency_scan_p20":
+                        result["frequency_response"] = frequency_response(metrics_by_id)
+                        checkpoint(out, result)
+                    if case["id"] == "rabi_high2":
                         scan = [(name, metrics_by_id.get(name, {})) for name in
-                                ("rabi_low", "rabi_center", "rabi_high")]
+                                ("rabi_low2", "rabi_low", "rabi_center", "rabi_high", "rabi_high2")]
+                        if all(number(m.get("rabi_real_server_result")) for _, m in scan):
+                            try:
+                                from analyze_results import fit_rabi
+                                result["rabi_fit"] = fit_rabi([
+                                    {"width_us": width, "real": metrics_by_id.get(name, {}).get("rabi_real_server_result")}
+                                    for name, width in zip(("rabi_low2", "rabi_low", "rabi_center",
+                                                            "rabi_high", "rabi_high2"),
+                                                           PREVIOUSLY_COMPLETED_RABI_WIDTHS_US)])
+                                result["rabi_fit"]["uncertainty"] = (
+                                    "NEOVERENÉ: päť bodov a neznámy interný priemer; perióda je exploratívny lokálny fit")
+                            except Exception as exc:
+                                result["rabi_fit"] = {"status": "NEOVERENÉ", "reason": str(redact(str(exc)))}
                         metric_key = ("peak_magnitude" if all(number(m.get("peak_magnitude")) for _, m in scan)
                                       else "rabi_real_server_result" if all(number(m.get("rabi_real_server_result")) for _, m in scan)
                                       else None)
                         if metric_key:
                             selected = max(scan, key=lambda item: abs(item[1][metric_key]))[0]
                             chosen = next(item for item in cases if item["id"] == selected)
-                            cases.append({"id": "rabi_control", "kind": "rabi",
+                            cases.insert(cases.index(case)+1,
+                                         {"id": "rabi_control", "kind": "rabi",
                                           "params": copy.deepcopy(chosen["params"]),
                                           "purpose": "nezávislá kontrola lokálne vybraného bodu"})
                             result["planned_tests"].append("rabi_control")
@@ -889,26 +1302,43 @@ def main() -> int:
         for case in cases:
             if case["id"] not in seen_ids:
                 result["tests"].append({"id": case["id"], "kind": case["kind"],
+                    "api": case_api(case), "purpose": case.get("purpose"),
                     "status": "NEOVERENÉ", "sent": None, "returned": None, "effect": None,
-                    "reason": "séria sa zastavila pred týmto testom"})
+                    "reason": (case.get("skip_reason", "vypnuté") if case.get("enabled") is False else
+                               "séria sa zastavila pred týmto testom")})
         if connected and link is not None:
             try:
                 link.disconnect()  # Own client only; this does not abort a task on hardware.
             except Exception as exc:
                 result["errors"].append("disconnect: "+redact(str(exc)))
+        if device is not None and adapter is not None:
+            result["device_accessors_final"] = device_snapshot(device, adapter.latest)
+        if device is not None and device_observer is not None:
+            device.unregister_observer(device_observer)
         if adapter is not None:
             result["capture"] = {"decoder_failures": adapter.decoder_failures,
                                  "outgoing_types": sorted(set(adapter.outgoing))}
             adapter.detach()
         if recorder is not None:
             result["recorder"] = recorder.close()
+            recorded = out/"events.jsonl.gz"
+            if recorded.exists():
+                (out/"data").mkdir(exist_ok=True)
+                shutil.copyfile(recorded, out/"data"/"events.jsonl.gz")
         if result["errors"]:
             prior = (out/"errors.log").read_text(encoding="utf-8")
             atomic_bytes(out/"errors.log", (prior+"\n"+"\n".join(result["errors"])+"\n").encode("utf-8"))
         result["finished_utc"] = utc_now()
+        result["readiness"] = readiness_summary(result)
+        checkpoint(out, result)
+        result["upload"] = {"status": "PENDING"}
         checkpoint(out, result)
         bundle(out)
-        print(f"Výsledky: {out/'results.zip'}", flush=True)
+        result["upload"] = publish_results(Path(__file__).resolve().parent,
+                                             out/"results.zip", "results/"+stamp)
+        checkpoint(out, result)
+        bundle(out)
+        print(f"Výsledky: {out/'results.zip'}; Git: {result['upload']['status']}", flush=True)
     return exit_code
 
 

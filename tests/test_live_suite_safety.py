@@ -5,7 +5,8 @@ import unittest
 from pathlib import Path
 
 from spinq_live_suite import (
-    HISTORICAL_PHYSICAL_BASELINE, check_case, load_config, make_cases,
+    HISTORICAL_PHYSICAL_BASELINE, STUDY_MAX_CUMULATIVE_REQUESTED_RF_US,
+    check_case, load_config, make_cases,
 )
 
 
@@ -46,7 +47,7 @@ class HistoricalBaselineSafetyTests(unittest.TestCase):
                 continue
             with self.subTest(case=case["id"]):
                 total += check_case(case, self.config, total)
-        self.assertLessEqual(total + 42, 1500)  # final independent Rabi control
+        self.assertLessEqual(total + 44, STUDY_MAX_CUMULATIVE_REQUESTED_RF_US)
         changed = copy.deepcopy(self.baseline)
         changed["params"]["pulse"]["hPulse"][0]["width"] = 80
         with self.assertRaises(ValueError):
@@ -56,7 +57,7 @@ class HistoricalBaselineSafetyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_case(changed, self.config, 0)
         with self.assertRaises(ValueError):
-            check_case(self.baseline, self.config, 1490)
+            check_case(self.baseline, self.config, STUDY_MAX_CUMULATIVE_REQUESTED_RF_US-10)
 
 
 if __name__ == "__main__":

@@ -205,12 +205,11 @@ spusti `git pull`. Opravený skript číta stav priamo z experimentu.
 
 ## Reálne automatické merania na Windows
 
-Podľa [stručného návodu](LIVE_WINDOWS.md) `spinq_live_suite.py` na pripojenom
-Windows počítači spustí obmedzenú sériu skutočných NMR a fyzikálnych meraní,
-10 opakovaní, malé zmeny H pulzu a krátky Rabi sken. Vychádza z už
-úspešného 40 µs pracovného bodu; čísla softvérového plánu neoznačuje za
-výrobné prevádzkové limity. Neznáme alebo trvalé zásahy preskočí. Výsledkom
-je `results.zip`.
+Na pripojenom Windows počítači spusti `run_windows.cmd`; postup je v
+[krátkom Windows návode](WINDOWS_README.md). Program vykoná dostupné reálne
+merania, zaznamená aj priebežné dáta a podľa čerstvej kalibrácie skúsi P kanál.
+Neoverené vnútorné pulzy a trvalé zásahy preskočí s dôvodom. Výsledkom je
+lokálny `results.zip`; Git push do samostatnej vetvy sa skúsi automaticky.
 
 ## Audit SDK, NMR dát a budúcej kalibrácie
 

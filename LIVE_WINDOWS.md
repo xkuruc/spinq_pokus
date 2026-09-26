@@ -21,8 +21,8 @@ nemáme. Rozsahy, ktoré prijíma Python API, nie sú dôkazom bezpečného
 prevádzkového rozsahu. Skript ich preto nenazýva prevádzkovými limitmi.
 
 Predvolená konfigurácia používa namiesto toho **obmedzený plán jednej
-výskumnej série**: malé zmeny okolo predošlého 40 µs merania, najviac 40
-požiadaviek a najviac 1500 µs súčtu *požadovaných* H pulzov v tomto spustení.
+výskumnej série**: malé zmeny okolo predošlého 40 µs merania, najviac 120
+požiadaviek a najviac 6000 µs súčtu *požadovaných* pulzov v tomto spustení.
 Sú to softvérové brzdy experimentu, nie záruka bezpečnosti hardvéru; vnútorné
 prípravné pulzy a interné opakovania do súčtu nevidíme. Séria kontroluje
 pripojenie, lock, čerstvú konečnú teplotu a frontu, ale bez výrobného rozsahu
@@ -34,25 +34,29 @@ V PowerShelli v priečinku repozitára:
 
 ```powershell
 git pull
-.\.venv\Scripts\python.exe .\spinq_live_suite.py --config .\live_suite.example.toml
+.\run_windows.cmd
 ```
 
-Predvolený plán postupne skúsi základný NMR signál, fyzikálny FID, 10
+Predvolený plán postupne skúsi základný NMR signál, fyzikálny FID, 20
 samostatných opakovaní, malé zmeny H pulzu s návratom na základný bod,
 rozdelenie H pulzu na dva segmenty, frekvenčný a demodulačný posun, zmeny
-vzorkovania a krátky Rabi sken 38/40/42 µs s kontrolným meraním vybraného
-bodu. Každé meranie má vlastné dáta a výsledok; serverom vrátený FID sa
+vzorkovania, fázy 0/90/180/270°, tvarovaný pulz pri potvrdenom type vzorky a päťbodový Rabi sken
+40/80/120/160/200 µs, ktorý ti už raz prešiel, s kontrolným meraním vybraného bodu. P kanál sa skúsi
+iba pri čerstvých úplných kalibračných hodnotách. Každé meranie má vlastné
+dáta a výsledok; serverom vrátený FID sa
 spracuje aj lokálne. Ak prehliadka stavu, lock, fronta, SDK alebo experiment
 zlyhá, ďalšie požiadavky sa neposielajú naslepo.
 
-P kanál, vypnutie prípravy, meranie bez RF, zmenu hodnoty relaxácie,
+Vypnutie prípravy, meranie bez RF, zmenu hodnoty relaxácie,
 gradienty a trvalé nastavenia skript preskočí s dôvodom: ich význam alebo
 pracovný bod zatiaľ nie je overený. Keďže si už spustil Rabi so šírkami
 40–200 µs, tento plán skúša iba malé zmeny okolo 40 µs. Študijné medze sú
 uvedené priamo v `spinq_live_suite.py`; zmena konfigurácie mimo nich sa
 neodošle.
 
-Heslo nedávaj do súboru. Skript sa naň opýta skrytou výzvou. Predvolený
+Heslo nedávaj do súboru. Skript bez otázok použije premennú
+`SPINQ_AUDIT_PASSWORD`, alebo demo hodnotu `anyword` z už fungujúceho
+`spinq_lab_control.py`. Predvolený
 príklad predpokladá, že počas merania prístroj používaš iba ty. Ak ho môže
 používať aj niekto iný, nastav v lokálnej kópii konfigurácie
 `exclusive_use_confirmed = false`; bez čerstvej prázdnej fronty sa potom
@@ -66,3 +70,8 @@ udalosťami, lokálnou analýzou, náhľadmi a chybami. Výsledky sa ukladajú
 priebežne a Git ich ignoruje. Ak zostane lokálny súbor
 `.spinq_live_gemini.lock` po násilnom ukončení, odstráň ho až po kontrole
 fronty a stavu úlohy na tablete.
+
+Po meraní sa program neinteraktívne pokúsi pushnúť iba výsledky do novej
+vetvy `results/DATUM_UTC`. Ak Git autentifikácia na Windowse chýba,
+lokálny ZIP zostane a v reporte bude `UPLOAD_FAILED`. Veľký ZIP sa pre Git
+rozdelí na číslované časti bez straty lokálneho celku.

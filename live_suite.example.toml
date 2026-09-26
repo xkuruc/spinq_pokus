@@ -5,14 +5,15 @@ host = "172.19.20.100"
 port = 8181
 account = "anyword"
 password_env = "SPINQ_AUDIT_PASSWORD"
+use_existing_demo_login = true
 baseline_verified = true
 historical_baseline_only = false
 bounded_study_enabled = true
 hardware_lock_path = "~/.spinq_live_gemini.lock"
 
 [operation]
-repeat_count = 10
-max_experiments = 40
+repeat_count = 20
+max_experiments = 120
 pause_seconds = 10
 timeout_seconds = 180
 status_max_age_seconds = 120
@@ -38,7 +39,7 @@ make_pps = true
 
 [deltas]
 # Small test changes around the earlier completed 40 µs measurement.
-# The code enforces a finite study envelope and a 1500 µs requested RF budget.
+# The code enforces a finite study envelope and a 6000 µs requested RF budget.
 amplitude_pct = 2.0
 phase_deg = 5.0
 width_us = 2.0
@@ -49,7 +50,7 @@ sample_frequency_hz = 10000
 sample_count = 1000
 sample_delay_us = 100
 relaxation_delay_value = 1.0
-rabi_width_us = 2.0
+# Rabi uses the five widths 40/80/120/160/200 µs completed previously.
 
 [features]
 # "verified" here means the SDK field meaning is documented enough to test;
@@ -57,6 +58,7 @@ rabi_width_us = 2.0
 multi_segment_verified = true
 frequency_shift_verified = true
 demod_shift_verified = true
+frequency_scan_enabled = true
 sampling_variants_verified = true
 relaxation_variant_verified = false
 state_initialization_off_verified = false
@@ -64,25 +66,5 @@ p_channel_verified = false
 no_rf_verified = false
 rabi_scan_verified = true
 
-# Add [phosphorus_baseline] with width_us, amplitude_pct, phase_deg,
-# detuning_hz after a P-channel working point is established.
-
-[limits]
-# Not used by bounded_study_enabled=true. These optional fields are for a
-# separate site-approved operating-envelope mode, if such limits become known.
-# Fill with documented local operating limits; never infer from this preset.
-# Do not copy Python validator maxima and call them safety limits.
-# max_pulse_amplitude_pct = ...
-# max_single_pulse_width_us = ...
-# max_requested_rf_us_per_task = ...
-# max_cumulative_requested_rf_us = ...
-# min_relaxation_value = ...
-# max_relaxation_value = ...
-# max_sample_count = ...
-# max_sample_frequency_hz = ...
-# max_sample_delay_us = ...
-# max_abs_detuning_hz = ...
-# max_abs_frequency_shift = ...
-# max_abs_demod_shift = ...
-# min_temperature_c = ...
-# max_temperature_c = ...
+# P-channel candidate is inferred only from fresh device pulseParam/ppsParam
+# and lock data during this run. Unknown operations remain skipped.
