@@ -1,0 +1,13 @@
+{
+  "experiment": "01_bayes_kalibracia",
+  "status": "UNAVAILABLE_PILOT_INCOMPLETE",
+  "units": {
+    "frequency": "Hz",
+    "t90": "microseconds",
+    "relative_phase": "degrees"
+  },
+  "origin": "this run's measured FID pilot; no persistent device settings changed",
+  "persistent_device_calibration_modified": false,
+  "pilot": {},
+  "validity": "No method calibration certified without independent block reference and controls"
+}
