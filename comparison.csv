@@ -1,0 +1,1 @@
+method,baseline,block,status,reason,acquisitions,acquisition_seconds,fitting_seconds,inference_seconds,design_seconds,end_to_end_seconds,frequency_error_hz,t90_error_us,phase_error_deg,coverage_frequency,coverage_t90,coverage_phase,reference_uncertainty,estimate_uncertainty,calibration_bias,control_error
