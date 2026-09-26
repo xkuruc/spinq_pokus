@@ -79,7 +79,7 @@ def passive(config: dict[str, Any], out: Path, duration: float) -> dict[str, Any
             link.disconnect()  # Only the client created here.
 
 
-def _configure_physical(params: Any, requested: dict[str, Any]):
+def _configure_physical(params: Any, requested: dict[str, Any], *, check_serialization: bool = True):
     from spinqlablink import Pulse
     params.type_setting = requested["compute_type"]
     params.relaxation_delay = requested["relaxation_time"]
@@ -99,7 +99,7 @@ def _configure_physical(params: Any, requested: dict[str, Any]):
                                        amplitude=pulse["am"], phase=pulse["phase"],
                                        detuning=pulse["freshift"]))
     actual = params.get_parameters()
-    if canonical(actual) != canonical(requested):
+    if check_serialization and canonical(actual) != canonical(requested):
         raise RuntimeError("SDK serializoval odlišný finálny payload; nič sa neposlalo.")
 
 

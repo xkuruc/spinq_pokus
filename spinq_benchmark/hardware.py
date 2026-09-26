@@ -21,6 +21,22 @@ class HardwareUncertain(RuntimeError):
     """Task might still be on the device; stop every further submission."""
 
 
+def same_physical_payload(expected, actual, *, rel_tol=1e-6, abs_tol=1e-6):
+    """Compare serialized physical fields without JSON order or int/float noise."""
+    if isinstance(expected,dict) and isinstance(actual,dict):
+        return set(expected)==set(actual) and all(same_physical_payload(expected[k],actual[k],
+            rel_tol=rel_tol,abs_tol=abs_tol) for k in expected)
+    if isinstance(expected,list) and isinstance(actual,list):
+        return len(expected)==len(actual) and all(same_physical_payload(a,b,
+            rel_tol=rel_tol,abs_tol=abs_tol) for a,b in zip(expected,actual))
+    if type(expected) is bool or type(actual) is bool:
+        return expected is actual
+    if isinstance(expected,(int,float)) and isinstance(actual,(int,float)):
+        return math.isfinite(expected) and math.isfinite(actual) and math.isclose(
+            expected,actual,rel_tol=rel_tol,abs_tol=abs_tol)
+    return expected==actual
+
+
 def physical_request(*, pulses=None, sample_count=16000, sample_hz=10000,
                      detuning_hz=0, phase_deg=90., amplitude_pct=100., width_us=40.):
     p=copy.deepcopy(HISTORICAL_PHYSICAL_BASELINE)
@@ -32,7 +48,7 @@ def physical_request(*, pulses=None, sample_count=16000, sample_hz=10000,
     return p
 
 
-def validate_request(p, cumulative_rf_us, max_rf_us=12000.):
+def validate_request(p, cumulative_rf_us, max_rf_us=12000., *, allow_idle_probe=False):
     """Finite study envelope derived from operator's completed 40-200 us H runs.
 
     This is a software research budget, NOT a manufacturer safety rating.
@@ -52,10 +68,13 @@ def validate_request(p, cumulative_rf_us, max_rf_us=12000.):
     for q in pulses:
         if set(q)!={"width","am","phase","freshift"} or any(type(q[k]) not in (int,float) or not math.isfinite(q[k]) for k in q):
             raise ValueError("Malformed pulse")
-        if not (5<=q["width"]<=200 and 0<q["am"]<=100 and 0<=q["phase"]<360 and abs(q["freshift"])<=20):
+        if not (5<=q["width"]<=200 and (0<=q["am"]<=100 if allow_idle_probe else 0<q["am"]<=100)
+                and 0<=q["phase"]<360 and abs(q["freshift"])<=20):
             raise ValueError("Pulse outside completed-study envelope")
-        rf+=q["width"]
-    if rf>200 or cumulative_rf_us+rf>max_rf_us:
+        if q["am"]==0 and not allow_idle_probe:
+            raise ValueError("Zero-amplitude delay not verified")
+        if q["am"]>0: rf+=q["width"]
+    if sum(q["width"] for q in pulses)>200 or rf>200 or cumulative_rf_us+rf>max_rf_us:
         raise ValueError("Requested RF time exceeds finite study budget")
     return rf
 
@@ -148,7 +167,7 @@ class LiveHardware:
         return {"temperature":status["temperature"],"queue_fresh":fresh,
                 "queue_empty":fresh and queue[1].get("queue")==[]}
 
-    def measure(self,key,p):
+    def measure(self,key,p,*,allow_idle_probe=False):
         """Configure -> submit -> terminal state -> paired FID and metadata.
 
         Completed keys are read from disk for idempotent continuation. An
@@ -160,7 +179,7 @@ class LiveHardware:
             return json.loads(target.read_text(encoding="utf-8"))
         if prior: raise HardwareUncertain(f"Unresolved prior task {key}: {prior.get('phase')}")
         if self.task_count>=self.max_tasks: raise ValueError("Study task budget exhausted")
-        rf=validate_request(p,self.rf_us,self.max_rf)
+        rf=validate_request(p,self.rf_us,self.max_rf,allow_idle_probe=allow_idle_probe)
         preflight=self._preflight()
         wait=max(0.,self.pause-(time.monotonic()-self.last_finished))
         if wait:time.sleep(wait)
@@ -169,9 +188,13 @@ class LiveHardware:
         terminal=False
         start=time.monotonic()
         try:
-            _configure_physical(pars,p)
+            _configure_physical(pars,p,check_serialization=False)
             wire=exp.get_experiment_parameter()
-            if json.loads(wire["params"])!=p: raise RuntimeError("Final SDK payload mismatch")
+            actual_payload=json.loads(wire["params"])
+            if not same_physical_payload(p,actual_payload):
+                atomic_json(self.data/(key+".payload_mismatch.json"),
+                            {"requested":p,"sdk_serialized":actual_payload})
+                raise RuntimeError("Final SDK physical payload mismatch")
             self.adapter.own_task_ids.add(str(exp.id))
             self.adapter.pending_own_ack=True
             self.adapter.ack_mismatch=False

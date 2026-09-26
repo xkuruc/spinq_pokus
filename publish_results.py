@@ -78,11 +78,31 @@ def _summary_files(out: Path, destination: Path) -> list[str]:
 
 
 def _archive_parts(zip_path: Path, destination: Path) -> list[str]:
-    """Compatibility path for the separate, older live-suite command."""
+    """Publish browsable results plus recoverable full-FID archive parts."""
+    out=zip_path.parent
+    names=[]
+    for name in ("REPORT.md","comparison.csv","results.json",
+                 "computation_map.md","reproduction_scope.md","sources.md"):
+        source=out/name
+        if source.is_file():
+            shutil.copyfile(source,destination/name)
+            names.append(name)
+    plots=out/"plots"
+    if plots.is_dir():
+        for source in sorted(plots.glob("*.png")):
+            target=destination/"plots"/source.name
+            target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copyfile(source,target)
+            names.append("plots/"+source.name)
     if zip_path.stat().st_size<=PART_BYTES:
         shutil.copyfile(zip_path,destination/"results.zip")
-        return ["results.zip"]
-    names=[]
+        names.append("results.zip")
+        (destination/"README.md").write_text(
+            "# Gemini Lab benchmark\n\nREPORT.md and comparison.csv are browsable here. "
+            "results.zip contains original exported FID, event journal, vendor references, models and plots.\n",
+            encoding="utf-8")
+        names.append("README.md")
+        return names
     with zip_path.open("rb") as source:
         for index in range(1,10000):
             chunk=source.read(PART_BYTES)
@@ -91,9 +111,18 @@ def _archive_parts(zip_path: Path, destination: Path) -> list[str]:
             (destination/name).write_bytes(chunk)
             names.append(name)
     (destination/"HOW_TO_JOIN.txt").write_text(
-        "Spoj results.zip.part0001, part0002, ... v číselnom poradí do results.zip.\n",
+        "Spoj results.zip.part0001, part0002, ... v číselnom poradí do results.zip.\n"
+        "Windows PowerShell: $parts = Get-ChildItem results.zip.part* | Sort-Object Name; "
+        "$out = [IO.File]::Create('results.zip'); try { foreach ($part in $parts) { "
+        "$inputFile = [IO.File]::OpenRead($part.FullName); try { $inputFile.CopyTo($out) } "
+        "finally { $inputFile.Dispose() } } } finally { $out.Dispose() }\n",
         encoding="utf-8")
     names.append("HOW_TO_JOIN.txt")
+    (destination/"README.md").write_text(
+        "# Gemini Lab benchmark\n\nREPORT.md and comparison.csv are browsable here. "
+        "All original exported FID and events are in numbered results.zip parts; "
+        "see HOW_TO_JOIN.txt.\n",encoding="utf-8")
+    names.append("README.md")
     return names
 
 

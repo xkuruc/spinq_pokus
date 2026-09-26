@@ -12,6 +12,19 @@ from publish_results import publish_summary
 
 
 class ResultPublishingTests(unittest.TestCase):
+    def test_full_archive_publication_keeps_browsable_report(self):
+        with tempfile.TemporaryDirectory() as d:
+            out=Path(d)/"results";out.mkdir()
+            destination=Path(d)/"publication";destination.mkdir()
+            (out/"REPORT.md").write_text("measured report",encoding="utf-8")
+            (out/"comparison.csv").write_text("module,error\nA,1\n",encoding="utf-8")
+            (out/"results.json").write_text("{}",encoding="utf-8")
+            (out/"results.zip").write_bytes(b"raw-FID-archive")
+            names=publishing._archive_parts(out/"results.zip",destination)
+            self.assertIn("REPORT.md",names)
+            self.assertIn("comparison.csv",names)
+            self.assertEqual((destination/"results.zip").read_bytes(),b"raw-FID-archive")
+
     def test_only_final_analysis_is_published_and_timeout_is_verified(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);bare=root/"remote.git";repo=root/"repo";repo.mkdir()
