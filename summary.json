@@ -1,0 +1,938 @@
+{
+  "started_utc": "2026-09-26T10:41:09.511960+00:00",
+  "state": "PILOT_COMPLETED_WITH_LIMITATIONS",
+  "config": {
+    "host": "172.19.20.100",
+    "port": 8181,
+    "blocks": 3,
+    "seed": 240926,
+    "sdk_required": "1.0.2",
+    "max_tasks_per_block": 140,
+    "max_requested_rf_us_per_block": 10000.0,
+    "per_task_requested_rf_us": 200.0,
+    "pause_seconds": 2.0,
+    "initial_condition": "H historical physical baseline; makePps true; no persistent calibration write",
+    "phase": "pilot",
+    "source_of_limits": "finite software plan, not certified hardware rating"
+  },
+  "topics": {
+    "calibration": {
+      "0": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "calibration not identifiable",
+        "shared_pilot_count": 8,
+        "reference_count": 7,
+        "capability_probe_count": 1,
+        "reference": {
+          "t90_us": 37.86213543634536,
+          "resonance_detuning_hz": 19.99999999998846,
+          "linewidth_hz": 199.99999999999952,
+          "t90_se_us": 0.31677356659671024,
+          "frequency_se_hz": 96.17317335585268,
+          "offset_re": -7.477897711415703,
+          "offset_im": -2.4752539315310327,
+          "scale_re": 284.5587724380048,
+          "scale_im": 180.03076138035578,
+          "weighted_residual_sum": 0.06370235942388955,
+          "points": 7,
+          "identifiable": false
+        },
+        "methods": {
+          "coarse_fine_fit": {
+            "estimate": {
+              "t90_us": 38.164835709119735,
+              "resonance_detuning_hz": 19.999999999999776,
+              "linewidth_hz": 199.99999999999997,
+              "t90_se_us": 0.9868603698569135,
+              "frequency_se_hz": 326.88571321122294,
+              "offset_re": -18.20469773792666,
+              "offset_im": -11.714520675890704,
+              "scale_re": 248.75834543048666,
+              "scale_im": 167.11313501315814,
+              "weighted_residual_sum": 2.052375571685962,
+              "points": 12,
+              "identifiable": false
+            },
+            "observations": [
+              {
+                "key": "cal_b00_coarse_fine_fit_0",
+                "width_us": 80.0,
+                "detuning_hz": -10.0,
+                "coefficient_re": -60.72558222346043,
+                "coefficient_im": -33.648263495116744,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 16.066820499952883
+              },
+              {
+                "key": "cal_b00_coarse_fine_fit_1",
+                "width_us": 160.0,
+                "detuning_hz": 10.0,
+                "coefficient_re": 94.18657853659452,
+                "coefficient_im": 52.46920466441964,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 16.25459949998185
+              },
+              {
+                "key": "cal_b00_coarse_fine_fit_2",
+                "width_us": 40.0,
+                "detuning_hz": 10.0,
+                "coefficient_re": 267.6805939907056,
+                "coefficient_im": 185.79021029243285,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 17.477183499839157
+              },
+              {
+                "key": "cal_b00_coarse_fine_fit_3",
+                "width_us": 114.6,
+                "detuning_hz": 20.0,
+                "coefficient_re": -278.90751320520076,
+                "coefficient_im": -214.59995859134196,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 14.474911600351334
+              }
+            ],
+            "return_baseline": {
+              "key": "cal_b00_coarse_fine_fit_return_baseline",
+              "width_us": 40.0,
+              "detuning_hz": 0.0,
+              "coefficient_re": 235.7717281476038,
+              "coefficient_im": 296.5937848709301,
+              "sigma": 232.0467947396727,
+              "wall_seconds": 15.917522600386292
+            }
+          },
+          "bayesian_complex": {
+            "estimate": {
+              "t90_us": 37.85542745584808,
+              "resonance_detuning_hz": 19.999999999999996,
+              "linewidth_hz": 199.99999999999778,
+              "t90_se_us": 1.0425567409670593,
+              "frequency_se_hz": 442.0139766601435,
+              "offset_re": -15.851846644127104,
+              "offset_im": -5.613124958468151,
+              "scale_re": 223.83828143999608,
+              "scale_im": 161.48754648549814,
+              "weighted_residual_sum": 2.726181513098383,
+              "points": 12,
+              "identifiable": false,
+              "posterior": {
+                "t90_us": 41.11758646664355,
+                "resonance_detuning_hz": 0.036370881400987515,
+                "t90_sd_us": 7.0861252420038,
+                "frequency_sd_hz": 11.832546661135588
+              }
+            },
+            "observations": [
+              {
+                "key": "cal_b00_bayesian_complex_0",
+                "width_us": 160.0,
+                "detuning_hz": 10.0,
+                "coefficient_re": 92.22072628325552,
+                "coefficient_im": 55.728370107746024,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 16.060722699854523
+              },
+              {
+                "key": "cal_b00_bayesian_complex_1",
+                "width_us": 160.0,
+                "detuning_hz": -10.0,
+                "coefficient_re": 103.90909955692037,
+                "coefficient_im": 40.857561081430084,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 15.7204152001068
+              },
+              {
+                "key": "cal_b00_bayesian_complex_2",
+                "width_us": 200.0,
+                "detuning_hz": 10.0,
+                "coefficient_re": 223.9511503951706,
+                "coefficient_im": 251.57616956716572,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 17.345640300307423
+              },
+              {
+                "key": "cal_b00_bayesian_complex_3",
+                "width_us": 200.0,
+                "detuning_hz": -10.0,
+                "coefficient_re": 17.49569632240055,
+                "coefficient_im": 102.4664927598187,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 14.708845799788833
+              }
+            ],
+            "return_baseline": {
+              "key": "cal_b00_bayesian_complex_return_baseline",
+              "width_us": 40.0,
+              "detuning_hz": 0.0,
+              "coefficient_re": 262.1003251841233,
+              "coefficient_im": 196.52151447219194,
+              "sigma": 232.0467947396727,
+              "wall_seconds": 16.731579000130296
+            }
+          },
+          "fixed_fit": {
+            "estimate": {
+              "t90_us": 38.777137598340786,
+              "resonance_detuning_hz": 19.999999999999563,
+              "linewidth_hz": 199.99999999999997,
+              "t90_se_us": 1.119430924187226,
+              "frequency_se_hz": 328.60738848562426,
+              "offset_re": -12.190643889463784,
+              "offset_im": -0.2406044121757355,
+              "scale_re": 231.6008478781968,
+              "scale_im": 173.25706011113394,
+              "weighted_residual_sum": 2.2518505754914875,
+              "points": 12,
+              "identifiable": false
+            },
+            "observations": [
+              {
+                "key": "cal_b00_fixed_fit_0",
+                "width_us": 80.0,
+                "detuning_hz": -20.0,
+                "coefficient_re": -2.117524588654261,
+                "coefficient_im": 0.8086341774507789,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 15.265690200030804
+              },
+              {
+                "key": "cal_b00_fixed_fit_1",
+                "width_us": 120.0,
+                "detuning_hz": 20.0,
+                "coefficient_re": -253.91894831712082,
+                "coefficient_im": -206.18536295922559,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 17.45843610027805
+              },
+              {
+                "key": "cal_b00_fixed_fit_2",
+                "width_us": 160.0,
+                "detuning_hz": -20.0,
+                "coefficient_re": 59.49693829248126,
+                "coefficient_im": 54.375212531452036,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 14.650673300027847
+              },
+              {
+                "key": "cal_b00_fixed_fit_3",
+                "width_us": 200.0,
+                "detuning_hz": 20.0,
+                "coefficient_re": 200.89644716534517,
+                "coefficient_im": 275.87797116208026,
+                "sigma": 232.0467947396727,
+                "wall_seconds": 16.883691700175405
+              }
+            ],
+            "return_baseline": {
+              "key": "cal_b00_fixed_fit_return_baseline",
+              "width_us": 40.0,
+              "detuning_hz": 0.0,
+              "coefficient_re": 242.05516966979866,
+              "coefficient_im": 197.75318911054276,
+              "sigma": 232.0467947396727,
+              "wall_seconds": 16.116832200437784
+            }
+          }
+        },
+        "method_order": [
+          "coarse_fine_fit",
+          "bayesian_complex",
+          "fixed_fit"
+        ],
+        "sigma_complex": 232.0467947396727,
+        "segment_probe_relative_difference": 0.4005037100988319,
+        "segment_sequence_supported_by_probe": false,
+        "t90_for_followup_us": null
+      },
+      "1": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "No paired complex FID for cal_b01_shared_4"
+      },
+      "2": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "No paired complex FID for cal_b02_segment_probe"
+      }
+    },
+    "acquisition": {
+      "0": {
+        "status": "PILOT",
+        "reason": "real short FID acquisitions compared; T2 echo unavailable",
+        "pilot": [
+          {
+            "sample_count": 4000,
+            "frequency_hz": 343.1586870212601,
+            "wall_seconds": 15.271371699869633
+          },
+          {
+            "sample_count": 4000,
+            "frequency_hz": 341.70471792253136,
+            "wall_seconds": 13.261791800148785
+          },
+          {
+            "sample_count": 8000,
+            "frequency_hz": 2892.61270011674,
+            "wall_seconds": 14.465252100024372
+          },
+          {
+            "sample_count": 8000,
+            "frequency_hz": 1628.049261084703,
+            "wall_seconds": 14.071949400007725
+          },
+          {
+            "sample_count": 16000,
+            "frequency_hz": 1626.3248096493837,
+            "wall_seconds": 15.890902200248092
+          },
+          {
+            "sample_count": 16000,
+            "frequency_hz": 1624.7806557686977,
+            "wall_seconds": 15.871305200271308
+          }
+        ],
+        "target_se_hz": 1.0918816802286313,
+        "adaptive_plan": {
+          "sample_count": 4000,
+          "repeats": 1,
+          "predicted_se_hz": 1.028111409346791,
+          "sample_budget": 4000
+        },
+        "reference_hz": 1623.6137703958257,
+        "reference_se_hz": 3.0452862323170238,
+        "order": [
+          "fixed_16k",
+          "adaptive_equal_sample_budget",
+          "adaptive_early_stop"
+        ],
+        "costs": {
+          "pilot_acquisitions": 6,
+          "reference_acquisitions": 3,
+          "fixed_wall_seconds": 32.93669669982046,
+          "adaptive_early_stop_wall_seconds": 14.863488600123674,
+          "measured_early_stop_seconds_saved": 18.073208099696785
+        },
+        "echo_t2": {
+          "status": "SKIPPED_UNSUPPORTED",
+          "reason": "SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2"
+        }
+      },
+      "1": {
+        "status": "PILOT",
+        "reason": "real short FID acquisitions compared; T2 echo unavailable",
+        "pilot": [
+          {
+            "sample_count": 4000,
+            "frequency_hz": 344.21235578210883,
+            "wall_seconds": 12.859447000082582
+          },
+          {
+            "sample_count": 4000,
+            "frequency_hz": 340.82530485439565,
+            "wall_seconds": 13.46524710021913
+          },
+          {
+            "sample_count": 8000,
+            "frequency_hz": 1628.687861092499,
+            "wall_seconds": 15.04670919990167
+          },
+          {
+            "sample_count": 8000,
+            "frequency_hz": 342.14527935276215,
+            "wall_seconds": 15.266186300199479
+          },
+          {
+            "sample_count": 16000,
+            "frequency_hz": 1624.1447811666533,
+            "wall_seconds": 15.065635100007057
+          },
+          {
+            "sample_count": 16000,
+            "frequency_hz": 1628.1793462359399,
+            "wall_seconds": 15.672017499804497
+          }
+        ],
+        "target_se_hz": 1.0918816802286313,
+        "adaptive_plan": {
+          "sample_count": 4000,
+          "repeats": 1,
+          "predicted_se_hz": 2.3950066792101734,
+          "sample_budget": 4000
+        },
+        "reference_hz": 1625.4112457637227,
+        "reference_se_hz": 1.4947527010805741,
+        "order": [
+          "adaptive_equal_sample_budget",
+          "adaptive_early_stop",
+          "fixed_16k"
+        ],
+        "costs": {
+          "pilot_acquisitions": 6,
+          "reference_acquisitions": 3,
+          "fixed_wall_seconds": 31.339254300110042,
+          "adaptive_early_stop_wall_seconds": 13.057433099951595,
+          "measured_early_stop_seconds_saved": 18.281821200158447
+        },
+        "echo_t2": {
+          "status": "SKIPPED_UNSUPPORTED",
+          "reason": "SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2"
+        }
+      },
+      "2": {
+        "status": "PILOT",
+        "reason": "real short FID acquisitions compared; T2 echo unavailable",
+        "pilot": [
+          {
+            "sample_count": 4000,
+            "frequency_hz": 345.22113117780515,
+            "wall_seconds": 14.867230699863285
+          },
+          {
+            "sample_count": 4000,
+            "frequency_hz": 338.41159503180603,
+            "wall_seconds": 12.854458999820054
+          },
+          {
+            "sample_count": 8000,
+            "frequency_hz": 333.7534260531121,
+            "wall_seconds": 14.271112599875778
+          },
+          {
+            "sample_count": 8000,
+            "frequency_hz": 1628.6409746440872,
+            "wall_seconds": 15.271644700318575
+          },
+          {
+            "sample_count": 16000,
+            "frequency_hz": 1623.0016667844666,
+            "wall_seconds": 15.8793092998676
+          },
+          {
+            "sample_count": 16000,
+            "frequency_hz": 1628.0156002551162,
+            "wall_seconds": 15.88142989994958
+          }
+        ],
+        "target_se_hz": 1.0918816802286313,
+        "adaptive_plan": {
+          "sample_count": 4000,
+          "repeats": 1,
+          "predicted_se_hz": 4.815069185570885,
+          "sample_budget": 4000
+        },
+        "reference_hz": 1623.4340559954805,
+        "reference_se_hz": 2.4732939215617513,
+        "order": [
+          "fixed_16k",
+          "adaptive_equal_sample_budget",
+          "adaptive_early_stop"
+        ],
+        "costs": {
+          "pilot_acquisitions": 6,
+          "reference_acquisitions": 3,
+          "fixed_wall_seconds": 31.967831800691783,
+          "adaptive_early_stop_wall_seconds": 13.968279900029302,
+          "measured_early_stop_seconds_saved": 17.999551900662482
+        },
+        "echo_t2": {
+          "status": "SKIPPED_UNSUPPORTED",
+          "reason": "SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2"
+        }
+      }
+    },
+    "pulse_tuning": {
+      "0": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "Independent H 90-degree working point unidentifiable; pulse tuning skipped"
+      },
+      "1": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "Independent H 90-degree working point unidentifiable; pulse tuning skipped"
+      },
+      "2": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "Independent H 90-degree working point unidentifiable; pulse tuning skipped"
+      }
+    },
+    "robust_pulse": {
+      "0": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "Calibrated H 90-degree width unavailable"
+      },
+      "1": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "Calibrated H 90-degree width unavailable"
+      },
+      "2": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "Calibrated H 90-degree width unavailable"
+      }
+    },
+    "denoising": {
+      "2": {
+        "status": "NEPRESVEDČIVÉ",
+        "reason": "[WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\.benchmark-venv\\Lib\\site-packages\\torch\\lib\\c10.dll\" or one of its dependencies."
+      }
+    }
+  },
+  "rows": [
+    {
+      "topic": "calibration",
+      "method": "coarse_fine_fit",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": 13,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 208000,
+      "wall_seconds": 195.772247901652,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": 326.8872028620874,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "reference fit unidentifiable"
+    },
+    {
+      "topic": "calibration",
+      "method": "bayesian_complex",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": 13,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 208000,
+      "wall_seconds": 196.14841320132837,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": 442.0152061722221,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "reference fit unidentifiable"
+    },
+    {
+      "topic": "calibration",
+      "method": "fixed_fit",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": 13,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 208000,
+      "wall_seconds": 195.95653370209038,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": 328.6092952016665,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "reference fit unidentifiable"
+    },
+    {
+      "topic": "acquisition",
+      "method": "fixed_16k",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": 2,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 32000,
+      "wall_seconds": 32.93669669982046,
+      "compute_seconds": 0.1508970996364951,
+      "error": 0.44150049022209714,
+      "uncertainty": 3.0452862323170238,
+      "improvement_vs_baseline": 0.0,
+      "status": "PILOT",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_equal_sample_budget",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": 8,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 32000,
+      "wall_seconds": 111.83644940005615,
+      "compute_seconds": 0.808595500420779,
+      "error": 960.3090236118188,
+      "uncertainty": 3.0452862323170238,
+      "improvement_vs_baseline": -2174.1029611059653,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_early_stop",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": 1,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 4000,
+      "wall_seconds": 14.863488600123674,
+      "compute_seconds": 0.0996332997456193,
+      "error": 1291.5801768194237,
+      "uncertainty": 3.0452862323170238,
+      "improvement_vs_baseline": -2924.433165815271,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "echo_t2",
+      "method": "fixed_vs_adaptive_echo",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "SKIPPED_UNSUPPORTED",
+      "reason": "SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2"
+    },
+    {
+      "topic": "pulse_tuning",
+      "method": "module",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "Independent H 90-degree working point unidentifiable; pulse tuning skipped"
+    },
+    {
+      "topic": "robust_pulse",
+      "method": "module",
+      "block": 0,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "Calibrated H 90-degree width unavailable"
+    },
+    {
+      "topic": "calibration",
+      "method": "module",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "No paired complex FID for cal_b01_shared_4"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_equal_sample_budget",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": 8,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 32000,
+      "wall_seconds": 113.76563910022378,
+      "compute_seconds": 0.9376353994011879,
+      "error": 1285.3306325804124,
+      "uncertainty": 1.4947527010805741,
+      "improvement_vs_baseline": -1053.5260096622237,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_early_stop",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": 1,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 4000,
+      "wall_seconds": 13.057433099951595,
+      "compute_seconds": 0.09979879995808005,
+      "error": 1289.7300985903007,
+      "uncertainty": 1.4947527010805741,
+      "improvement_vs_baseline": -1057.135471086743,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "acquisition",
+      "method": "fixed_16k",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": 2,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 32000,
+      "wall_seconds": 31.339254300110042,
+      "compute_seconds": 0.11700979992747307,
+      "error": 1.218870488545008,
+      "uncertainty": 1.4947527010805741,
+      "improvement_vs_baseline": 0.0,
+      "status": "PILOT",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "echo_t2",
+      "method": "fixed_vs_adaptive_echo",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "SKIPPED_UNSUPPORTED",
+      "reason": "SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2"
+    },
+    {
+      "topic": "pulse_tuning",
+      "method": "module",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "Independent H 90-degree working point unidentifiable; pulse tuning skipped"
+    },
+    {
+      "topic": "robust_pulse",
+      "method": "module",
+      "block": 1,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "Calibrated H 90-degree width unavailable"
+    },
+    {
+      "topic": "calibration",
+      "method": "module",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "No paired complex FID for cal_b02_segment_probe"
+    },
+    {
+      "topic": "acquisition",
+      "method": "fixed_16k",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": 2,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 32000,
+      "wall_seconds": 31.967831800691783,
+      "compute_seconds": 0.1675676004961133,
+      "error": 2.698636310738948,
+      "uncertainty": 2.4732939215617513,
+      "improvement_vs_baseline": 0.0,
+      "status": "PILOT",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_equal_sample_budget",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": 8,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 32000,
+      "wall_seconds": 112.76807410037145,
+      "compute_seconds": 0.8011928992345929,
+      "error": 1121.0471072224052,
+      "uncertainty": 2.4732939215617513,
+      "improvement_vs_baseline": -414.41244470820783,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_early_stop",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": 1,
+      "internal_repetitions": "UNKNOWN",
+      "requested_samples": 4000,
+      "wall_seconds": 13.968279900029302,
+      "compute_seconds": 0.08365919999778271,
+      "error": 1288.0669658175837,
+      "uncertainty": 2.4732939215617513,
+      "improvement_vs_baseline": -476.30291061891245,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "independent 16k reference; equal 32k sample budget or independently checked early stop"
+    },
+    {
+      "topic": "echo_t2",
+      "method": "fixed_vs_adaptive_echo",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "SKIPPED_UNSUPPORTED",
+      "reason": "SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2"
+    },
+    {
+      "topic": "pulse_tuning",
+      "method": "module",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "Independent H 90-degree working point unidentifiable; pulse tuning skipped"
+    },
+    {
+      "topic": "robust_pulse",
+      "method": "module",
+      "block": 2,
+      "phase": "pilot",
+      "measurements": null,
+      "internal_repetitions": null,
+      "requested_samples": null,
+      "wall_seconds": null,
+      "compute_seconds": null,
+      "error": null,
+      "uncertainty": null,
+      "improvement_vs_baseline": null,
+      "status": "NEPRESVEDČIVÉ",
+      "reason": "Calibrated H 90-degree width unavailable"
+    }
+  ],
+  "errors": [
+    "pulse_tuning block 0: ValueError: Independent H 90-degree working point unidentifiable; pulse tuning skipped",
+    "robust_pulse block 0: ValueError: Calibrated H 90-degree width unavailable",
+    "calibration block 1: ValueError: No paired complex FID for cal_b01_shared_4",
+    "pulse_tuning block 1: ValueError: Independent H 90-degree working point unidentifiable; pulse tuning skipped",
+    "robust_pulse block 1: ValueError: Calibrated H 90-degree width unavailable",
+    "calibration block 2: ValueError: No paired complex FID for cal_b02_segment_probe",
+    "pulse_tuning block 2: ValueError: Independent H 90-degree working point unidentifiable; pulse tuning skipped",
+    "robust_pulse block 2: ValueError: Calibrated H 90-degree width unavailable",
+    "denoising: OSError: [WinError 1114] A dynamic link library (DLL) initialization routine failed. Error loading \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\.benchmark-venv\\Lib\\site-packages\\torch\\lib\\c10.dll\" or one of its dependencies."
+  ],
+  "hardware_results_present": true,
+  "study_phase": "pilot",
+  "raw_adc_confirmed": false,
+  "frozen_plan": {
+    "calibration_target_joint_error": null,
+    "frozen_after_block": 0,
+    "acquisition_target_se_hz": 1.0918816802286313,
+    "calibration_new_measurements_per_method": 4,
+    "pulse_candidate_evaluations_per_method": 4,
+    "pulse_held_out_phases_deg": [
+      45,
+      225
+    ],
+    "robust_test_detunings_hz": [
+      -20,
+      0,
+      20
+    ],
+    "decision_note": "do not change these after viewing later blocks"
+  },
+  "finished_utc": "2026-09-26T11:17:14.218601+00:00",
+  "aggregate": [
+    {
+      "topic": "acquisition",
+      "method": "adaptive_early_stop",
+      "blocks": 3,
+      "mean_error": 1289.792413742436,
+      "sd_between_blocks": 1.7574342859696916,
+      "mean_error_95pct_ci": [
+        1285.4267049567359,
+        1294.1581225281363
+      ],
+      "mean_improvement_vs_baseline": -1485.9571825069754,
+      "frozen_success_target": 1.0918816802286313,
+      "successes": 0,
+      "success_rate": 0.0,
+      "mean_measurements": 1.0,
+      "mean_wall_seconds": 13.963067200034857,
+      "status": "PILOT_NEEDS_REPLICATION"
+    },
+    {
+      "topic": "acquisition",
+      "method": "adaptive_equal_sample_budget",
+      "blocks": 3,
+      "mean_error": 1122.2289211382122,
+      "sd_between_blocks": 162.51402735527796,
+      "mean_error_95pct_ci": [
+        718.5216970965414,
+        1525.936145179883
+      ],
+      "mean_improvement_vs_baseline": -1214.013805158799,
+      "frozen_success_target": 1.0918816802286313,
+      "successes": 0,
+      "success_rate": 0.0,
+      "mean_measurements": 8.0,
+      "mean_wall_seconds": 112.79005420021713,
+      "status": "PILOT_NEEDS_REPLICATION"
+    },
+    {
+      "topic": "acquisition",
+      "method": "fixed_16k",
+      "blocks": 3,
+      "mean_error": 1.453002429835351,
+      "sd_between_blocks": 1.1466380651776558,
+      "mean_error_95pct_ci": [
+        -1.3954044296008967,
+        4.301409289271598
+      ],
+      "mean_improvement_vs_baseline": 0.0,
+      "frozen_success_target": 1.0918816802286313,
+      "successes": 1,
+      "success_rate": 0.3333333333333333,
+      "mean_measurements": 2.0,
+      "mean_wall_seconds": 32.08126093354076,
+      "status": "PILOT_NEEDS_REPLICATION"
+    }
+  ],
+  "plots": {
+    "pulse_convergence": "SKIPPED_NO_EVALUATIONS",
+    "robustness": "SKIPPED_NO_READINGS"
+  }
+}

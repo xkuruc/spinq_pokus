@@ -1,0 +1,24 @@
+topic,method,block,phase,measurements,internal_repetitions,requested_samples,wall_seconds,compute_seconds,error,uncertainty,improvement_vs_baseline,status,reason
+calibration,coarse_fine_fit,0,pilot,13,UNKNOWN,208000,195.772247901652,,,326.8872028620874,,NEPRESVEDČIVÉ,reference fit unidentifiable
+calibration,bayesian_complex,0,pilot,13,UNKNOWN,208000,196.14841320132837,,,442.0152061722221,,NEPRESVEDČIVÉ,reference fit unidentifiable
+calibration,fixed_fit,0,pilot,13,UNKNOWN,208000,195.95653370209038,,,328.6092952016665,,NEPRESVEDČIVÉ,reference fit unidentifiable
+acquisition,fixed_16k,0,pilot,2,UNKNOWN,32000,32.93669669982046,0.1508970996364951,0.44150049022209714,3.0452862323170238,0.0,PILOT,independent 16k reference; equal 32k sample budget or independently checked early stop
+acquisition,adaptive_equal_sample_budget,0,pilot,8,UNKNOWN,32000,111.83644940005615,0.808595500420779,960.3090236118188,3.0452862323170238,-2174.1029611059653,NEPRESVEDČIVÉ,independent 16k reference; equal 32k sample budget or independently checked early stop
+acquisition,adaptive_early_stop,0,pilot,1,UNKNOWN,4000,14.863488600123674,0.0996332997456193,1291.5801768194237,3.0452862323170238,-2924.433165815271,NEPRESVEDČIVÉ,independent 16k reference; equal 32k sample budget or independently checked early stop
+echo_t2,fixed_vs_adaptive_echo,0,pilot,,,,,,,,,SKIPPED_UNSUPPORTED,SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2
+pulse_tuning,module,0,pilot,,,,,,,,,NEPRESVEDČIVÉ,Independent H 90-degree working point unidentifiable; pulse tuning skipped
+robust_pulse,module,0,pilot,,,,,,,,,NEPRESVEDČIVÉ,Calibrated H 90-degree width unavailable
+calibration,module,1,pilot,,,,,,,,,NEPRESVEDČIVÉ,No paired complex FID for cal_b01_shared_4
+acquisition,adaptive_equal_sample_budget,1,pilot,8,UNKNOWN,32000,113.76563910022378,0.9376353994011879,1285.3306325804124,1.4947527010805741,-1053.5260096622237,NEPRESVEDČIVÉ,independent 16k reference; equal 32k sample budget or independently checked early stop
+acquisition,adaptive_early_stop,1,pilot,1,UNKNOWN,4000,13.057433099951595,0.09979879995808005,1289.7300985903007,1.4947527010805741,-1057.135471086743,NEPRESVEDČIVÉ,independent 16k reference; equal 32k sample budget or independently checked early stop
+acquisition,fixed_16k,1,pilot,2,UNKNOWN,32000,31.339254300110042,0.11700979992747307,1.218870488545008,1.4947527010805741,0.0,PILOT,independent 16k reference; equal 32k sample budget or independently checked early stop
+echo_t2,fixed_vs_adaptive_echo,1,pilot,,,,,,,,,SKIPPED_UNSUPPORTED,SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2
+pulse_tuning,module,1,pilot,,,,,,,,,NEPRESVEDČIVÉ,Independent H 90-degree working point unidentifiable; pulse tuning skipped
+robust_pulse,module,1,pilot,,,,,,,,,NEPRESVEDČIVÉ,Calibrated H 90-degree width unavailable
+calibration,module,2,pilot,,,,,,,,,NEPRESVEDČIVÉ,No paired complex FID for cal_b02_segment_probe
+acquisition,fixed_16k,2,pilot,2,UNKNOWN,32000,31.967831800691783,0.1675676004961133,2.698636310738948,2.4732939215617513,0.0,PILOT,independent 16k reference; equal 32k sample budget or independently checked early stop
+acquisition,adaptive_equal_sample_budget,2,pilot,8,UNKNOWN,32000,112.76807410037145,0.8011928992345929,1121.0471072224052,2.4732939215617513,-414.41244470820783,NEPRESVEDČIVÉ,independent 16k reference; equal 32k sample budget or independently checked early stop
+acquisition,adaptive_early_stop,2,pilot,1,UNKNOWN,4000,13.968279900029302,0.08365919999778271,1288.0669658175837,2.4732939215617513,-476.30291061891245,NEPRESVEDČIVÉ,independent 16k reference; equal 32k sample budget or independently checked early stop
+echo_t2,fixed_vs_adaptive_echo,2,pilot,,,,,,,,,SKIPPED_UNSUPPORTED,SpinQLabLink 1.0.2 T2 and SpinEcho parameters do not expose verified per-point echo delays; FID T2* is not T2
+pulse_tuning,module,2,pilot,,,,,,,,,NEPRESVEDČIVÉ,Independent H 90-degree working point unidentifiable; pulse tuning skipped
+robust_pulse,module,2,pilot,,,,,,,,,NEPRESVEDČIVÉ,Calibrated H 90-degree width unavailable
