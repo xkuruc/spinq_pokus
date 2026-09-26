@@ -1082,8 +1082,11 @@ def main() -> int:
                                     raise ValueError("vlastné frekvencie sa líšia od čerstvej telemetrie")
                                 params.freq_h = frequencies["H"]/1e6
                                 params.freq_p = frequencies["P"]/1e6
+                    from_get_parameters = params.get_parameters()
                     wire = experiment.get_experiment_parameter()
                     actual = json.loads(wire["params"])
+                    if actual != from_get_parameters:
+                        raise ValueError("SDK v experimentálnom rámci zmenilo výstup get_parameters()")
                     if case["kind"] == "physical" and actual != desired:
                         raise ValueError("SDK serializoval iný fyzikálny payload")
                     if actual.get("pulse") != desired["pulse"] or actual.get("samplePath") != desired["samplePath"]:
@@ -1096,6 +1099,7 @@ def main() -> int:
                             abs(actual.get("freq_p", 0)-case["custom_frequency_hz"]["P"]) > 1):
                         raise ValueError("SDK serializoval inú vlastnú frekvenciu")
                     row["sent"] = {"experiment_type": str(experiment_type), "params": actual,
+                                   "get_parameters": from_get_parameters,
                                    "sdk_task_id_before_ack": str(experiment.id),
                                    "phase": "prepared_not_sent"}
                     row["reason"] = "payload pripravený"
@@ -1130,7 +1134,7 @@ def main() -> int:
                     result["real_hardware_completed"] += 1
                     measurement = out/"data"/case["id"]
                     measurement.mkdir(parents=True, exist_ok=True)
-                    sdk_result = experiment.get_result()
+                    sdk_result = link.get_experiment_result()
                     atomic_bytes(measurement/"sdk_result.json", json.dumps(redact(sdk_result),
                                  ensure_ascii=False, allow_nan=True, default=str).encode("utf-8"))
                     wait_recorded(recorder)
