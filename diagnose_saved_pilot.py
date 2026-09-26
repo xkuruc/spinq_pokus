@@ -72,6 +72,7 @@ def diagnose(directory: Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read-only check of saved Gemini Lab Rabi pilot")
     parser.add_argument("results_directory", type=Path)
+    parser.add_argument("--json", action="store_true", help="Print all offline diagnostic details")
     args = parser.parse_args(argv)
     try:
         result = diagnose(args.results_directory)
@@ -79,8 +80,19 @@ def main(argv: list[str] | None = None) -> int:
         print(f"PILOT DIAGNOSTIC FAILED: {type(exc).__name__}: {exc}", flush=True)
         traceback.print_exc(limit=6, file=sys.stdout)
         return 2
+    fit=result["rabi"]
+    journal=result["journal"]
     print("PILOT DIAGNOSTIC: saved FIDs only; no hardware command sent", flush=True)
-    print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+    print(f"RABI: period_us={fit['period_us']:.1f} "
+          f"t90_us={fit['t90_us']:.1f} R2={fit['signed_complex_r2']:.4f}",flush=True)
+    print(f"NOISE: {result['noise']['status']}; "
+          f"JOURNAL: {journal['status']} completed={journal['completed_tasks']} "
+          f"uncertain={len(journal['uncertain_keys'])} "
+          f"missing_results={len(journal['missing_completed_results'])}",flush=True)
+    if result["previous_pilot_failures"]:
+        print(f"PREVIOUS PILOT FAILURES: {', '.join(result['previous_pilot_failures'])}",flush=True)
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
     return 0
 
 

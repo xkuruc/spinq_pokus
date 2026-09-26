@@ -54,6 +54,9 @@ class SavedPilotDiagnosticTests(unittest.TestCase):
             self.assertAlmostEqual(result["rabi"]["period_us"], 156, delta=2)
             self.assertGreater(result["rabi"]["signed_complex_r2"], .99)
             self.assertIn("no hardware command sent", output.getvalue())
+            self.assertIn("RABI: period_us=", output.getvalue())
+            self.assertIn("JOURNAL: LOCAL_RECORDS_CONSISTENT completed=1", output.getvalue())
+            self.assertNotIn('"records":',output.getvalue())
 
 
 if __name__ == "__main__":
