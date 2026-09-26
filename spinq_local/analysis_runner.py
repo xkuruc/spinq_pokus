@@ -200,8 +200,63 @@ def _effective_one_spin_model(roles,pilot,out):
             bounds=([band[0],0.],[band[1],2000.]),max_nfev=50))
     best=min(fits,key=lambda f:float(np.dot(f.fun,f.fun)))
     frequency,decay=map(float,best.x)
-    if min(frequency-band[0],band[1]-frequency)<.01*(band[1]-band[0]):
-        raise ValueError("Effective D acquisition-frequency fit hit frozen band edge")
+    edge_hit=min(frequency-band[0],band[1]-frequency)<.01*(band[1]-band[0])
+    frequency_source="joint pilot fit inside frozen component band"
+    if edge_hit:
+        diagnostic={
+            "status":"REFERENCE_INADEQUATE",
+            "reason":"Single-frequency 1q fit hit frozen pilot component band edge",
+            "frozen_band_hz":list(band),
+            "pilot_reference_frequency_hz":center,
+            "edge_fit_frequency_hz":frequency,
+            "edge_fit_decay_per_s":decay,
+            "edge_fit_whitened_rss":float(np.dot(best.fun,best.fun)),
+            "pilot_reference_at_band_edge":bool(
+                min(center-band[0],band[1]-center)<.01*(band[1]-band[0])),
+        }
+        if diagnostic["pilot_reference_at_band_edge"]:
+            diagnostic["reason"]+=("; prior pilot frequency estimate is also at the band edge, "
+                                    "so it cannot anchor a fixed-frequency fallback")
+            atomic_json(out/"models"/"D_effective_pilot_diagnostic.json",diagnostic)
+            raise ValueError("Effective D acquisition-frequency fit and pilot reference both hit frozen band edge: "
+                             f"fit={frequency:.1f}, pilot={center:.1f}, band=[{band[0]:.1f}, {band[1]:.1f}] Hz; "
+                             "see D_effective_pilot_diagnostic.json")
+        # A boundary optimum is evidence against the freely fitted 1q model.
+        # The prior pilot component estimate is a pre-existing candidate from
+        # overlapping pilot data: freeze it and fit only decay/receiver gauge.
+        # It can be used solely if all untouched phase/amplitude FIDs validate.
+        fixed=least_squares(lambda x:residual((center,float(x[0]))),[80.],
+            bounds=([0.],[2000.]),max_nfev=50)
+        fixed_decay=float(fixed.x[0])
+        (fixed_gain,fixed_background),_,_=linear_solve(center,fixed_decay)
+        if abs(fixed_gain)<1e-9:
+            diagnostic["reason"]="Fixed pilot frequency receiver scale collapsed"
+            atomic_json(out/"models"/"D_effective_pilot_diagnostic.json",diagnostic)
+            raise ValueError("Effective D fixed pilot frequency receiver scale collapsed "
+                             "(see D_effective_pilot_diagnostic.json)")
+        fixed_readout=cde.ReadoutPhysics(center*cde.spin_operator("z",0,1),
+            complex(fixed_gain),complex(fixed_background),fixed_decay)
+        fixed_validation=[]
+        for record,example,ix in zip(holdout,validation_examples,validation_indices):
+            observed=example.fid[ix]
+            predicted=cde.predict_fid_physics(example,model,fixed_readout,indices=ix)
+            error=float(np.sqrt(np.mean(np.abs(predicted-observed)**2)))
+            signal=float(np.sqrt(np.mean(np.abs(observed-fixed_background)**2)))
+            threshold=max(4*noise_rms,.15*signal)
+            fixed_validation.append({"record_id":record.key,"complex_fid_rmse":error,
+                "signal_rms":signal,"threshold":threshold,
+                "passes":bool(signal>=5*noise_rms and error<=threshold)})
+        if not all(row["passes"] for row in fixed_validation):
+            diagnostic["reason"]+=("; fixed pilot frequency estimate "
+                                   "failed held-out phase/amplitude gate")
+            diagnostic["fixed_frequency_validation_rows"]=fixed_validation
+            atomic_json(out/"models"/"D_effective_pilot_diagnostic.json",diagnostic)
+            failed=sum(not row["passes"] for row in fixed_validation)
+            raise ValueError("Effective D frequency fit hit frozen band edge; fixed pilot frequency failed "
+                             f"{failed}/{len(fixed_validation)} held-out FID gates "
+                             "(see D_effective_pilot_diagnostic.json)")
+        frequency,decay=center,fixed_decay
+        frequency_source="fixed prior pilot component estimate; edge fit rejected; overlapping pilot calibration data"
     (gain,background),_,_=linear_solve(frequency,decay)
     if abs(gain)<1e-9:
         raise ValueError("Effective D receiver scale collapsed")
@@ -224,6 +279,8 @@ def _effective_one_spin_model(roles,pilot,out):
         "assumed_control_detuning_hz":0.,"rf_hz_per_percent_from_pilot_t90":rate,
         "calibration_record_ids":[r.key for r in candidates],"validation_rows":heldout,
         "acquisition_frequency_hz":frequency,"decay_per_s":decay,
+        "acquisition_frequency_source":frequency_source,
+        "edge_fit_frequency_hz":float(best.x[0]) if edge_hit else None,
         "gain_re":float(gain.real),"gain_im":float(gain.imag),
         "background_re":float(background.real),"background_im":float(background.imag),
         "noise_rms_from_independent_repeats":noise_rms,

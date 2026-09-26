@@ -640,7 +640,10 @@ def _require_torch():
     try:
         import torch
     except (ImportError, OSError) as exc:
-        raise RuntimeError("CPU PyTorch import failed; neural C/D/E stages unavailable") from exc
+        raise RuntimeError(
+            "CPU PyTorch import failed; neural C/D/E stages unavailable: "
+            f"{type(exc).__name__}: {exc}"
+        ) from exc
     return torch
 
 

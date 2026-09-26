@@ -59,6 +59,20 @@ zachovaných výsledkov:
 .\.benchmark-venv\Scripts\python.exe .\local_benchmark_windows.py --offline-rebuild --resume .\results\20260926_123456_UTC --no-upload
 ```
 
+`--offline-rebuild` obnoví existujúci report, ale znovu nepočíta modely.
+Po oprave kódu môžeš **znova analyzovať všetky uložené FID bez jediného
+nového experimentu** takto (nahraď názov adresára skutočným behom):
+
+```powershell
+.\reanalyze_windows.cmd .\results\20260926_143851_UTC
+```
+
+Vznikne nový podadresár `reanalysis_...` s novým reportom. Pôvodný
+`results.json`, pôvodné FID, udalosti a hardvérový žurnál zostanú nedotknuté.
+Príkaz znovu preverí lokálny CPU/PyTorch, vypíše stav D/E/F/G a na GitHub
+odošle iba nový súhrn; žiadne FID neposiela. Ak žurnál obsahuje neukončenú
+úlohu alebo chýba uložený FID, analýzu zastaví s konkrétnym dôvodom.
+
 Plný lokálny ZIP vznikne iba pri výslovnom `--full-archive`. Môžeš ho
 vytvoriť aj neskôr cez predchádzajúci offline príkaz s týmto prepínačom.
 Starší `results.zip` v obnovenom priečinku ostáva zachovaný, no bez tohto

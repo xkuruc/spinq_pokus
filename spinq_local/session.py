@@ -187,7 +187,14 @@ class LocalSession:
         if self.spec is None:
             raise RuntimeError("Pilot frequency identities not frozen")
         fit = fit_complex_multiplet(record, self.spec, self.noise)
-        return float(fit["modes"][self.primary_component_index]["frequency_hz"])
+        modes = fit["modes"]
+        at_edge = [mode.get("component_id", index) for index, mode in enumerate(modes)
+                   if mode.get("frequency_at_band_edge", False)]
+        if fit.get("status") != "FIT_COMPLETED" or at_edge:
+            raise ValueError(
+                f"Frozen multiplet frequency fit invalid for {record.key}: "
+                f"status={fit.get('status')}, band_edge_components={at_edge}")
+        return float(modes[self.primary_component_index]["frequency_hz"])
 
     def pilot(self) -> dict:
         # Repeated controls establish noise and drift at the same physical
@@ -239,35 +246,49 @@ class LocalSession:
             note_failure("reference_frequency",exc)
         axis = validate_axis(self.pilot_records["pilot_40_r0"])
         length_pilot = []
-        for count in (4000,8000):
-            for repeat in range(2):
-                key = f"pilot_count{count}_r{repeat}"
-                record = self.pulse(key, 40., count=count, role="pilot", family="fid_length")
-                self.pilot_records[key] = record
+        if self.reference_frequency_hz is not None:
+            for count in (4000,8000):
+                for repeat in range(2):
+                    key = f"pilot_count{count}_r{repeat}"
+                    record = self.pulse(key, 40., count=count, role="pilot", family="fid_length")
+                    self.pilot_records[key] = record
+                    try:
+                        length_pilot.append({"sample_count": count,
+                                             "estimate_hz": self.frequency(record),
+                                             "wall_seconds": record.metadata["wall_seconds"]})
+                    except Exception as exc:
+                        note_failure(f"frequency_{key}",exc)
+            for repeat in range(3):
+                record = self.pilot_records[f"pilot_40_r{repeat}"]
                 try:
-                    length_pilot.append({"sample_count": count,
-                                         "estimate_hz": self.frequency(record),
+                    length_pilot.append({"sample_count":16000,
+                                         "estimate_hz":self.frequency(record),
                                          "wall_seconds": record.metadata["wall_seconds"]})
                 except Exception as exc:
-                    note_failure(f"frequency_{key}",exc)
-        for repeat in range(3):
-            record = self.pilot_records[f"pilot_40_r{repeat}"]
-            try:
-                length_pilot.append({"sample_count":16000,
-                                     "estimate_hz":self.frequency(record),
-                                     "wall_seconds":record.metadata["wall_seconds"]})
-            except Exception as exc:
-                note_failure(f"frequency_{record.key}",exc)
+                    note_failure(f"frequency_{record.key}",exc)
         full=[r["estimate_hz"] for r in length_pilot if r["sample_count"]==16000]
         scatter = float(np.std(full, ddof=1)) if len(full)>=2 else None
         fid_target = max(3., 2*scatter) if scatter is not None else None
         try:
             if fid_target is None:raise ValueError("No independent full-length frequency reference")
+            if not any(sum(row["sample_count"]==count for row in length_pilot)>=2
+                       for count in (4000,8000)):
+                raise ValueError("No shorter FID length has two valid independent frequency fits")
             acquisition_plan = choose_fid_acquisition_plan(length_pilot,
                 target_se_hz=fid_target, max_repeats=8)
         except Exception as exc:
             acquisition_plan={"status":"REFERENCE_INADEQUATE","reason":str(exc)}
             print(f"PILOT WARNING fid_acquisition_plan: {type(exc).__name__}: {exc}",flush=True)
+        if acquisition_plan.get("status")=="MODEL_MISMATCH":
+            # A shorter FID cannot be benchmarked against a frozen frequency
+            # if the independent pilot fits disagree across acquisition modes.
+            self.reference_frequency_hz=None
+            acquisition_plan["reason"] = (
+                "Local frequency estimates disagree across FID lengths; "
+                "component identity or fit must be checked before comparison")
+            print(f"PILOT WARNING fid_acquisition_plan: {acquisition_plan['reason']}",flush=True)
+        elif acquisition_plan.get("status")=="REFERENCE_INADEQUATE":
+            self.reference_frequency_hz=None
         pilot = {"rabi":rabi,"noise":({"covariance":self.noise.re_im_covariance.tolist(),
                   "lag_one":self.noise.lag_one_correlation,
                   "independent_repetitions":self.noise.repetitions} if self.noise else None),
@@ -707,7 +728,7 @@ class LocalSession:
                     "status":"EXPLORATORY_BLOCK_BOOTSTRAP"}
             self.results.module("B",status,
                 "Physical FID-length arms measured; echo T2 requires independently validated echo/refocus and adequate TE range"
-                + ("; frozen component frequency changed with FID length" if plan.get("status")=="MODEL_MISMATCH" else ""),
+                + ("; local frequency fits disagreed across FID lengths" if plan.get("status")=="MODEL_MISMATCH" else ""),
                 fid_length_paired_comparison=comparison)
         if any(self.h_history.values()):
             atomic_json(self.out/"models"/"H_history.json",_jsonable(self.h_history))

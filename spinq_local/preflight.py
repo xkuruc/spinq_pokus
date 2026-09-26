@@ -53,6 +53,10 @@ def check() -> dict:
                            "device": "cpu", "backward_verified": True}
     except Exception as exc:
         result["torch"]["reason"] = f"{type(exc).__name__}: {exc}"
+        try:
+            result["torch"]["installed_version"] = importlib.metadata.version("torch")
+        except Exception:
+            result["torch"]["installed_version"] = None
     return result
 
 
@@ -62,7 +66,11 @@ def main() -> int:
     args = parser.parse_args()
     result = check()
     atomic_json(args.output, result)
-    print(json.dumps({k: v.get("ready") for k, v in result.items() if isinstance(v, dict)}))
+    summary = {k: v.get("ready") for k, v in result.items() if isinstance(v, dict)}
+    if not result["torch"]["ready"]:
+        summary["torch_reason"] = result["torch"].get("reason")
+        summary["torch_installed_version"] = result["torch"].get("installed_version")
+    print(json.dumps(summary, ensure_ascii=False))
     return 0 if result["sdk"]["ready"] and result["numeric"]["ready"] else 2
 
 

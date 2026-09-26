@@ -1,11 +1,15 @@
 """Offline regression checks for F/G; no hardware or vendor derived arrays."""
 
 import math
+import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
+from scipy.optimize import least_squares as scipy_least_squares
 
 from spinq_local.fg import (
     DDPulse, Gate, apply_analog_readout, apply_residual_readout, apply_tvcondnet, average_fids, bounded_anneal,
@@ -229,6 +233,24 @@ class AnalysisIntegrationChecks(unittest.TestCase):
             self.assertIn("f_test",prediction)
             self.assertNotIn("unrelated",prediction)
             self.assertIn("effective relative",prediction)
+            # A free 1q fit reaching the frozen band boundary may fall back
+            # only to an interior pilot frequency that passes untouched
+            # phase/amplitude holdouts. A boundary pilot anchor is rejected.
+            def forced_edge(fun,x0,**kwargs):
+                if len(x0)==2:
+                    return SimpleNamespace(x=np.array([950.,80.]),fun=np.array([0.]))
+                return scipy_least_squares(fun,x0,**kwargs)
+            with patch("spinq_local.analysis_runner.least_squares",side_effect=forced_edge):
+                _,_,_,_,_,fixed=_effective_one_spin_model(roles,pilot,out)
+                self.assertEqual(fixed["acquisition_frequency_hz"],1000.)
+                self.assertTrue(all(row["passes"] for row in fixed["validation_rows"]))
+                self.assertIn("fixed prior pilot",fixed["acquisition_frequency_source"])
+                edge_pilot=dict(pilot,reference_frequency_hz=950.01)
+                with self.assertRaisesRegex(ValueError,"pilot reference both hit frozen band edge"):
+                    _effective_one_spin_model(roles,edge_pilot,out)
+            diagnostic=json.loads((out/"models"/"D_effective_pilot_diagnostic.json").read_text())
+            self.assertTrue(diagnostic["pilot_reference_at_band_edge"])
+            self.assertEqual(diagnostic["frozen_band_hz"],[950.,1050.])
 
     def test_measurement_block_survives_save_and_physical_g_status_is_preserved(self):
         rng=np.random.default_rng(3)

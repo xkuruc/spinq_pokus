@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from diagnose_saved_pilot import diagnose, main
+from diagnose_saved_pilot import TIMING_KEYS, diagnose, main
 from spinq_local.core import RawFIDRecord
 
 
@@ -34,6 +34,13 @@ class SavedPilotDiagnosticTests(unittest.TestCase):
                                  qubit="0", step="NMRSIG", axis_original=axis,
                                  time_seconds=t, re=observed.real, im=observed.imag,
                                  parameters_sent={"sampleFre": fs, "sampleCount": n}).save(raw)
+            timing_scales=(1.,1.,-1.,1.05,.8,.2,.5,1.10)
+            for key,scale in zip(TIMING_KEYS,timing_scales):
+                signal=scale*np.sin(2*np.pi*40/156)*base
+                RawFIDRecord(key=key,task_id=f"task_{key}",group="g",path="0",
+                             qubit="0",step="NMRSIG",axis_original=axis,
+                             time_seconds=t,re=signal.real,im=signal.imag,
+                             parameters_sent={"sampleFre":fs,"sampleCount":n}).save(raw)
             data = out / "data"
             data.mkdir()
             (data / "pilot_40_r0.json").write_text("{}", encoding="utf-8")
@@ -53,9 +60,13 @@ class SavedPilotDiagnosticTests(unittest.TestCase):
             self.assertEqual(result["journal"]["completed_tasks"], 1)
             self.assertAlmostEqual(result["rabi"]["period_us"], 156, delta=2)
             self.assertGreater(result["rabi"]["signed_complex_r2"], .99)
+            self.assertEqual(result["timing"]["status"],"MEASURED_CONTRASTS")
+            self.assertGreater(result["timing"]["contrasts"]["opposite_phase"],
+                               result["timing"]["thresholds"]["opposite_phase"])
             self.assertIn("no hardware command sent", output.getvalue())
             self.assertIn("RABI: period_us=", output.getvalue())
             self.assertIn("JOURNAL: LOCAL_RECORDS_CONSISTENT completed=1", output.getvalue())
+            self.assertIn("TIMING: drift=",output.getvalue())
             self.assertNotIn('"records":',output.getvalue())
 
 

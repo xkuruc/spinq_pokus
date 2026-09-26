@@ -20,6 +20,32 @@ from spinq_local.signal import estimate_noise, validate_axis
 
 WIDTH_KEYS = ((40, "pilot_40_r0"), (80, "pilot_80"), (120, "pilot_120"),
               (160, "pilot_160"), (200, "pilot_200"))
+TIMING_KEYS = ("timing_return_0", "timing_split_equal",
+               "timing_split_opposite", "timing_return_1", "timing_gap_10",
+               "timing_gap_20", "timing_terminal_idle", "timing_return_2")
+
+
+def _timing_contrasts(values: list[complex]) -> dict:
+    """Report the live gate's effect sizes without certifying device timing."""
+    drift = max(abs(values[0]-values[3]), abs(values[3]-values[7]), 1e-9)
+    contrasts = {
+        "equal_split": abs(values[1]-values[0]),
+        "opposite_phase": abs(values[2]-values[1]),
+        "gap_10_vs_20_us": abs(values[5]-values[4]),
+        "terminal_idle": abs(values[6]-values[3]),
+    }
+    thresholds = {
+        "equal_split": max(3*drift, .3*abs(values[0])),
+        "opposite_phase": max(3*drift, .1*abs(values[0])),
+        "gap_10_vs_20_us": 3*drift,
+        "terminal_idle": 3*drift,
+    }
+    return {"status": "MEASURED_CONTRASTS", "return_control_drift": float(drift),
+            "coefficient_scale": float(abs(values[0])),
+            "contrasts": {name: float(value) for name,value in contrasts.items()},
+            "thresholds": {name: float(value) for name,value in thresholds.items()},
+            "interpretation": "Contrast below drift threshold is inconclusive; "
+                              "it does not prove the device ignored the sequence"}
 
 
 def diagnose(directory: Path) -> dict:
@@ -44,6 +70,17 @@ def diagnose(directory: Path) -> dict:
         session.out = Path(temporary)
         session.pilot_records = {"pilot_40_r0": records[40]}
         coefficients = [session.coefficient(records[width]) for width, _ in WIDTH_KEYS]
+        missing_timing = [key for key in TIMING_KEYS if not (raw / f"{key}.json").is_file()]
+        if missing_timing:
+            timing_result = {"status": "UNAVAILABLE", "missing_keys": missing_timing}
+        else:
+            try:
+                timing_values = [session.coefficient(RawFIDRecord.load(raw, key))
+                                 for key in TIMING_KEYS]
+                timing_result = _timing_contrasts(timing_values)
+            except Exception as exc:
+                timing_result = {"status": "UNAVAILABLE",
+                                 "reason": f"{type(exc).__name__}: {exc}"}
     fit = _rabi_period([width for width, _ in WIDTH_KEYS], coefficients)
     noise_result = None
     try:
@@ -64,7 +101,8 @@ def diagnose(directory: Path) -> dict:
                                      "points": axes[width].point_count,
                                      "coefficient": _jsonable(coefficients[index])}
                         for index, (width, _) in enumerate(WIDTH_KEYS)},
-            "rabi": fit, "noise": noise_result, "journal": journal_status,
+            "rabi": fit, "noise": noise_result, "timing": timing_result,
+            "journal": journal_status,
             "previous_pilot_failures": previous,
             "physical_adc_clock_verified": False}
 
@@ -89,6 +127,15 @@ def main(argv: list[str] | None = None) -> int:
           f"JOURNAL: {journal['status']} completed={journal['completed_tasks']} "
           f"uncertain={len(journal['uncertain_keys'])} "
           f"missing_results={len(journal['missing_completed_results'])}",flush=True)
+    timing=result["timing"]
+    if timing["status"]=="MEASURED_CONTRASTS":
+        parts=[f"drift={timing['return_control_drift']:.4g}"]
+        for name in ("opposite_phase","gap_10_vs_20_us","terminal_idle"):
+            parts.append(f"{name}={timing['contrasts'][name]:.4g}/"
+                         f"{timing['thresholds'][name]:.4g}")
+        print("TIMING: " + " ".join(parts) + " (contrast/threshold)",flush=True)
+    else:
+        print(f"TIMING: {timing['status']}; saved timing FIDs incomplete",flush=True)
     if result["previous_pilot_failures"]:
         print(f"PREVIOUS PILOT FAILURES: {', '.join(result['previous_pilot_failures'])}",flush=True)
     if args.json:

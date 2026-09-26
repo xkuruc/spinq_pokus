@@ -7,6 +7,7 @@ import json
 import os
 import zipfile
 from pathlib import Path
+from statistics import median
 
 import numpy as np
 
@@ -19,6 +20,86 @@ STATUSES = {"PENDING", "SUCCESS_VALIDATED", "VALID_NEGATIVE_RESULT", "METHOD_FAI
 FIELDS = ("module", "method", "baseline", "task", "block", "data_source", "acquisitions",
           "wall_seconds", "analysis_seconds", "design_seconds", "rf_duration_us",
           "error", "ci_low", "ci_high", "tolerance", "status", "reason")
+
+
+def _measured_findings(data: dict) -> list[str]:
+    """Summarize observed rows without promoting diagnostics to validated wins."""
+    rows = data.get("rows", [])
+    if not rows:
+        return []
+    lines = ["", "## Stručné zistenia z meraní", ""]
+    used = data.get("budgets", {}).get("acquisitions_used")
+    if isinstance(used, int) and used > 0:
+        lines.append(f"Zaúčtovaných fyzických úloh: **{used}**; riadkov porovnania: "
+                     f"**{len(rows)}**. Riadky nie sú nezávislé opakovania jedinej metódy.")
+        lines.append("")
+
+    pilot = data.get("pilot", {})
+    rabi = pilot.get("rabi", {})
+    if isinstance(rabi, dict) and all(k in rabi for k in ("period_us", "t90_us")):
+        lines.append(f"- **Rabi pilot:** perióda {float(rabi['period_us']):.3g} µs, "
+                     f"odhad 90° pulzu {float(rabi['t90_us']):.3g} µs; "
+                     "zhoda fitu nie je vernosťou brány.")
+
+    b_rows = [r for r in rows if r.get("module") == "B" and
+              isinstance(r.get("error"), (int, float))]
+    short = [r for r in b_rows if r.get("method") in {"adaptive", "diagnostic_8000"}]
+    full = [r for r in b_rows if r.get("method") == "fixed_16000"]
+    if short and full:
+        paired = {r.get("block") for r in short} & {r.get("block") for r in full}
+        short_errors = [float(r["error"]) for r in short if r.get("block") in paired]
+        full_errors = [float(r["error"]) for r in full if r.get("block") in paired]
+        if paired:
+            short_name = "8000 bodov" if all(r.get("method") == "diagnostic_8000"
+                                             for r in short) else "kratší FID"
+            line = (f"- **B:** {len(paired)} párov blokov; medián absolútnej odchýlky "
+                    f"frekvencie od zmrazenej pilotnej referencie: {short_name} "
+                    f"{median(short_errors):.3g} Hz, 16000 bodov "
+                    f"{median(full_errors):.3g} Hz.")
+            reference = pilot.get("reference_frequency_hz")
+            bands = pilot.get("multiplet_bands_hz") or []
+            if isinstance(reference, (int, float)) and any(
+                    isinstance(edge, (int, float)) and abs(float(reference)-edge) < 1e-6
+                    for band in bands if isinstance(band, (list, tuple)) for edge in band):
+                line += " Pilotná referencia leží na okraji fit pásma."
+            plan_status = (pilot.get("fid_acquisition_plan") or {}).get("status")
+            if plan_status and plan_status != "PLAN_ONLY":
+                line += f" Plán dĺžky FID: {plan_status}."
+            line += " Tieto odchýlky nedokazujú presnosť ani úsporu času kratšej akvizície."
+            lines.append(line)
+
+    f_rows = [r for r in rows if r.get("module") == "F" and
+              isinstance(r.get("error"), (int, float))]
+    if f_rows:
+        groups = {method: [r for r in f_rows if r.get("method") == method]
+                  for method in ("unchanged", "complex_TV", "randomized_Hankel")}
+        medians = ", ".join(f"{method} {median(float(r['error']) for r in own):.3g}"
+                            for method, own in groups.items() if own)
+        blocks = {r.get("block") for r in f_rows}
+        line = (f"- **F:** {len(blocks)} odložené meracie bloky; medián komplexnej "
+                f"FID RMSE: {medians}.")
+        if groups["unchanged"] and groups["randomized_Hankel"]:
+            unchanged = {r.get("block"): float(r["error"]) for r in groups["unchanged"]}
+            hankel = {r.get("block"): float(r["error"]) for r in groups["randomized_Hankel"]}
+            paired = unchanged.keys() & hankel.keys()
+            if paired:
+                lower = sum(hankel[block] < unchanged[block] for block in paired)
+                line += f" Randomized Hankel mal nižšiu chybu v {lower}/{len(paired)} párov."
+        if data.get("modules", {}).get("F", {}).get("status") == "REFERENCE_INADEQUATE":
+            line += " Neurónové porovnanie a interval spoľahlivosti chýbajú; nadradenosť nie je preukázaná."
+        lines.append(line)
+
+    h_rows = [r for r in rows if r.get("module") == "H" and
+              isinstance(r.get("error"), (int, float))]
+    if h_rows:
+        methods = {str(r.get("method")) for r in h_rows}
+        counts = ", ".join(f"{method} {sum(r.get('method') == method for r in h_rows)}"
+                           for method in sorted(methods))
+        lines.append(f"- **H:** {len(h_rows)} fyzických skúšobných pulzov "
+                     f"({counts}). Chyba je relatívna odchýlka komplexného FID "
+                     "od referenčného pulzu; bez nezávislého Blochovho x/y/z "
+                     "merania nejde o vernosť kvantovej brány.")
+    return lines
 
 
 class Results:
@@ -73,13 +154,24 @@ class Results:
 
     def markdown(self):
         d=self.data
+        reanalysis=d.get("reanalysis")
+        if isinstance(reanalysis,dict):
+            source_raw=reanalysis.get("source_raw","../raw")
+            raw_line=(f"Toto je offline prepočet pôvodného behu; merané FID ostáva "
+                      f"v `{source_raw}/` pri pôvodnom behu.")
+        else:
+            raw_line="Merané FID ostáva lokálne v `raw/` a `data/`."
+        planned_blocks=d.get("config",{}).get("blocks")
+        blocks_line=(f"Plán obsahuje {planned_blocks} meracích blokov. "
+                     if planned_blocks is not None else "")
         lines=["# SpinQ Gemini Lab — lokálny low-level benchmark", "",
                f"Stav: **{d['state']}**; skutočné hardvérové údaje: **{'áno' if d['hardware_results_present'] else 'nie'}**.",
-               f"Plný ZIP archív: **{d.get('archive',{}).get('status','NOT_REQUESTED')}**; merané FID ostáva lokálne v `raw/` a `data/`.",
+               f"Plný ZIP archív: **{d.get('archive',{}).get('status','NOT_REQUESTED')}**. {raw_line}",
                "Všetky FFT, fity, modely a porovnania v tomto behu počíta lokálny Windows proces.",
                "Prijímaný FID môže byť predspracovaný serverom; surový ADC nebol potvrdený.",
-               "Tri pilotné bloky nie sú silný dôkaz zlepšenia. Neznáme interné opakovania sú UNKNOWN.",
-               "", "## Moduly", ""]
+               blocks_line+"Neznáme interné opakovania zariadenia sú UNKNOWN."]
+        lines.extend(_measured_findings(d))
+        lines.extend(["", "## Moduly", ""])
         for module in MODULES:
             item=d["modules"][module]
             lines.append(f"- **{module}**: {item['status']} — {item.get('reason','')}")

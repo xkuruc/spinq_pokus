@@ -4,6 +4,7 @@ import unittest
 import json
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
@@ -14,6 +15,97 @@ from spinq_local.signal import MultipletSpec
 
 
 class SessionNumericalTests(unittest.TestCase):
+    def test_frequency_rejects_frozen_band_edge_or_unchecked_fit(self):
+        session=object.__new__(LocalSession)
+        session.spec=MultipletSpec(((-1810.,-1570.),))
+        session.noise=None
+        session.primary_component_index=0
+        record=SimpleNamespace(key="pilot_40_r0")
+        def fit(status, at_edge):
+            return {"status":status,"modes":[{"component_id":0,
+                "frequency_hz":-1570.,"frequency_at_band_edge":at_edge}]}
+        with patch("spinq_local.session.fit_complex_multiplet",
+                   return_value=fit("FIT_COMPLETED",True)):
+            with self.assertRaisesRegex(ValueError,"band_edge_components=\\[0\\]"):
+                session.frequency(record)
+        with patch("spinq_local.session.fit_complex_multiplet",
+                   return_value=fit("MODEL_CHECK_REQUIRED",False)):
+            with self.assertRaisesRegex(ValueError,"status=MODEL_CHECK_REQUIRED"):
+                session.frequency(record)
+        with patch("spinq_local.session.fit_complex_multiplet",
+                   return_value=fit("FIT_COMPLETED",False)):
+            self.assertEqual(session.frequency(record),-1570.)
+
+    def test_bad_full_length_pilot_reference_skips_short_fid_acquisitions(self):
+        session=object.__new__(LocalSession)
+        session.blocks=10
+        session.seed=1
+        session.pilot_records={}
+        session.noise=None
+        session.spec=None
+        session.primary_component_index=0
+        session.t90_us=None
+        session.reference_frequency_hz=None
+        session.a_receiver_offset=0j
+        session.a_receiver_gain=1+0j
+        session.a_observation_cov=np.eye(2)
+        session.results=SimpleNamespace(data={"pilot":{},"frozen_plan":{}},save=lambda:None)
+        acquired=[]
+        def pulse(key,width,**_):
+            acquired.append(key)
+            return SimpleNamespace(key=key,width=width,metadata={"wall_seconds":1.})
+        session.pulse=pulse
+        session.coefficient=lambda record: complex(np.sin(2*np.pi*record.width/152.))
+        noise=SimpleNamespace(re_im_covariance=np.eye(2),lag_one_correlation=0.,repetitions=3)
+        rejected={"status":"MODEL_CHECK_REQUIRED","modes":[{
+            "component_id":0,"frequency_hz":-1570.,"frequency_at_band_edge":True}]}
+        with patch("spinq_local.session.estimate_noise",return_value=noise), \
+             patch("spinq_local.session._pilot_bands",return_value=(MultipletSpec(((-1810.,-1570.),)),0)), \
+             patch("spinq_local.session.validate_axis",return_value=SimpleNamespace(sample_hz=10000.)), \
+             patch("spinq_local.session.fit_complex_multiplet",return_value=rejected):
+            pilot=session.pilot()
+        self.assertEqual(len(acquired),7)
+        self.assertFalse(any("count" in key for key in acquired))
+        self.assertIsNone(session.reference_frequency_hz)
+        self.assertEqual(pilot["fid_acquisition_plan"]["status"],"REFERENCE_INADEQUATE")
+        self.assertIn("reference_frequency",pilot["failures"])
+
+    def test_invalid_short_fid_fits_cannot_create_trivial_full_length_plan(self):
+        session=object.__new__(LocalSession)
+        session.blocks=10
+        session.seed=1
+        session.pilot_records={}
+        session.noise=None
+        session.spec=None
+        session.primary_component_index=0
+        session.t90_us=None
+        session.reference_frequency_hz=None
+        session.a_receiver_offset=0j
+        session.a_receiver_gain=1+0j
+        session.a_observation_cov=np.eye(2)
+        session.results=SimpleNamespace(data={"pilot":{},"frozen_plan":{}},save=lambda:None)
+        acquired=[]
+        def pulse(key,width,**_):
+            acquired.append(key)
+            return SimpleNamespace(key=key,width=width,metadata={"wall_seconds":1.})
+        session.pulse=pulse
+        session.coefficient=lambda record: complex(np.sin(2*np.pi*record.width/152.))
+        def frequency(record):
+            if "count" in record.key:
+                raise ValueError("frozen fit hit band edge")
+            return -1690.+{"pilot_40_r0":0.,"pilot_40_r1":1.,
+                           "pilot_40_r2":-1.}.get(record.key,0.)
+        session.frequency=frequency
+        noise=SimpleNamespace(re_im_covariance=np.eye(2),lag_one_correlation=0.,repetitions=3)
+        with patch("spinq_local.session.estimate_noise",return_value=noise), \
+             patch("spinq_local.session._pilot_bands",return_value=(MultipletSpec(((-1810.,-1570.),)),0)), \
+             patch("spinq_local.session.validate_axis",return_value=SimpleNamespace(sample_hz=10000.)):
+            pilot=session.pilot()
+        self.assertEqual(len(acquired),11)
+        self.assertIsNone(session.reference_frequency_hz)
+        self.assertEqual(pilot["fid_acquisition_plan"]["status"],"REFERENCE_INADEQUATE")
+        self.assertIn("No shorter FID length",pilot["fid_acquisition_plan"]["reason"])
+
     def test_h_rf_map_consumes_serialized_complex_rabi_coefficients(self):
         session=object.__new__(LocalSession)
         session.t90_us=39.
