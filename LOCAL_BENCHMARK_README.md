@@ -49,25 +49,29 @@ vypíše do konzoly:
 .\.benchmark-venv\Scripts\python.exe .\diagnose_saved_pilot.py .\results\20260926_123456_UTC
 ```
 
-Živý beh vypisuje každý prijatý FID (`MEASURED` alebo `REUSED`), priebežné
-porovnávacie riadky, výsledok pilotu a dôvody preskočenia metód. Pri chybe
-vypíše fázu, blok a krátky traceback; detaily zároveň uloží do `results.json`.
+Živý beh vypisuje krátky stav pilotu a blokov. Chyby vypíše hneď s fázou,
+blokom a miestom v kóde; úplný traceback uloží do `results.json`.
 
-Bez kontaktu so zariadením možno znova vytvoriť report, grafy a ZIP zo
+Bez kontaktu so zariadením možno znova vytvoriť report a grafy zo
 zachovaných výsledkov:
 
 ```powershell
 .\.benchmark-venv\Scripts\python.exe .\local_benchmark_windows.py --offline-rebuild --resume .\results\20260926_123456_UTC --no-upload
 ```
 
+Plný lokálny ZIP vznikne iba pri výslovnom `--full-archive`. Môžeš ho
+vytvoriť aj neskôr cez predchádzajúci offline príkaz s týmto prepínačom.
+Starší `results.zip` v obnovenom priečinku ostáva zachovaný, no bez tohto
+prepínača sa neaktualizuje.
+
 Každý beh vytvorí `results/<run_id>/REPORT.md`, `comparison.csv`,
-`results.json`, `raw/`, `vendor_reference/`, `models/`, `plots/` a úplný
-`results.zip`. Pôvodné Re/Im a osi sú v komprimovaných NPZ, sanitizované
-udalosti v `data/events.jsonl.gz`. Výsledný report a tabuľka sú čitateľné
-priamo v novej GitHub vetve `benchmark/<run_id>`; celý ZIP je tam prípadne
-rozdelený na očíslované časti. Použije sa existujúce Git prihlásenie alebo
+`results.json`, `raw/`, `vendor_reference/`, `models/` a `plots/`.
+Pôvodné Re/Im a osi sú v komprimovaných NPZ, sanitizované
+udalosti v `data/events.jsonl.gz`. Na GitHub sa posiela iba report, tabuľka,
+strojovo čitateľné zhrnutie a výsledné grafy vo vetve `benchmark/<run_id>`.
+Merané FID ostáva na Windowse. Použije sa existujúce Git prihlásenie alebo
 `GH_TOKEN`/`GITHUB_TOKEN` z prostredia, žiadny token sa nezapisuje do kódu.
-Pri zlyhaní uploadu ostáva ZIP lokálne.
+Pri zlyhaní uploadu ostávajú report a merané dáta lokálne.
 
 Metódy A–H sú implementované, no úspech reálnych pulzových, echo a
 viacspinových porovnaní závisí od overeného časovania, dostatočnej

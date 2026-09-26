@@ -128,9 +128,6 @@ class LocalSession:
             raise ValueError("Unknown dataset role")
         sequence = SequenceIR(segments, sample_count=count, label=key)
         request = compile_sequence(sequence, self.caps, idle_probe=idle_probe)
-        prior_journal=getattr(self.hw,"journal",{}) or {}
-        reused=((self.out/"raw"/f"{key}.json").is_file() or
-                prior_journal.get(key,{}).get("phase")=="completed")
         record = run_raw(request, key=key, hardware=self.hw, output=self.out)
         record.metadata.update({"measurement_block": f"block-{block:02d}" if block >= 0 else "pilot",
                                 "setting_family": family, "dataset_role": role,
@@ -143,10 +140,6 @@ class LocalSession:
         self.results.save()
         if not any(existing.key == key for existing in self.role_records[role]):
             self.role_records[role].append(record)
-        print(f"FID {'REUSED' if reused else 'MEASURED'}: key={key} "
-              f"task={record.task_id} points={len(record.re)} "
-              f"wall_s={record.metadata.get('wall_seconds')} "
-              f"raw={self.out/'raw'/f'{key}.npz'}",flush=True)
         return record
 
     def pulse(self, key: str, width: float, *, amplitude: float = 100.,

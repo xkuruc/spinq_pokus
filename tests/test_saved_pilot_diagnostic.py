@@ -1,6 +1,7 @@
 """The operator's saved-data check must work without instrument access."""
 
 import io
+import json
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -33,6 +34,11 @@ class SavedPilotDiagnosticTests(unittest.TestCase):
                                  qubit="0", step="NMRSIG", axis_original=axis,
                                  time_seconds=t, re=observed.real, im=observed.imag,
                                  parameters_sent={"sampleFre": fs, "sampleCount": n}).save(raw)
+            data = out / "data"
+            data.mkdir()
+            (data / "pilot_40_r0.json").write_text("{}", encoding="utf-8")
+            (data / "hardware_journal.json").write_text(json.dumps({
+                "pilot_40_r0": {"phase": "completed"}}), encoding="utf-8")
             before = sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file())
             with patch("spinq_benchmark.hardware.LiveHardware.__enter__",
                        side_effect=AssertionError("hardware must not be contacted")):
@@ -43,6 +49,8 @@ class SavedPilotDiagnosticTests(unittest.TestCase):
             self.assertEqual(before, after)
             self.assertEqual(code, 0)
             self.assertEqual(result["status"], "VALID")
+            self.assertEqual(result["journal"]["status"], "LOCAL_RECORDS_CONSISTENT")
+            self.assertEqual(result["journal"]["completed_tasks"], 1)
             self.assertAlmostEqual(result["rabi"]["period_us"], 156, delta=2)
             self.assertGreater(result["rabi"]["signed_complex_r2"], .99)
             self.assertIn("no hardware command sent", output.getvalue())

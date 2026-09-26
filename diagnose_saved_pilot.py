@@ -25,6 +25,18 @@ WIDTH_KEYS = ((40, "pilot_40_r0"), (80, "pilot_80"), (120, "pilot_120"),
 def diagnose(directory: Path) -> dict:
     out = directory.resolve()
     raw = out / "raw"
+    journal_path = out / "data" / "hardware_journal.json"
+    journal_status = {"status": "MISSING", "completed_tasks": 0,
+                      "uncertain_keys": [], "missing_completed_results": []}
+    if journal_path.is_file():
+        journal = json.loads(journal_path.read_text(encoding="utf-8"))
+        uncertain = [key for key, row in journal.items() if row.get("phase") in
+                     {"submission_attempted_unconfirmed", "sent_unconfirmed", "unknown"}]
+        completed = [key for key, row in journal.items() if row.get("phase") == "completed"]
+        missing = [key for key in completed if not (out / "data" / f"{key}.json").is_file()]
+        journal_status = {"status": "LOCAL_RECORDS_CONSISTENT" if not uncertain and not missing
+                          else "REVIEW_REQUIRED", "completed_tasks": len(completed),
+                          "uncertain_keys": uncertain, "missing_completed_results": missing}
     records = {width: RawFIDRecord.load(raw, key) for width, key in WIDTH_KEYS}
     axes = {width: validate_axis(record) for width, record in records.items()}
     with tempfile.TemporaryDirectory(prefix="spinq_pilot_diagnostic_") as temporary:
@@ -52,7 +64,7 @@ def diagnose(directory: Path) -> dict:
                                      "points": axes[width].point_count,
                                      "coefficient": _jsonable(coefficients[index])}
                         for index, (width, _) in enumerate(WIDTH_KEYS)},
-            "rabi": fit, "noise": noise_result,
+            "rabi": fit, "noise": noise_result, "journal": journal_status,
             "previous_pilot_failures": previous,
             "physical_adc_clock_verified": False}
 

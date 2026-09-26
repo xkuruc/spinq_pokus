@@ -7,6 +7,7 @@ import importlib.metadata
 import json
 import math
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -19,6 +20,10 @@ from spinq_live_suite import HISTORICAL_PHYSICAL_BASELINE, read_new_events, wait
 
 class HardwareUncertain(RuntimeError):
     """Task might still be on the device; stop every further submission."""
+
+
+class PreSubmissionFailure(HardwareUncertain):
+    """Local checkpoint failed before run_experiment; this key was not sent."""
 
 
 def same_physical_payload(expected, actual, *, rel_tol=1e-6, abs_tol=1e-6):
@@ -95,10 +100,26 @@ def paired_fid_graphs(graph, requested_count):
     return pairs
 
 
+def stored_graph_fields(graph, requested_count, *, compact=False):
+    """Keep one event journal and raw NPZ as the local FID evidence.
+
+    Legacy callers retain their full SDK graph export. The local benchmark
+    reads the recorded chart events and saves its own validated FID NPZ, so
+    another copy of every chart in each task JSON is unnecessary.
+    """
+    if compact:
+        return {"sdk_graph_blocks": len(graph),
+                "decoded_charts_in_event_journal": True,
+                "duplicate_sdk_graphs_stored": False}
+    return {"fid_pairs": paired_fid_graphs(graph, requested_count),
+            "all_decoded_graphs": graph}
+
+
 class LiveHardware:
     def __init__(self, out: Path, *, host="172.19.20.100", port=8181, account="anyword",
                  timeout_seconds=180, pause_seconds=2., max_tasks=180,
-                 max_requested_rf_us=12000., exclusive_use_confirmed=True):
+                 max_requested_rf_us=12000., exclusive_use_confirmed=True,
+                 compact_result=False):
         self.out=out
         self.data=out/"data"
         self.data.mkdir(parents=True,exist_ok=True)
@@ -106,6 +127,7 @@ class LiveHardware:
         self.timeout,self.pause=timeout_seconds,pause_seconds
         self.max_tasks,self.max_rf=max_tasks,max_requested_rf_us
         self.exclusive=exclusive_use_confirmed
+        self.compact_result=compact_result
         self.link=self.adapter=self.recorder=None
         self.last_finished=0.
         self.halted=False
@@ -186,6 +208,7 @@ class LiveHardware:
         from spinqlablink import ExperimentType
         exp,pars=self.link.register_experiment(ExperimentType.PHYSICAL_LAYER_EXPERIMENT)
         terminal=False
+        submission_attempted=False
         start=time.monotonic()
         try:
             _configure_physical(pars,p,check_serialization=False)
@@ -200,10 +223,21 @@ class LiveHardware:
             self.adapter.ack_mismatch=False
             self.journal[key]={"phase":"submission_attempted_unconfirmed","requested_rf_us":rf,
                                "task_id_before_ack":str(exp.id),"params":p,"utc":utc_now()}
-            atomic_json(self.journal_path,self.journal)
+            try:
+                atomic_json(self.journal_path,self.journal)
+            except Exception as exc:
+                # The SDK sends only in run_experiment(), which is below this
+                # durable checkpoint. No command for this key reached it.
+                self.halted=True
+                self.journal.pop(key,None)
+                raise PreSubmissionFailure(
+                    f"Local journal write failed before submission for {key}; "
+                    f"no experiment was sent ({type(exc).__name__}: {redact(str(exc))})"
+                ) from exc
             self.task_count+=1
             self.rf_us+=rf
             try:
+                submission_attempted=True
                 self.link.run_experiment()
                 self.journal[key]["phase"]="sent_unconfirmed"
                 atomic_json(self.journal_path,self.journal)
@@ -228,12 +262,11 @@ class LiveHardware:
                 # SDK result is an original decoded chart export, alongside event journal.
                 result=self.link.get_experiment_result()
                 graph=result.get("result",{}).get("graph",[])
-                pairs=paired_fid_graphs(graph,p["sampleCount"])
                 row={"key":key,"state":state,"task_id":str(exp.id),"params":p,"preflight":preflight,
                      "wall_seconds":time.monotonic()-start,"finished_utc":utc_now(),
-                     "fid_pairs":pairs,"all_decoded_graphs":graph,
                      "internal_repetitions":"UNKNOWN","requested_rf_us":rf,
                      "raw_adc_confirmed":False}
+                row.update(stored_graph_fields(graph,p["sampleCount"],compact=self.compact_result))
                 atomic_json(target,row)
                 self.journal[key]["phase"]="completed"
                 self.journal[key]["result_file"]=str(target.relative_to(self.out))
@@ -246,8 +279,16 @@ class LiveHardware:
                 atomic_json(self.journal_path,self.journal)
                 raise HardwareUncertain("Completed task output not captured; stop submissions") from exc
         finally:
-            if terminal:
-                self.link.deregister_experiment()
+            if terminal or not submission_attempted:
+                if not submission_attempted:
+                    self.adapter.own_task_ids.discard(str(exp.id))
+                    self.adapter.pending_own_ack=False
+                active_error=sys.exc_info()[0] is not None
+                try:
+                    self.link.deregister_experiment()
+                except Exception as exc:
+                    if not active_error: raise
+                    print(f"LOCAL CLEANUP WARNING: {type(exc).__name__}: {redact(str(exc))}",flush=True)
 
 
 def first_fid(row):

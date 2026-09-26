@@ -15,7 +15,7 @@ if not exist ".benchmark-venv\Scripts\python.exe" (
   if errorlevel 1 exit /b 2
 )
 set PIP_NO_INPUT=1
-".benchmark-venv\Scripts\python.exe" -m pip --disable-pip-version-check install --only-binary=:all: -r "requirements-local-core.txt"
+".benchmark-venv\Scripts\python.exe" -m pip --quiet --disable-pip-version-check install --only-binary=:all: -r "requirements-local-core.txt"
 if errorlevel 1 (
   echo Instalacia izolovanych zakladnych zavislosti zlyhala. Povodna .venv sa nezmenila.
   exit /b 2
@@ -23,7 +23,7 @@ if errorlevel 1 (
 ".benchmark-venv\Scripts\python.exe" -m pip show torch >nul 2>&1
 if errorlevel 1 (
   echo Instalujem volitelny CPU PyTorch z oficialneho PyTorch indexu.
-  ".benchmark-venv\Scripts\python.exe" -m pip --disable-pip-version-check install --only-binary=:all: torch --index-url https://download.pytorch.org/whl/cpu
+  ".benchmark-venv\Scripts\python.exe" -m pip --quiet --disable-pip-version-check install --only-binary=:all: torch --index-url https://download.pytorch.org/whl/cpu
   if errorlevel 1 echo PyTorch nie je dostupny; neurónové metody budu preskocene s dovodom.
 )
 ".benchmark-venv\Scripts\python.exe" -m spinq_local.preflight --output ".benchmark-preflight.json"

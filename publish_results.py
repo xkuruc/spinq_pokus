@@ -49,7 +49,7 @@ def _remote(repo: Path, env: dict[str, str]) -> str:
 def _summary_files(out: Path, destination: Path) -> list[str]:
     """Copy only analysis outputs; FID charts and models stay on the Windows PC."""
     data=json.loads((out/"results.json").read_text(encoding="utf-8"))
-    if data.get("state")=="running":
+    if str(data.get("state","")).upper()=="RUNNING":
         raise ValueError("Benchmark is still running; summary upload refused")
     names=[]
     for name in ("REPORT.md","comparison.csv"):
@@ -70,7 +70,7 @@ def _summary_files(out: Path, destination: Path) -> list[str]:
     (destination/"README.md").write_text(
         "# Gemini Lab benchmark: analyzed results\n\n"
         "This branch contains the final report, comparison table, machine-readable "
-        "summary and plots. The decoded FID/FFT charts, models and full ZIP remain "
+        "summary and plots. Measured FIDs, decoded events and models remain "
         "on the acquisition computer in the matching results directory.\n",
         encoding="utf-8")
     names.append("README.md")

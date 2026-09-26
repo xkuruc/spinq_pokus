@@ -6,11 +6,17 @@ import html
 import json
 import os
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 SECRET_KEYS = {"password", "token", "session_id", "sessionid", "account", "authorization", "cookie", "secret", "credential"}
+
+# Windows may briefly deny replacement while another process scans the
+# destination. Keep the completed temporary file and retry the atomic rename;
+# never remove the previous destination to work around a lock.
+_REPLACE_RETRY_DELAYS = (0.05, 0.1, 0.2, 0.4, 0.8, 1.6, 3.2)
 
 
 def utc_now() -> str:
@@ -45,7 +51,18 @@ def atomic_bytes(path: Path, content: bytes) -> None:
             target.write(content)
             target.flush()
             os.fsync(target.fileno())
-        os.replace(name, path)
+        announced = False
+        for delay in (*_REPLACE_RETRY_DELAYS, None):
+            try:
+                os.replace(name, path)
+                break
+            except PermissionError:
+                if delay is None:
+                    raise
+                if not announced and path.name == "hardware_journal.json":
+                    print("FILE WARNING: hardware journal temporarily locked; retrying save", flush=True)
+                    announced = True
+                time.sleep(delay)
     finally:
         if os.path.exists(name):
             os.unlink(name)

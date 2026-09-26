@@ -13,7 +13,7 @@ from spinq_local.report import Results
 
 
 class ConsoleDiagnosticsTests(unittest.TestCase):
-    def test_partial_row_and_final_module_are_printed_and_saved(self):
+    def test_partial_row_is_saved_and_final_module_is_printed(self):
         with tempfile.TemporaryDirectory() as folder:
             out = Path(folder)
             capture = io.StringIO()
@@ -25,8 +25,7 @@ class ConsoleDiagnosticsTests(unittest.TestCase):
                 results.module("B", "REFERENCE_INADEQUATE",
                                "independent frequency reference unavailable")
             shown = capture.getvalue()
-            self.assertIn("ROW B block=0 method=adaptive task=B_b00_adaptive", shown)
-            self.assertIn("error=2.5 tolerance=3.0 status=RUNNING", shown)
+            self.assertNotIn("ROW B", shown)
             self.assertIn("MODULE B: REFERENCE_INADEQUATE: independent frequency reference unavailable", shown)
             saved = json.loads((out / "results.json").read_text(encoding="utf-8"))
             self.assertEqual(saved["rows"][0]["status"], "REFERENCE_INADEQUATE")
@@ -49,9 +48,9 @@ class ConsoleDiagnosticsTests(unittest.TestCase):
                 outcome = _run_guarded(results, "H", bad_map, stage="rf_map")
             self.assertIsNone(outcome)
             shown = capture.getvalue()
-            self.assertIn("MODULE H: METHOD_FAILED: rf_map: TypeError:", shown)
-            self.assertIn("TRACE H/rf_map:", shown)
-            self.assertIn("bad_map", shown)
+            self.assertIn("ERROR H/rf_map: METHOD_FAILED: TypeError:", shown)
+            self.assertIn("traceback saved in results.json", shown)
+            self.assertNotIn("Traceback (most recent call last)", shown)
             self.assertIn("'complex' object is not subscriptable", shown)
             saved = json.loads((out / "results.json").read_text(encoding="utf-8"))
             self.assertEqual(saved["modules"]["H"]["status"], "METHOD_FAILED")
@@ -73,9 +72,8 @@ class ConsoleDiagnosticsTests(unittest.TestCase):
         shown = capture.getvalue()
         self.assertIn("PILOT: Rabi status=METHOD_FAILED", shown)
         self.assertIn("noise=UNAVAILABLE", shown)
-        self.assertIn("PILOT WARNING independent_noise: ValueError: no repeats", shown)
-        self.assertIn("PILOT WARNING rabi_t90: ValueError: fringe absent", shown)
-        self.assertIn("FID length plan={'status': 'REFERENCE_INADEQUATE'}", shown)
+        self.assertIn("PILOT: failures=2", shown)
+        self.assertIn("FID length plan=REFERENCE_INADEQUATE", shown)
 
 
 if __name__ == "__main__":

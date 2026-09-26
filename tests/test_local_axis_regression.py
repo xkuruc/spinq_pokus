@@ -130,15 +130,38 @@ class LocalAxisRegressionTests(unittest.TestCase):
                 encoding="utf-8")
             (out / "data" / "pilot_40_r0.json").write_text(
                 '{"chart":"measured FID"}', encoding="utf-8")
-            with patch("local_benchmark_windows.publish_results") as publish:
+            with patch("local_benchmark_windows.publish_summary") as publish:
                 with redirect_stdout(io.StringIO()):
                     _finalize(out, results, upload=True)
                 publish.assert_not_called()
             self.assertTrue(results.data["hardware_results_present"])
             self.assertEqual(results.data["upload"]["status"],
                              "UPLOAD_SKIPPED_INCOMPLETE")
+            self.assertFalse((out / "results.zip").exists())
+            self.assertEqual((out / "data" / "pilot_40_r0.json").read_text(),
+                             '{"chart":"measured FID"}')
+            self.assertEqual(results.data["archive"]["status"],"NOT_CREATED_THIS_RUN")
+            with redirect_stdout(io.StringIO()):
+                _finalize(out,results,upload=False,full_archive=True)
             with zipfile.ZipFile(out / "results.zip") as archive:
-                self.assertIn("data/pilot_40_r0.json", archive.namelist())
+                self.assertIn("data/pilot_40_r0.json",archive.namelist())
+
+    def test_completed_run_publishes_summary_only(self):
+        from local_benchmark_windows import _finalize
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder)
+            results = Results(out, {}, {})
+            results.data["state"] = "COMPLETED_WITH_EXPLICIT_LIMITATIONS"
+            results.data["hardware_results_present"] = True
+            results.row(module="B", method="fixed_16000", task="B_b00_fixed_16000",
+                        block=0, acquisitions=1, status="REFERENCE_INADEQUATE")
+            with patch("local_benchmark_windows.publish_summary",
+                       return_value={"status": "UPLOAD_SUCCEEDED"}) as publish:
+                with redirect_stdout(io.StringIO()):
+                    _finalize(out, results, upload=True)
+            self.assertEqual(publish.call_count, 1)
+            self.assertEqual(publish.call_args.args[1], out)
+            self.assertEqual(results.data["upload"]["status"], "UPLOAD_SUCCEEDED")
 
 
 if __name__ == "__main__":

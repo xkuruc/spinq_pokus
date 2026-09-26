@@ -51,7 +51,7 @@ class Results:
         os.replace(temporary,self.out/"comparison.csv")
         atomic_bytes(self.out/"REPORT.md",self.markdown().encode("utf-8"))
 
-    def module(self,letter:str,status:str,reason:str="",**details):
+    def module(self,letter:str,status:str,reason:str="",*,quiet:bool=False,**details):
         if letter not in MODULES or status not in STATUSES: raise ValueError("Invalid module state")
         self.data["modules"][letter]={"status":status,"reason":reason,**details}
         if status not in {"PENDING","RUNNING"}:
@@ -60,7 +60,7 @@ class Results:
                     row["status"]=status
                     if not row["reason"]:row["reason"]=reason
         self.save()
-        if status!="RUNNING":
+        if status!="RUNNING" and not quiet:
             print(f"MODULE {letter}: {status}: {reason}",flush=True)
 
     def row(self,**values):
@@ -70,15 +70,12 @@ class Results:
             (r["module"],r["method"],r["task"],r["block"])!=identity]
         self.data["rows"].append(item)
         self.save()
-        print(f"ROW {item['module']} block={item['block']} method={item['method']} "
-              f"task={item['task']} acquisitions={item['acquisitions']} "
-              f"error={item['error']} tolerance={item['tolerance']} "
-              f"status={item['status']}",flush=True)
 
     def markdown(self):
         d=self.data
         lines=["# SpinQ Gemini Lab — lokálny low-level benchmark", "",
                f"Stav: **{d['state']}**; skutočné hardvérové údaje: **{'áno' if d['hardware_results_present'] else 'nie'}**.",
+               f"Plný ZIP archív: **{d.get('archive',{}).get('status','NOT_REQUESTED')}**; merané FID ostáva lokálne v `raw/` a `data/`.",
                "Všetky FFT, fity, modely a porovnania v tomto behu počíta lokálny Windows proces.",
                "Prijímaný FID môže byť predspracovaný serverom; surový ADC nebol potvrdený.",
                "Tri pilotné bloky nie sú silný dôkaz zlepšenia. Neznáme interné opakovania sú UNKNOWN.",
@@ -88,8 +85,8 @@ class Results:
             lines.append(f"- **{module}**: {item['status']} — {item.get('reason','')}")
         if not d["rows"]:
             lines.extend(["", "Zatiaľ nevzniklo žiadne porovnanie. Ak hardvérová úloha skončila, "
-                          "jej pôvodný dekódovaný výstup je v `data/<kľúč>.json` "
-                          "a udalosti v `data/events.jsonl.gz`; opraviteľný beh pokračuje "
+                          "jej metadáta sú v `data/<kľúč>.json` a pôvodné dekódované "
+                          "grafy sú v `data/events.jsonl.gz`; opraviteľný beh pokračuje "
                           "s `--resume` bez opakovania dokončenej úlohy."])
         lines.extend(["", "## Porovnanie", "",
                       "| Modul | Metóda | Referencia | Úloha | Blok | Akvizície | Čas (s) | Chyba | CI | Tolerancia | Stav |",
@@ -215,8 +212,8 @@ def bundle_complete(out:Path) -> Path:
             if not path.is_file() or path.name in {"results.zip","results.zip.tmp","events.jsonl"} or path.name.endswith(".tmp"):
                 continue
             # On a validated task, raw NPZ and events retain the arrays. If
-            # validation failed, the decoded SDK task JSON is the only simple
-            # browsable copy of that measurement and must remain in the ZIP.
+            # validation failed, keep its task JSON too; together with the
+            # event journal it documents and can recover that measurement.
             if path.parent == out/"data" and path.name.endswith(".json") and path.name not in {
                 "hardware_journal.json","initial_telemetry.json","recorder_status.json"} and not (
                 path.name.endswith(".error.json") or path.name.endswith(".payload_mismatch.json")):

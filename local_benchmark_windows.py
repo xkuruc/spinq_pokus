@@ -18,10 +18,10 @@ from pathlib import Path
 
 import numpy as np
 
-from publish_results import publish_results
+from publish_results import publish_summary
 from spinq_audit.common import atomic_json, redact, utc_now
 from spinq_audit.safety import HardwareLock
-from spinq_benchmark.hardware import HardwareUncertain, LiveHardware
+from spinq_benchmark.hardware import HardwareUncertain, LiveHardware, PreSubmissionFailure
 from spinq_local.core import CapabilityUnavailable, IncompleteFID, Segment, SequenceIR
 from spinq_local.report import Results, bundle_complete, plots_from_results
 from spinq_local.session import LocalSession
@@ -43,6 +43,8 @@ def _args():
     parser.add_argument("--resume",type=Path)
     parser.add_argument("--offline-rebuild",action="store_true")
     parser.add_argument("--no-upload",action="store_true")
+    parser.add_argument("--full-archive",action="store_true",
+                        help="Create an optional full local ZIP of measured FIDs and events")
     args=parser.parse_args()
     if not 3<=args.blocks<=20:parser.error("--blocks must be 3..20")
     if args.max_tasks<30 or not 0<args.max_requested_rf_us<=30000:
@@ -69,8 +71,12 @@ def _record_status(results:Results,module:str,exc:Exception,*,stage:str):
     results.data.setdefault("error_details",[]).append({
         "module":module,"stage":stage,"status":status,"reason":reason,
         "traceback":detail})
-    results.module(module,status,reason)
-    print(f"TRACE {module}/{stage}:\n{detail}",flush=True)
+    results.module(module,status,reason,quiet=True)
+    frames=traceback.extract_tb(exc.__traceback__)
+    location=(f"{Path(frames[-1].filename).name}:{frames[-1].lineno}"
+              if frames else "unknown location")
+    print(f"ERROR {module}/{stage}: {status}: {type(exc).__name__}: {exc} "
+          f"({location}; traceback saved in results.json)",flush=True)
 
 
 def _run_guarded(results:Results,module:str,fn,*,stage:str):
@@ -89,9 +95,10 @@ def _print_pilot(pilot:dict,session:LocalSession):
           f"signed_r2={rabi.get('signed_complex_r2')} "
           f"noise={'OK' if session.noise is not None else 'UNAVAILABLE'} "
           f"bands_hz={pilot.get('multiplet_bands_hz')}",flush=True)
-    for key,reason in pilot.get("failures",{}).items():
-        print(f"PILOT WARNING {key}: {reason}",flush=True)
-    print(f"PILOT: FID length plan={pilot.get('fid_acquisition_plan')}",flush=True)
+    print(f"PILOT: failures={len(pilot.get('failures',{}))}",flush=True)
+    plan=pilot.get("fid_acquisition_plan",{})
+    print(f"PILOT: FID length plan={plan.get('status')} "
+          f"sample_count={plan.get('sample_count')}",flush=True)
 
 
 def _physical_control(session:LocalSession,results:Results):
@@ -265,7 +272,8 @@ def _physical_e(session:LocalSession,results:Results):
         paired=measured.get("paired_block_comparisons"))
 
 
-def _finalize(out:Path,results:Results,*,upload:bool,mark_finished:bool=True):
+def _finalize(out:Path,results:Results,*,upload:bool,mark_finished:bool=True,
+              full_archive:bool=False):
     _copy_docs(out)
     journal=out/"data"/"hardware_journal.json"
     if journal.is_file():
@@ -280,25 +288,31 @@ def _finalize(out:Path,results:Results,*,upload:bool,mark_finished:bool=True):
     if not complete and results.data["upload"]["status"]=="NOT_ATTEMPTED":
         results.data["upload"]={"status":"UPLOAD_SKIPPED_INCOMPLETE",
                                 "reason":"No completed physical comparison rows"}
+    results.data["archive"]={"status":"REQUESTED" if full_archive else "NOT_CREATED_THIS_RUN",
+                              "measured_data_kept_locally":True}
     if mark_finished:results.data["finished_utc"]=utc_now()
     results.save()
     plots_from_results(out,results.data)
-    archive=bundle_complete(out)
+    archive=bundle_complete(out) if full_archive else None
+    if archive is not None:
+        results.data["archive"]["status"]="CREATED_THIS_RUN"
+        results.save()
     if upload:
         if complete:
-            results.data["upload"]=publish_results(ROOT,archive,f"benchmark/{out.name}")
+            results.data["upload"]=publish_summary(ROOT,out,f"benchmark/{out.name}")
         results.save()
-    counts={module:sum(row["module"]==module for row in results.data["rows"])
-            for module in "ABCDEFGH"}
     print(f"SUMMARY: state={results.data['state']} "
           f"measured_tasks={results.data['budgets']['acquisitions_used']} "
-          f"comparison_rows={len(results.data['rows'])} per_module={counts} "
-          f"errors={len(results.data['errors'])}",flush=True)
+          f"comparison_rows={len(results.data['rows'])} "
+          f"errors={len(results.data['errors'])} "
+          f"upload={results.data['upload']['status']}",flush=True)
     if not results.data["rows"]:
-        print("SUMMARY: No comparison yet; inspect PILOT WARNING/TRACE above and saved data/ events.",flush=True)
+        print("SUMMARY: No comparison yet; inspect ERROR/PILOT WARNING above and saved event journal.",flush=True)
     print(f"Report: {out/'REPORT.md'}",flush=True)
-    print(f"Archive: {archive}",flush=True)
-    print(f"Upload: {results.data['upload']['status']}",flush=True)
+    if archive is not None:
+        print(f"Local archive: {archive}",flush=True)
+    elif (out/"results.zip").exists():
+        print("Local archive: previous snapshot retained; not updated by this run",flush=True)
 
 
 def main():
@@ -308,7 +322,7 @@ def main():
         data=json.loads((out/"results.json").read_text(encoding="utf-8"))
         results=Results(out,data["config"],data.get("preflight",{}))
         _finalize(out,results,upload=not args.no_upload and data.get("state")!="RUNNING",
-                  mark_finished=False)
+                  mark_finished=False,full_archive=args.full_archive)
         return 0
     preflight=json.loads(args.preflight.read_text(encoding="utf-8"))
     if not preflight.get("sdk",{}).get("ready") or not preflight.get("numeric",{}).get("ready"):
@@ -332,9 +346,9 @@ def main():
     try:
         with HardwareLock(Path("~/.spinq_live_gemini.lock")),LiveHardware(
             out,host=args.host,port=args.port,max_tasks=args.max_tasks,
-            max_requested_rf_us=args.max_requested_rf_us) as hardware:
+            max_requested_rf_us=args.max_requested_rf_us,compact_result=True) as hardware:
             session=LocalSession(hardware,results,blocks=args.blocks,seed=args.seed)
-            print("Pilot: independent FID, noise, Rabi and acquisition lengths",flush=True)
+            print(f"Pilot: saved_tasks={hardware.task_count}; independent FID, noise, Rabi, lengths",flush=True)
             pilot=_run_guarded(results,"A",session.pilot,stage="pilot")
             if pilot is not None:
                 recovered=[error for error in results.data["errors"] if
@@ -373,14 +387,15 @@ def main():
                     h_map=_run_guarded(results,"H",session.h_map,stage="rf_map")
                     h_ready=h_map is not None and session.rf_map is not None
                     if h_map is not None:
-                        print(f"H MAP: amplitudes_pct={h_map.get('amplitude_pct')} "
-                              f"rate_x_hz={h_map.get('effective_rate_x_hz')} "
-                              f"rate_y_hz={h_map.get('effective_rate_y_hz')}",flush=True)
+                        print(f"H MAP: ready; "
+                              f"x100_hz={h_map['effective_rate_x_hz'][-1]:.4g} "
+                              f"y100_hz={h_map['effective_rate_y_hz'][-1]:.4g}",flush=True)
                 else:
                     results.module("H","REFERENCE_INADEQUATE",
                                    "Pilot Rabi/noise prerequisites unavailable; RF map not attempted")
                 for block in range(args.blocks):
-                    print(f"Measurement block {block+1}/{args.blocks}",flush=True)
+                    before_rows=len(results.data["rows"])
+                    print(f"Block {block+1}/{args.blocks} ...",flush=True)
                     if a_ready:
                         _run_guarded(results,"A",lambda:session.module_a_block(block),
                                      stage=f"block_{block+1:02d}")
@@ -392,6 +407,10 @@ def main():
                                      stage=f"block_{block+1:02d}")
                     _run_guarded(results,"F",lambda:session.collect_f_block(block),
                                  stage=f"collect_block_{block+1:02d}")
+                    print(f"Block {block+1}/{args.blocks}: "
+                          f"tasks={hardware.task_count} "
+                          f"new_comparisons={len(results.data['rows'])-before_rows} "
+                          f"errors={len(results.data['errors'])}",flush=True)
                 _run_guarded(results,"A",session.finish_a_b_h,stage="summarize_a_b_h")
                 _run_guarded(results,"C",lambda:_physical_control(session,results),stage="physical_control")
                 _run_guarded(results,"D",lambda:_offline_analysis(session,results,preflight),stage="offline_analysis")
@@ -401,15 +420,19 @@ def main():
                 results.data["state"]="FAILED_PILOT"
                 for module in "BCDEFGH":
                     results.module(module,"DEPENDENCY_FAILED",
-                        "Primary pilot failed; no valid frozen physical model")
+                        "Primary pilot failed; no valid frozen physical model",quiet=True)
+                print("SKIPPED B-H: pilot failed; no further measurement submitted",flush=True)
     except (KeyboardInterrupt,HardwareUncertain) as exc:
         failed=True
-        results.data["state"]="STOPPED_UNCERTAIN"
+        pre_send=isinstance(exc,PreSubmissionFailure)
+        results.data["state"]="STOPPED_BEFORE_SUBMISSION" if pre_send else "STOPPED_UNCERTAIN"
         results.data["errors"].append(f"STOP: {type(exc).__name__}: {redact(str(exc))}")
-        print(f"STOP: {type(exc).__name__}: {redact(str(exc))}",flush=True)
+        print(f"{'STOP BEFORE SEND' if pre_send else 'STOP UNCERTAIN'}: "
+              f"{type(exc).__name__}: {redact(str(exc))}",flush=True)
         for module in "ABCDEFGH":
             if results.data["modules"][module]["status"] in ("PENDING","RUNNING"):
-                results.module(module,"STOPPED_UNCERTAIN",str(exc))
+                results.module(module,"DEPENDENCY_FAILED" if pre_send else "STOPPED_UNCERTAIN",
+                               str(exc),quiet=True)
     except Exception as exc:
         failed=True
         results.data["state"]="STOPPED_UNCERTAIN"
@@ -423,7 +446,8 @@ def main():
         for module in "ABCDEFGH":
             if results.data["modules"][module]["status"] in ("PENDING","RUNNING"):
                 results.module(module,"DEPENDENCY_FAILED","No validated result produced before finalization")
-        _finalize(out,results,upload=not args.no_upload and not failed)
+        _finalize(out,results,upload=not args.no_upload and not failed,
+                  full_archive=args.full_archive)
     return 2 if failed else 0
 
 
