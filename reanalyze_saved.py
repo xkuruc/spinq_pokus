@@ -155,6 +155,8 @@ def reanalyze(source: Path, *, upload: bool = False) -> Path:
           f"upload={results.data['upload']['status']}", flush=True)
     if results.data["upload"]["status"] == "UPLOAD_FAILED":
         print(f"OFFLINE UPLOAD ERROR: {results.data['upload'].get('reason')}", flush=True)
+    elif results.data["upload"]["status"] == "UPLOAD_SUCCEEDED":
+        print(f"OFFLINE UPLOAD BRANCH: {results.data['upload'].get('branch')}", flush=True)
     print(f"Report: {out / 'REPORT.md'}", flush=True)
     return out
 
