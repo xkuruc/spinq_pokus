@@ -1,0 +1,61 @@
+{
+  "experiment": "01_bayes_online",
+  "run_id": "quick_20260927_100919_UTC",
+  "started_utc": "2026-09-27T10:09:19+00:00",
+  "status": "FAILED",
+  "profile": "quick",
+  "task_requested": "rabi",
+  "config": {
+    "host": "172.19.20.100",
+    "port": 8181,
+    "channels": [
+      "H"
+    ],
+    "blocks": 3,
+    "seed": 27092026,
+    "sample_frequency_hz": 10000,
+    "sample_count": 16000,
+    "pilot_widths_us": [
+      20,
+      40,
+      80,
+      120,
+      160,
+      200
+    ],
+    "pilot_repeats": 3,
+    "nominal_amplitude_pct": 70,
+    "calibration_acquisitions_per_method": 10,
+    "heldout_controls_per_method": 2,
+    "reference_acquisitions_per_block": 5,
+    "particle_count": 512,
+    "design_mc_samples": 8,
+    "max_tasks": 120,
+    "max_requested_rf_us": 30000,
+    "timeout_seconds": 180,
+    "pause_seconds": 1,
+    "software_pulse_width_envelope_us": [
+      20,
+      200
+    ],
+    "software_amplitude_ceiling_pct": 100,
+    "allow_unverified_multisegment": false
+  },
+  "acquisitions": {},
+  "anchors": {},
+  "scenarios": {},
+  "methods": {},
+  "capabilities": {},
+  "comparison": [],
+  "errors": [
+    {
+      "stage": "run",
+      "error": "TransportError: SpinQLabLink login did not complete",
+      "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\runner.py\", line 1153, in execute\n    with PhysicalTransport(host=self.config[\"host\"], port=self.config[\"port\"],\n         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n            exclusive_use_confirmed=self.exclusive_use_confirmed,\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n            timeout_s=self.config[\"timeout_seconds\"]) as transport:\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\transport.py\", line 304, in __enter__\n    self.connect()\n    ~~~~~~~~~~~~^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\transport.py\", line 333, in connect\n    raise TransportError(\"SpinQLabLink login did not complete\")\nbayes_online_core.transport.TransportError: SpinQLabLink login did not complete\n"
+    }
+  ],
+  "task_count": 0,
+  "requested_rf_us": 0.0,
+  "learner_input_provenance": "exported complex FID only; vendor FFT excluded",
+  "ended_utc": "2026-09-27T10:09:30+00:00"
+}
