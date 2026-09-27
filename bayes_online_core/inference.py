@@ -126,6 +126,93 @@ def _noise_correlation_factor(residual: np.ndarray) -> float:
     return float(min(max(factor, 1.0), max(len(residual) / 16, 1.0)))
 
 
+def diagnose_pilot_signal(fids: np.ndarray, time_s: np.ndarray) -> dict:
+    """Triage the first six diverse pilot FIDs before paying for repeats.
+
+    An early, contiguous excess in a trace's complex envelope is compared
+    with *that same trace's* late variability.  The tail is only a noise
+    candidate: coherent late signal or drift can inflate the threshold and
+    cause a conservative false negative.  This is a stop/go signal check,
+    not an estimate of resonance, Rabi rate, or hardware calibration.
+    """
+    data = np.asarray(fids, dtype=complex)
+    axis = np.asarray(time_s, dtype=float)
+    if data.ndim != 2 or data.shape[0] < 6 or data.shape[1] < 128:
+        raise ValueError("INCOMPLETE_DATA: signal triage needs six FIDs with >=128 points")
+    if axis.shape != (data.shape[1],):
+        raise ValueError("INCOMPLETE_DATA: signal triage needs one common FID time axis")
+    if not np.all(np.isfinite(data)) or not np.all(np.isfinite(axis)):
+        raise ValueError("INCOMPLETE_DATA: nonfinite FID or time samples")
+    steps = np.diff(axis)
+    if np.any(steps <= 0):
+        raise ValueError("INCOMPLETE_DATA: FID time axis does not increase")
+    dt = float(np.median(steps))
+    if np.max(np.abs(steps - dt)) > max(1e-9, 0.01 * dt):
+        raise ValueError("INCOMPLETE_DATA: FID time axis is not uniform")
+
+    count, points = data.shape
+    window = int(np.clip(round(0.0016 / dt), 8, min(64, points // 32)))
+    early_windows = min(8, points // (8 * window))
+    if early_windows < 2:
+        raise ValueError("INCOMPLETE_DATA: FID is too short for early signal triage")
+    tail_points = max(64, points // 8)
+    threshold_ratio = 2.5
+    threshold_coherence = 0.35
+    traces = []
+    for row in data:
+        tail = row[-tail_points:]
+        # Component-wise median/MAD resists occasional late spikes without
+        # assuming that the tail is a known noise-only region.
+        center = complex(np.median(tail.real), np.median(tail.imag))
+        sigma_re = float(np.median(np.abs(tail.real - center.real)) / 0.6744897501960817)
+        sigma_im = float(np.median(np.abs(tail.imag - center.imag)) / 0.6744897501960817)
+        tail_rms = float(np.hypot(sigma_re, sigma_im))
+        floor = np.finfo(float).eps * max(1.0, float(np.max(np.abs(row))))
+        denominator = max(tail_rms, floor)
+        window_rms = np.array([
+            np.sqrt(np.mean(np.abs(row[i * window:(i + 1) * window] - center) ** 2))
+            for i in range(early_windows)
+        ])
+        ratios = window_rms / denominator
+        above = ratios >= threshold_ratio
+        pairs = np.flatnonzero(above[:-1] & above[1:])
+        # A true FID should start near acquisition onset.  A late isolated
+        # burst, even within the first eighth of the export, is insufficient.
+        candidate_pairs = pairs[pairs <= 2]
+        coherence = []
+        for start in candidate_pairs:
+            segment = row[start * window:(start + 2) * window] - center
+            power = float(np.vdot(segment, segment).real)
+            coherence.append(float(abs(np.vdot(segment[:-1], segment[1:])) /
+                                   max(power, np.finfo(float).tiny)))
+        connected = bool(coherence and max(coherence) >= threshold_coherence)
+        traces.append({
+            "detected": connected,
+            "early_tail_rms_ratio": float(np.max(ratios)),
+            "early_lag_one_coherence": float(max(coherence, default=0.0)),
+            "consecutive_early_windows": int(max(
+                (len(group) for group in np.split(np.flatnonzero(above),
+                                                   np.flatnonzero(np.diff(np.flatnonzero(above)) > 1) + 1)
+                 if len(group)), default=0)),
+            "tail_candidate_noise_rms": tail_rms,
+        })
+    detected = sum(trace["detected"] for trace in traces)
+    return {
+        "status": "PROCEED" if detected >= 2 else "NO_DETECTABLE_FID",
+        "evidence": {
+            "pilot_fids": count,
+            "detectable_fids": detected,
+            "required_detectable_fids": 2,
+            "early_window_samples": window,
+            "threshold_early_to_tail_rms": threshold_ratio,
+            "threshold_lag_one_coherence": threshold_coherence,
+            "trace": traces,
+            "tail_caveat": "The late FID is a noise candidate, not certified noise-only; "
+                           "late coherence or drift can make this check conservative.",
+        },
+    }
+
+
 def detect_coherent_window(fids: np.ndarray, time_s: np.ndarray) -> dict:
     """Find the early *connected* signal interval, ignoring late spikes.
 

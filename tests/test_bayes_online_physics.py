@@ -1,6 +1,7 @@
 """Offline mathematical checks; no device commands or claimed hardware data."""
 
 import unittest
+from itertools import combinations
 
 import numpy as np
 
@@ -15,6 +16,7 @@ from bayes_online_core.physics import (
     bell_preparation_gates,
     bell_target,
     default_readout_unitaries,
+    minimum_readout_unitaries,
     ideal_gate_sequence,
     pps_target_deviation,
     propagate,
@@ -96,6 +98,43 @@ class SpinPhysicsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "NONIDENTIFIABLE"):
             reconstruct_deviation(np.zeros(len(incomplete.measurement_labels)),
                                   incomplete)
+
+    def test_minimum_physical_readout_subset_is_rank_15_and_well_conditioned(self):
+        physical = default_readout_unitaries()[1:]
+        self.assertEqual(len(physical), 8)
+        self.assertNotIn("I+I", [name for name, _ in physical])
+        for size in range(1, 4):
+            self.assertTrue(all(tomography_design(group).rank < 15
+                                for group in combinations(physical, size)))
+        four_setting_designs = [
+            (group, tomography_design(group))
+            for group in combinations(physical, 4)
+        ]
+        full_rank = [(group, design) for group, design in four_setting_designs
+                     if design.rank == 15]
+        self.assertEqual(len(full_rank), 45)
+        selected = minimum_readout_unitaries()
+        self.assertEqual([name for name, _ in selected],
+                         ["I+Rx90P", "I+Ry90P", "Rx90H+I", "Ry90H+I"])
+        design = tomography_design(selected)
+        self.assertEqual(design.rank, 15)
+        self.assertAlmostEqual(design.condition, 2.0)
+        self.assertAlmostEqual(design.condition,
+                               min(candidate.condition for _, candidate in full_rank))
+        cheapest = min(sum(name.count("90") for name, _ in group)
+                       for group, candidate in full_rank
+                       if np.isclose(candidate.condition, design.condition))
+        self.assertEqual(sum(name.count("90") for name, _ in selected), cheapest)
+        self.assertEqual(design.complex_matrix.shape, (16, 15))
+        self.assertEqual(design.real_matrix.shape, (32, 15))
+        self.assertTrue(all(name.count("90") == 1 for name, _ in selected))
+        state = bell_target("Psi-")
+        coefficients = np.array([np.trace(PAULIS[name] @ state).real
+                                 for name in PAULI_LABELS])
+        reconstructed = reconstruct_deviation(design.complex_matrix @ coefficients,
+                                              design)
+        np.testing.assert_allclose(reconstructed["delta_rho"], state - II / 4,
+                                   atol=1e-12)
 
     def test_absolute_scale_and_projection_are_explicit(self):
         state = bell_target("Psi-")

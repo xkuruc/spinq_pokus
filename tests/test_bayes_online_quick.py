@@ -37,14 +37,15 @@ class QuickProfileTests(unittest.TestCase):
             "shared_anchor": 18,
             "fresh_nominal_references": 6,
             "B_and_D_training": 60,
+            "sequential_stop_checks": 12,
             "heldout_controls": 12,
             "hidden_perturbation_probes": 2,
             "pre_between_post_drift_checks": 9,
         })
-        self.assertEqual(plan["planned_physical_tasks"], 107)
-        self.assertEqual(sum(plan["counts"].values()), 107)
+        self.assertEqual(plan["planned_physical_tasks"], 119)
+        self.assertEqual(sum(plan["counts"].values()), 119)
         self.assertLessEqual(plan["planned_physical_tasks"], plan["max_physical_tasks"])
-        too_small = dict(config, max_tasks=106)
+        too_small = dict(config, max_tasks=118)
         with self.assertRaisesRegex(ValueError, "exceeds configured physical-task budget"):
             quick_task_plan(too_small)
 

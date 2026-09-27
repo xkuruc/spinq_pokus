@@ -26,7 +26,7 @@ import numpy as np
 
 from .artifacts import RunArtifacts, atomic_json, jsonable, publish
 from .inference import (Candidate, ComplexFeature, OnlineLearner, ReadoutAnchor,
-                        estimate_anchor, extract_feature, fit_classical,
+                        diagnose_pilot_signal, estimate_anchor, extract_feature, fit_classical,
                         numeric_selfcheck, predict_feature)
 from .physics import verify_gate_conventions
 from .transport import (AcquisitionRequest, AcquisitionResult, PhysicalTransport, PulseSpec,
@@ -35,11 +35,24 @@ from .transport import (AcquisitionRequest, AcquisitionResult, PhysicalTransport
 
 EXPERIMENT = "01_bayes_online"
 METHODS = ("A_prior_only", "B_classical", "C_fixed_bayes", "D_adaptive_bayes")
+# The stopping rule is fixed before any DUT FID is acquired.  Its two physical
+# checks are separate from training and from the final held-out scorer.
+STOP_AFTER_TRAINING_FIDS = 6
+STOP_CHECKS_PER_ARM = 2
+STOP_MAX_RELATIVE_ERROR = 0.15
+STOP_MAX_RELATIVE_NOISE = 0.05
 
 
 class BudgetExhausted(RuntimeError):
     """The finite software task or requested RF budget has been reached."""
-SOURCE_FILES = ["run_01_bayes_online.cmd", "bayes_online_windows.py",
+
+
+class PilotNoSignal(ValueError):
+    """The first paid six-width round cannot support any learned calibration."""
+
+
+SOURCE_FILES = ["run_01_bayes_online.cmd", "run_01_bayes_online_mac.sh",
+                "bayes_online_windows.py",
                 "config-bayes-online.json", "requirements-bayes-online.txt",
                 "experiments/bayes_online.py", "bayes_online_core/__init__.py",
                 "bayes_online_core/runner.py", "bayes_online_core/inference.py",
@@ -54,6 +67,33 @@ def utc_now() -> str:
 
 def _phase_distance_deg(a: float, b: float) -> float:
     return float(np.rad2deg(np.angle(np.exp(1j * (a - b)))))
+
+
+def _stop_control_quality(anchor: ReferenceAnchor, candidate: Candidate,
+                          observed: ComplexFeature) -> dict[str, Any]:
+    """Score one fresh stop-check FID against the paid nominal anchor model.
+
+    The final held-out reference FIDs, injected truth, and Bell target never
+    enter this decision.  An entire FID contributes one complex observation.
+    """
+    target = complex(predict_feature(candidate, np.array([0., 1., 0.]), anchor.readout))
+    response = abs(target)
+    if response < 0.2 * abs(anchor.readout.gain):
+        return {"status": "WEAK_NOMINAL_RESPONSE", "passed": False,
+                "relative_error": None, "relative_noise": None, "threshold": None}
+    relative_error = float(abs(observed.value - target) / response)
+    relative_noise = float(np.sqrt(np.trace(
+        observed.covariance_ri + anchor.readout.feature_noise_ri)) / response)
+    threshold = float(min(STOP_MAX_RELATIVE_ERROR,
+                          max(3 * relative_noise,
+                              2 * anchor.readout.model_floor_fraction)))
+    passed = (observed.diagnostic == "OK" and
+              relative_noise <= STOP_MAX_RELATIVE_NOISE and
+              relative_error <= threshold)
+    return {"status": "PASS" if passed else "FAIL", "passed": bool(passed),
+            "relative_error": relative_error, "relative_noise": relative_noise,
+            "threshold": threshold, "fid_diagnostic": observed.diagnostic,
+            "target_source": "paid_nominal_anchor_forward_model"}
 
 
 def validate_config(config: dict[str, Any]) -> dict[str, Any]:
@@ -81,7 +121,7 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
     if config["heldout_controls_per_method"] != 2:
         raise ValueError("Exactly two independent controls per method implemented")
     if config["calibration_acquisitions_per_method"] < 10:
-        raise ValueError("At least ten training acquisitions per learned arm required")
+        raise ValueError("At least ten maximum training acquisitions per learned arm required")
     if not 512 <= config["particle_count"] <= 2048:
         raise ValueError("Particle count must be inside the specified CPU range")
     if config["max_tasks"] < 1 or config["max_requested_rf_us"] <= 0:
@@ -107,6 +147,7 @@ def quick_task_plan(config: dict[str, Any]) -> dict[str, Any]:
     counts = {"shared_anchor": len(config["pilot_widths_us"])*config["pilot_repeats"],
               "fresh_nominal_references": 2*config["blocks"],
               "B_and_D_training": 2*config["calibration_acquisitions_per_method"]*config["blocks"],
+              "sequential_stop_checks": 2*STOP_CHECKS_PER_ARM*config["blocks"],
               "heldout_controls": 2*2*config["blocks"],
               "hidden_perturbation_probes": config["blocks"]-1,
               "pre_between_post_drift_checks": 3*config["blocks"]}
@@ -445,6 +486,24 @@ class OnlineRun:
                 actual_widths.append(width)
                 keys.append(key)
                 durations.append(elapsed)
+            if repeat == 0:
+                base = axes[0]
+                if any(axis.shape != base.shape or
+                       not np.allclose(axis, base, rtol=0, atol=1e-9)
+                       for axis in axes[1:]):
+                    raise ValueError("PILOT_INCONCLUSIVE: first-round exported FID axes differ")
+                triage = diagnose_pilot_signal(np.asarray(fids), base)
+                atomic_json(self.artifacts.path / "profiles" /
+                            f"b{block}_{channel}_pilot_triage.json", triage)
+                self.state["capabilities"][f"b{block}_{channel}_pilot_triage"] = triage
+                self.save()
+                self.log(f"Pilot {channel} first-round signal triage: "
+                         f"{triage['status']}, detectable="
+                         f"{triage['evidence']['detectable_fids']}/"
+                         f"{triage['evidence']['pilot_fids']}")
+                if triage["status"] != "PROCEED":
+                    raise PilotNoSignal("PILOT_INCONCLUSIVE: no detectable coherent FID "
+                                        "in the first six distinct pulse widths")
         base = axes[0]
         if any(axis.shape != base.shape or not np.allclose(axis, base, rtol=0, atol=1e-9)
                for axis in axes[1:]):
@@ -616,6 +675,58 @@ class OnlineRun:
                        phase_deg=float(logical.phase_deg - math.degrees(mean[2])),
                        detuning_hz=float(round(logical.detuning_hz - mean[0])))
 
+    def _stopping_candidates(self, anchor: ReferenceAnchor) -> tuple[tuple[str, Candidate], ...]:
+        """Two prespecified checks disjoint from training and final controls."""
+        low, high = self.config["software_pulse_width_envelope_us"]
+        widths = (round(np.clip(1.11 * anchor.t90_us, low, high)),
+                  round(np.clip(1.57 * anchor.t90_us, low, high)))
+        return (("phase30", Candidate(anchor.channel, widths[0],
+                    anchor.nominal_amplitude_pct, 30., -300., anchor.full_cycle_s)),
+                ("phase150", Candidate(anchor.channel, widths[1],
+                    anchor.nominal_amplitude_pct, 150., 300., anchor.full_cycle_s)))
+
+    def _stopping_checkpoint(self, label: str, block: int, channel: str,
+                             method: str, anchor: ReferenceAnchor,
+                             controller: PerturbationController,
+                             estimate: dict) -> dict[str, Any]:
+        """Validate a provisional fit without updating it or using final controls."""
+        allowed = "FIT_OK" if method == "B_classical" else "LEARNING"
+        if estimate.get("status") != allowed:
+            return {"status": "NOT_IDENTIFIABLE", "passed": False,
+                    "estimate_status": estimate.get("status"), "measured_keys": [],
+                    "checks": [], "training_fids_at_checkpoint": STOP_AFTER_TRAINING_FIDS}
+        candidates = self._stopping_candidates(anchor)
+        if len(candidates) != STOP_CHECKS_PER_ARM:
+            raise AssertionError("Prespecified stop-check count changed")
+        # All candidate targets must have usable anchor contrast before
+        # sending either physical request.  No evaluator data is consulted.
+        if any(abs(complex(predict_feature(candidate, np.array([0., 1., 0.]),
+                                           anchor.readout))) < 0.2 * abs(anchor.readout.gain)
+               for _, candidate in candidates):
+            return {"status": "WEAK_NOMINAL_RESPONSE", "passed": False,
+                    "estimate_status": estimate.get("status"), "measured_keys": [],
+                    "checks": [], "training_fids_at_checkpoint": STOP_AFTER_TRAINING_FIDS}
+        checks = []
+        keys = []
+        for name, logical in candidates:
+            commanded = self._compensated(logical, estimate)
+            key = f"{label}_stop_{name}"
+            self.acquire(self._request(key, commanded), controller=controller,
+                         role="sequential_stop_check", channel=channel,
+                         block=block, method=method)
+            check = _stop_control_quality(anchor, logical, self._feature(key, anchor))
+            check["name"] = name
+            check["key"] = key
+            checks.append(check)
+            keys.append(key)
+        passed = all(check["passed"] for check in checks)
+        return {"status": "PASS" if passed else "FAIL", "passed": passed,
+                "estimate_status": estimate.get("status"), "measured_keys": keys,
+                "checks": checks,
+                "training_fids_at_checkpoint": STOP_AFTER_TRAINING_FIDS,
+                "stopping_rule": "both disjoint physical controls pass identical "
+                                 "relative response and noise limits"}
+
     def _measure_arm(self, block: int, channel: str, method: str,
                      anchor: ReferenceAnchor, controller: PerturbationController,
                      references: dict[str, ComplexFeature], probe: dict,
@@ -635,7 +746,6 @@ class OnlineRun:
                     and row.get("method") == method and row.get("status") in
                     ("BUDGET_EXHAUSTED", "INCOMPLETE_DATA"))]
         started = time.monotonic()
-        start_tasks = self.task_count
         pool = self._candidate_pool(anchor)
         fixed = self._fixed_plan(pool, self.config["calibration_acquisitions_per_method"])
         bounds = self._bounds(anchor)
@@ -645,6 +755,9 @@ class OnlineRun:
         self.log(f"Block {block} {channel} {method}: training budget "
                  f"{0 if method == 'A_prior_only' else len(fixed)} acquisitions")
         training_keys = []
+        checkpoint = {"status": "NOT_APPLICABLE", "passed": False,
+                      "measured_keys": [], "checks": []}
+        estimated: dict | None = None
         for index in range(0 if method == "A_prior_only" else len(fixed)):
             if method == "D_adaptive_bayes":
                 assert learner.smc is not None
@@ -663,10 +776,35 @@ class OnlineRun:
                 self.log(f"{label} checkpoint {index+1}: status={point['status']}, "
                          f"ESS={point['ess']:.0f}, df={point['mean'][0]:.1f} Hz, "
                          f"RF={point['mean'][1]:.3f}, phase={math.degrees(point['mean'][2]):.1f} deg")
-        estimated = learner.estimate()
+            if index + 1 == STOP_AFTER_TRAINING_FIDS:
+                provisional = learner.estimate()
+                provisional_file = f"models/{label}_after_{STOP_AFTER_TRAINING_FIDS}_training.json"
+                atomic_json(self.artifacts.path / provisional_file, {
+                    "estimate": provisional, "method": method,
+                    "training_keys": training_keys,
+                    "stopping_candidate_plan": [asdict(candidate) for _, candidate
+                                                in self._stopping_candidates(anchor)],
+                    "frozen_before_stopping_checks": True,
+                })
+                checkpoint = self._stopping_checkpoint(label, block, channel, method,
+                                                       anchor, controller, provisional)
+                checkpoint["provisional_estimate_file"] = provisional_file
+                self.log(f"{label} sequential stop after {index+1} training FIDs: "
+                         f"{checkpoint['status']}; separate check FIDs="
+                         f"{len(checkpoint['measured_keys'])}")
+                if checkpoint["passed"]:
+                    estimated = provisional
+                    break
+        if estimated is None:
+            estimated = learner.estimate()
+        checkpoint_keys = list(checkpoint["measured_keys"])
         frozen = jsonable(estimated)
         frozen["method"] = method
         frozen["training_keys"] = training_keys
+        frozen["sequential_stopping"] = checkpoint
+        frozen["stopping_decision"] = ("EARLY_STOP" if checkpoint["passed"] else
+                                       "MAX_TRAINING_BUDGET" if method != "A_prior_only" else
+                                       "PRIOR_ONLY")
         frozen["prior_bounds"] = bounds.tolist()
         frozen["frozen_before_controls"] = True
         atomic_json(self.artifacts.path / "models" / f"{label}_frozen.json", frozen)
@@ -702,15 +840,17 @@ class OnlineRun:
         shared_keys = list(anchor.pilot_keys) + reference_keys
         shared_seconds = sum(float(self.state["acquisitions"][key]["elapsed_s"])
                              for key in shared_keys)
+        arm_acquisitions = len(training_keys) + len(checkpoint_keys) + len(control_keys)
         row = {"block": block, "scenario": self.state["scenarios"][str(block)]["label"],
                "task": "frequency_rabi", "channel": channel, "method": method,
                "method_order": order_index, "status": scored["status"],
                "design_acquisitions": len(training_keys),
+               "sequential_stop_check_acquisitions": len(checkpoint_keys),
                "control_acquisitions": len(control_keys),
-               "total_acquisitions": self.task_count - start_tasks,
+               "total_acquisitions": arm_acquisitions,
                "shared_anchor_acquisitions": len(anchor.pilot_keys),
                "shared_evaluator_acquisitions": len(reference_keys),
-               "cold_start_acquisitions": self.task_count - start_tasks + len(shared_keys),
+               "cold_start_acquisitions": arm_acquisitions + len(shared_keys),
                "cold_start_seconds": float(total_s + shared_seconds),
                "training_seconds": float(training_s),
                "validation_seconds": float(validation_s),
@@ -721,6 +861,8 @@ class OnlineRun:
                "heldout_complex_error": scored.get("heldout_complex_error"),
                "reason": scored.get("reason", ""),
                "scoring": scored, "estimate_file": f"models/{label}_frozen.json",
+               "stopping_decision": frozen["stopping_decision"],
+               "stopping_checkpoint": checkpoint,
                "heldout_keys": control_keys,
                "vendor_comparison": "NOT_MATCHED_PERTURBATION"}
         self.state["methods"][label] = {"estimate": frozen,
@@ -783,6 +925,8 @@ class OnlineRun:
                     except TaskUncertain:
                         raise
                     except BudgetExhausted:
+                        raise
+                    except PilotNoSignal:
                         raise
                     except Exception as exc:
                         self.log(f"Block {block} {channel} pilot: {type(exc).__name__}: {exc}", kind="ERROR")
@@ -962,7 +1106,8 @@ class OnlineRun:
                           p.readout.fid_frequency_hz+1000)},
                 "coupling_j_search_hz": (20., 1800.),
                 "readout_gains": {"H": h.readout.gain, "P": p.readout.gain},
-                "line_decay_per_s": float(1/min(h.readout.decay_s,p.readout.decay_s)),
+                "line_decay_per_s": {"H": float(1/h.readout.decay_s),
+                                     "P": float(1/p.readout.decay_s)},
                 "sequence_budget_status": "HARDWARE_SEQUENCE_LIMIT_UNMEASURED"}
 
     def _qualify_coherent_timing(self, latest: dict[str, ReferenceAnchor],
@@ -1142,7 +1287,10 @@ class OnlineRun:
             record_task("pps", pps, task_count, clock)
         if requested in ("bell", "all"):
             task_count, clock = self.task_count, time.monotonic()
-            bell = run_bell(self._quantum_callback, anchors, timing, coupling=coupling)
+            labels = ("Phi+", "Psi+") if requested == "bell" else \
+                ("Phi+", "Phi-", "Psi+", "Psi-")
+            bell = run_bell(self._quantum_callback, anchors, timing,
+                            coupling=coupling, labels=labels)
             record_task("bell", bell, task_count, clock)
 
     def execute(self) -> dict:
@@ -1184,6 +1332,10 @@ class OnlineRun:
             self.state["status"] = "BUDGET_EXHAUSTED"
             self.state["errors"].append({"stage": "budget", "error": str(exc)})
             self.log(str(exc), kind="ERROR")
+        except PilotNoSignal as exc:
+            self.state["status"] = "PILOT_INCONCLUSIVE"
+            self.state["errors"].append({"stage": "pilot_signal", "error": str(exc)})
+            self.log(str(exc) + "; no further physical task submitted", kind="WARNING")
         except Exception as exc:
             self.state["status"] = "FAILED"
             self.state["errors"].append({"stage": "run", "error": f"{type(exc).__name__}: {exc}",

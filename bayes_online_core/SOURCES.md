@@ -1,6 +1,6 @@
 # Zdroje a hranice dôkazov pre `01_bayes_online`
 
-Tento experiment je **vlastná adaptácia**. Nižšie uvedené publikácie neurčujú parametre Gemini Lab a nepredstavujú výsledky tohto programu. Fyzické údaje vzniknú až spustením Windows launchera a sú platné iba v rozsahu doloženom uloženými FID, odoslanými povelmi a nezávislými kontrolami. Verzia skúšaného klienta je SpinQLabLink **1.0.2**; správanie tabletu a časovej osi musí potvrdiť živé meranie.
+Tento experiment je **vlastná adaptácia**. Nižšie uvedené publikácie neurčujú parametre Gemini Lab a nepredstavujú výsledky tohto programu. Nové fyzické údaje vzniknú až spustením Windows alebo Mac launchera a sú platné iba v rozsahu doloženom uloženými FID, odoslanými povelmi a nezávislými kontrolami. Verzia skúšaného klienta je SpinQLabLink **1.0.2**; správanie tabletu a časovej osi musí potvrdiť živé meranie.
 
 | Zdroj | Konkrétny prvok v tomto programe | Naša adaptácia a neoverené predpoklady |
 |---|---|---|
@@ -14,7 +14,7 @@ Tento experiment je **vlastná adaptácia**. Nižšie uvedené publikácie neur�
 | [S8: Qiu et al., low-rank Hankel NMR denoising](https://arxiv.org/abs/2001.11815) | Základ pre hodnotenie denoisingu a zachovania slabých zložiek. | Hankelov denoiser sa v základnom online behu **nepoužíva**; učené odšumenie je posterior-predictive fyzikálny signál. S8 teda nie je dôkaz, že náš denoiser zlepší FID. |
 | [S9: Batson & Royer, Noise2Self](https://proceedings.mlr.press/v97/batson19a.html) | Pripomína potrebu overiť nezávislosť šumu pri self-supervised učení. | Noise2Self sa tu **neimplementuje**, lebo nezávislosť časových vzoriek FID nebola potvrdená. Korelovaný reziduál sa nesmie vydávať za nezávislý šum. |
 | [S10: Zheng et al., PPS a neunitárne riadenie](https://arxiv.org/abs/1903.03569) | Rozlíšenie unitárnych pulzov od fyzickej pseudopure prípravy; `physics.py` overuje trojvetvové časové priemerovanie maticovo. | Gradientová príprava nie je automaticky kvalifikovaná. Časovo priemerovaná vetva je **efektívna** PPS z viacerých kompletných fyzických akvizícií; sama osebe nedokazuje čistý stav jednej vzorky. Vyžaduje overený entangler, časovanie a spoločnú prijímaciu škálu. |
-| [S11: Nielsen et al., Gate Set Tomography](https://arxiv.org/abs/2009.07301) | Upozornenie na gauge/SPAM neurčitosť; `physics.py` počíta hodnosť a podmienenosť matice meraní pred rekonštrukciou. | Tento program neimplementuje plnú gate-set tomography. Bellov scorer je oddelený od rekonštruktora. Hodnosť ideálnej matice nedokazuje, že Gemini Lab rozlíši potrebné multipletové zložky alebo že efektívna `rho` je plná tepelná matica. |
+| [S11: Nielsen et al., Gate Set Tomography](https://arxiv.org/abs/2009.07301) | Upozornenie na gauge/SPAM neurčitosť; `physics.py` počíta hodnosť a podmienenosť matice meraní pred rekonštrukciou. | Tento program neimplementuje plnú gate-set tomography. Bellov scorer je oddelený od rekonštruktora. Vlastným vyčerpávajúcim numerickým výberom sme zvolili štyri minimálne čítacie konfigurácie s ideálnou hodnosťou 15 a podmienenosťou 2; ich reálny merací model treba ešte kvalifikovať. Ideálna hodnosť nedokazuje, že Gemini Lab rozlíši potrebné multipletové zložky alebo že efektívna `rho` je plná tepelná matica. |
 
 ## Dôkazová hierarchia
 

@@ -6,7 +6,7 @@ import numpy as np
 
 from bayes_online_core.physics import (
     II, PAULI_LABELS, PAULIS, bell_preparation_gates,
-    default_readout_unitaries, ideal_gate_sequence,
+    default_readout_unitaries, ideal_gate_sequence, minimum_readout_unitaries,
     temporal_pps_branches, tomography_design,
 )
 from bayes_online_core.quantum_tasks import run_bell, run_coupling, run_pps
@@ -130,7 +130,7 @@ class QuantumTaskTests(unittest.TestCase):
 
     def test_qualified_temporal_pps_path_counts_every_branch_readout(self):
         a = anchors()
-        settings = default_readout_unitaries()[1:]
+        settings = minimum_readout_unitaries()
         a.update({"readout_unitaries": dict(settings),
                   "readout_gains": {"H": 1+0j, "P": 1+0j},
                   "line_frequencies_hz": {"H": (270, 380), "P": (-180, -60)},
@@ -169,8 +169,10 @@ class QuantumTaskTests(unittest.TestCase):
             return synthetic_result(request, fid)
         result = run_pps(acquire, a, evidence, key_prefix="synthetic", coupling=coupling)
         self.assertEqual(result["status"], "EVALUATED", result.get("reason"))
-        self.assertEqual(result["acquisitions"], 48)
-        self.assertEqual(len(sent), 48)
+        self.assertEqual(result["acquisitions"], 24)
+        self.assertEqual(len(sent), 24)
+        self.assertEqual(result["tomography_rank"], 15)
+        self.assertAlmostEqual(result["tomography_condition"], 2.0)
         self.assertLess(result["shape_error"], 1e-9)
         self.assertEqual(result["preparation_kind"], "TEMPORAL_AVERAGED_EFFECTIVE_PPS")
         self.assertTrue(any("pps_cycle_forward" in p.role for request in sent
@@ -178,7 +180,7 @@ class QuantumTaskTests(unittest.TestCase):
 
     def test_bell_tomography_scores_measured_mixed_state_not_ideal_target(self):
         a = anchors()
-        settings = default_readout_unitaries()[1:]
+        settings = minimum_readout_unitaries()
         a.update({"readout_unitaries": dict(settings),
                   "readout_gains": {"H": 1+0j, "P": 1+0j},
                   "line_frequencies_hz": {"H": (270, 380), "P": (-180, -60)},
@@ -217,7 +219,7 @@ class QuantumTaskTests(unittest.TestCase):
         result = run_bell(acquire, a, evidence, key_prefix="synthetic",
                           coupling=coupling)
         self.assertEqual(result["status"], "EVALUATED", result)
-        self.assertEqual(result["acquisitions"], 192)
+        self.assertEqual(result["acquisitions"], 96)
         for row in result["states"].values():
             self.assertEqual(row["status"], "EVALUATED", row)
             self.assertAlmostEqual(row["state_fidelity"], 0.55, places=8)

@@ -6,12 +6,50 @@ import numpy as np
 
 from bayes_online_core.inference import (
     Candidate, ComplexFeature, OnlineLearner, ReadoutAnchor,
-    detect_coherent_window, estimate_anchor, numeric_selfcheck,
+    detect_coherent_window, diagnose_pilot_signal, estimate_anchor, numeric_selfcheck,
     pulse_design_identifiability,
 )
 
 
 class OnlineInferenceTests(unittest.TestCase):
+    def test_early_pilot_triage_requires_two_detectable_traces(self):
+        rng = np.random.default_rng(84)
+        t = np.arange(4096) / 10000.0
+        fids = rng.normal(size=(6, len(t))) + 1j * rng.normal(size=(6, len(t)))
+        signal = 75 * np.exp(-t / 0.005 + 2j * np.pi * 370 * t)
+        fids[0] += signal
+        one = diagnose_pilot_signal(fids, t)
+        self.assertEqual(one["status"], "NO_DETECTABLE_FID")
+        self.assertEqual(one["evidence"]["detectable_fids"], 1)
+        fids[4] += 0.8j * signal
+        two = diagnose_pilot_signal(fids, t)
+        self.assertEqual(two["status"], "PROCEED")
+        self.assertEqual(two["evidence"]["detectable_fids"], 2)
+        self.assertIn("noise candidate", two["evidence"]["tail_caveat"])
+
+    def test_pilot_triage_rejects_stationary_noise_and_single_sample_spikes(self):
+        rng = np.random.default_rng(319)
+        t = np.arange(4096) / 10000.0
+        noise = rng.normal(size=(6, len(t))) + 1j * rng.normal(size=(6, len(t)))
+        noise[0, 0] += 1000
+        noise[1, 200] += 1000
+        result = diagnose_pilot_signal(noise, t)
+        self.assertEqual(result["status"], "NO_DETECTABLE_FID")
+        self.assertEqual(result["evidence"]["detectable_fids"], 0)
+        # A high, short white-noise burst has excess envelope but no
+        # coherent complex evolution, so it is not accepted as a FID.
+        for row in (0, 1):
+            noise[row, :48] += 20 * (rng.normal(size=48) + 1j * rng.normal(size=48))
+        burst = diagnose_pilot_signal(noise, t)
+        self.assertEqual(burst["status"], "NO_DETECTABLE_FID")
+
+    def test_pilot_triage_refuses_incomplete_data(self):
+        t = np.arange(256) / 10000.0
+        with self.assertRaisesRegex(ValueError, "INCOMPLETE_DATA"):
+            diagnose_pilot_signal(np.zeros((5, 256), complex), t)
+        with self.assertRaisesRegex(ValueError, "INCOMPLETE_DATA"):
+            diagnose_pilot_signal(np.zeros((6, 256), complex), t[:-1])
+
     def test_synthetic_physical_inference(self):
         self.assertEqual(numeric_selfcheck()["status"], "PASS")
 

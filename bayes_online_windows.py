@@ -1,4 +1,4 @@
-"""Windows-only entry point for independent, live 01_bayes_online."""
+"""Live 01_bayes_online entry point: Windows or local-only macOS."""
 
 from __future__ import annotations
 
@@ -47,8 +47,9 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         print(f"01 ONLINE PREFLIGHT ERROR: {type(exc).__name__}: {exc}; no physical task sent", flush=True)
         return 2
-    if os.name != "nt":
-        print("01 ONLINE ERROR: live launcher is Windows-only; no connection opened", flush=True)
+    if os.name != "nt" and not (sys.platform == "darwin" and args.skip_upload):
+        print("01 ONLINE ERROR: macOS live runs require --skip-upload; "
+              "no connection opened", flush=True)
         return 2
     print("01 ONLINE PREFLIGHT OK: SpinQLabLink 1.0.2, numeric model and gate algebra", flush=True)
     if quick_plan:
@@ -71,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         branch = f"benchmark/01_bayes_online/{output.name}"
         try:
-            upload = publish(repo, output, branch, summary_only=args.quick)
+            upload = publish(repo, output, branch)
         except Exception as exc:
             upload = {"status": "UPLOAD_FAILED", "branch": branch,
                       "reason": f"{type(exc).__name__}: {exc}"[:1000]}

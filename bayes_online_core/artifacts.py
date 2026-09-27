@@ -168,7 +168,8 @@ class RunArtifacts:
 
     def comparison_csv(self, rows: list[dict]) -> None:
         columns = ("block", "scenario", "task", "channel", "method", "status",
-                   "design_acquisitions", "control_acquisitions", "total_acquisitions",
+                   "design_acquisitions", "sequential_stop_check_acquisitions",
+                   "stopping_decision", "control_acquisitions", "total_acquisitions",
                    "shared_anchor_acquisitions", "shared_evaluator_acquisitions",
                    "cold_start_acquisitions", "cold_start_seconds",
                    "training_seconds", "validation_seconds", "end_to_end_seconds",
@@ -199,7 +200,10 @@ class RunArtifacts:
             lines[4:4] = ["**Krátky protokol:** iba H kanál, tri scenáre a priamo "
                           "spárované B (klasický komplexný fit) proti D (adaptívny Bayes). "
                           "A, C, väzba, PPS a Bell nie sú v tomto behu merané. "
-                          "Jeden 18-FID nominálny anchor je spoločný platený náklad; "
+                          "Jeden nominálny anchor stojí najviac 18 FID; "
+                          "po šiestich FID bez koherentného signálu sa beh zastaví. "
+                          "Dve platené kontroly skorého zastavenia na rameno "
+                          "sú oddelené od finálnych kontrol. "
                           "v každom bloku sú nové referencie, tréningy a kontrolné FID. "
                           "Tri páry predstavujú predbežné porovnanie, nie univerzálnu štatistickú výhodu.", ""]
         for row in rows:
@@ -310,8 +314,8 @@ class RunArtifacts:
         return target
 
 
-def publish(repo: Path, out: Path, branch: str, *, summary_only: bool = False) -> dict:
-    """Push this run's report, with the raw archive only for the full profile."""
+def publish(repo: Path, out: Path, branch: str) -> dict:
+    """Push this run's report and complete raw archive to its own branch."""
     if not branch.startswith("benchmark/01_bayes_online/"):
         raise ValueError("Result branch is outside this experiment")
     import re
@@ -325,7 +329,7 @@ def publish(repo: Path, out: Path, branch: str, *, summary_only: bool = False) -
         proc = subprocess.run(["git", *args], cwd=cwd, env=env,
                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE, text=True,
-                              timeout=timeout or (120 if summary_only else 900))
+                              timeout=timeout or 900)
         if proc.returncode:
             raise RuntimeError(f"git {args[0]} failed: {(proc.stderr or proc.stdout)[-800:]}")
         return proc.stdout.strip()
@@ -381,27 +385,23 @@ def publish(repo: Path, out: Path, branch: str, *, summary_only: bool = False) -
                 source = out / name
                 if source.is_file():
                     shutil.copy2(source, work / name)
-            if not summary_only:
-                archive = out / "results.zip"
-                with archive.open("rb") as incoming:
-                    for index in range(1, 10000):
-                        chunk = incoming.read(PART_BYTES)
-                        if not chunk:
-                            break
-                        filename = "results.zip" if archive.stat().st_size <= PART_BYTES else \
-                            f"results.zip.part{index:04d}"
-                        (work / filename).write_bytes(chunk)
-                if archive.stat().st_size > PART_BYTES:
-                    (work / "HOW_TO_JOIN.txt").write_text(
-                        "PowerShell: $p=Get-ChildItem results.zip.part* | Sort-Object Name; "
-                        "$o=[IO.File]::Create('results.zip'); try { foreach($f in $p) "
-                        "{ $i=[IO.File]::OpenRead($f.FullName); try {$i.CopyTo($o)} "
-                        "finally {$i.Dispose()} } } finally {$o.Dispose()}\n",
-                        encoding="utf-8")
-            description = ("Quick profile: REPORT.md, comparison.csv and results.json "
-                           "are uploaded. Original FID data and results.zip remain "
-                           "on the Windows computer.\n" if summary_only else
-                           "REPORT.md and comparison.csv are summaries. Join ZIP parts "
+            archive = out / "results.zip"
+            with archive.open("rb") as incoming:
+                for index in range(1, 10000):
+                    chunk = incoming.read(PART_BYTES)
+                    if not chunk:
+                        break
+                    filename = "results.zip" if archive.stat().st_size <= PART_BYTES else \
+                        f"results.zip.part{index:04d}"
+                    (work / filename).write_bytes(chunk)
+            if archive.stat().st_size > PART_BYTES:
+                (work / "HOW_TO_JOIN.txt").write_text(
+                    "PowerShell: $p=Get-ChildItem results.zip.part* | Sort-Object Name; "
+                    "$o=[IO.File]::Create('results.zip'); try { foreach($f in $p) "
+                    "{ $i=[IO.File]::OpenRead($f.FullName); try {$i.CopyTo($o)} "
+                    "finally {$i.Dispose()} } } finally {$o.Dispose()}\n",
+                    encoding="utf-8")
+            description = ("REPORT.md and comparison.csv are summaries. Join ZIP parts "
                            "if necessary; results.zip contains original exported FID, "
                            "sanitized events and source snapshot.\n")
             (work / "README.md").write_text(

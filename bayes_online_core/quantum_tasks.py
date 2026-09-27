@@ -22,6 +22,7 @@ from .physics import (
     bell_preparation_gates,
     bell_score,
     default_readout_unitaries,
+    minimum_readout_unitaries,
     pps_target_deviation,
     reconstruct_deviation,
     reconstruct_full_density,
@@ -450,10 +451,11 @@ def _readout_settings() -> tuple[tuple[str, tuple[str, ...]], ...]:
             gates = tuple(x + "_H" for x in h) + tuple(x + "_P" for x in p)
             settings.append((f"{label_h}+{label_p}", gates))
     assert tuple(name for name, _ in settings) == tuple(name for name, _ in default_readout_unitaries())
-    # The eight remaining settings still have rank 15 and condition ~1.41
-    # in the ideal two-line model.  This avoids an unqualified pulse-less
-    # acquisition for the identity temporal-PPS branch.
-    return tuple(item for item in settings if item[0] != "I+I")
+    selected = {name for name, _ in minimum_readout_unitaries()}
+    # The four selected settings have ideal rank 15/15 and condition 2.  Each
+    # contains exactly one readout RF pulse; the real frozen map is rechecked
+    # in _evaluator before any acquisition.
+    return tuple(item for item in settings if item[0] in selected)
 
 
 def _evaluator(
@@ -469,7 +471,7 @@ def _evaluator(
     matrices = anchors["readout_unitaries"]
     names = [name for name, _ in _readout_settings()]
     if not set(names).issubset(matrices):
-        raise ValueError("frozen readout matrices must cover the eight physical settings")
+        raise ValueError("frozen readout matrices must cover the four selected physical settings")
     settings = [(name, np.asarray(matrices[name], complex)) for name in names]
     gains = anchors["readout_gains"]
     design = tomography_design(settings, gains)

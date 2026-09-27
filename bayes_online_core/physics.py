@@ -304,6 +304,24 @@ def default_readout_unitaries() -> tuple[tuple[str, np.ndarray], ...]:
                  for name_h, uh in axes for name_p, up in other)
 
 
+# Exhaustive search of all 255 nonempty subsets of the eight compilable
+# settings (excluding I+I) in the ideal resolved-two-line model found no
+# rank-15 subset of size <=3.  Forty-five four-setting subsets have rank 15
+# and condition 2.  This tie has the fewest readout RF rotations (four) and
+# avoids simultaneous H/P readout pulses.  Actual frozen propagators and line
+# resolution are still qualified by the evaluator before hardware submission.
+MINIMUM_READOUT_NAMES = (
+    "I+Rx90P", "I+Ry90P", "Rx90H+I", "Ry90H+I",
+)
+
+
+def minimum_readout_unitaries() -> tuple[tuple[str, np.ndarray], ...]:
+    """Minimum-acquisition, well-conditioned ideal two-spin readout subset."""
+
+    available = dict(default_readout_unitaries())
+    return tuple((name, available[name]) for name in MINIMUM_READOUT_NAMES)
+
+
 def tomography_design(
     readout_unitaries: Sequence[tuple[str, np.ndarray]] | None = None,
     complex_gains: Mapping[str, complex] | None = None,
