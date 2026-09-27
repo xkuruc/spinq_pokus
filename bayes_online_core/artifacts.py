@@ -192,9 +192,16 @@ class RunArtifacts:
                  "Kalibračné H/P FID používajú spoločnú serverovú prípravu "
                  "(`makePps=True`); samostatná vlastná PPS vetva ju vypína.", "",
                  "## Porovnanie", "",
-                 "| Blok | Úloha | Kanál | Metóda | Stav | Akvizície ramena | Akvizície od štartu | Čas ramena (s) | Čas od štartu (s) | "
+                 "| Blok | Úloha | Kanál | Metóda | Stav | Akvizície ramena | Samostatný štart¹ | Čas ramena (s) | Samostatný štart¹ (s) | "
                  "Chyba df (Hz) | Chyba RF | Chyba fázy (°) | Kontrolná chyba |",
                  "|---:|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+        if state.get("profile") == "quick":
+            lines[4:4] = ["**Krátky protokol:** iba H kanál, tri scenáre a priamo "
+                          "spárované B (klasický komplexný fit) proti D (adaptívny Bayes). "
+                          "A, C, väzba, PPS a Bell nie sú v tomto behu merané. "
+                          "Jeden 18-FID nominálny anchor je spoločný platený náklad; "
+                          "v každom bloku sú nové referencie, tréningy a kontrolné FID. "
+                          "Tri páry predstavujú predbežné porovnanie, nie univerzálnu štatistickú výhodu.", ""]
         for row in rows:
             lines.append("| " + " | ".join(str(row.get(key, "—")) for key in
                 ("block", "task", "channel", "method", "status", "total_acquisitions",
@@ -203,25 +210,43 @@ class RunArtifacts:
                  "phase_error_deg", "heldout_complex_error")) + " |")
         if not rows:
             lines.append("| — | — | — | — | — | — | — | — | — | — | — | — | — | — |")
+        lines += ["", "¹ Samostatný štart = rameno + spoločný pilot + nové referencie. "
+                  "Je to porovnávací náklad jedného ramena, nie skutočný súčet behu. "
+                  "Pilot sa fyzicky meria iba raz; skutočný počet úloh je uvedený na začiatku reportu. "
+                  "Probe a kontroly driftu sa uvádzajú v celkovom počte úloh."]
         lines += ["", "## Párové porovnanie voči klasickému fitu B", "",
-                  "Do párov vstupujú len rovnaké bloky a kanály, v ktorých obidve "
-                  "metódy splnili zmrazené kontrolné kritériá.", "",
-                  "| Metóda | Zhodné bloky/kanály | Číselné páry | Cieľ metóda/B | Priemerná zmena kontrolnej chyby | "
+                  "Číselné rozdiely zahŕňajú aj neúspešné ramená a sú deskriptívne. "
+                  "Na tvrdenie o výhode sú spôsobilé iba páry z rovnakého bloku/kanála, "
+                  "v ktorých obe metódy splnili zmrazené kontroly a nebol zistený drift.", "",
+                  "| Metóda | Zhodné bloky/kanály | Číselné páry | Platné páry | Cieľ metóda/B | Priemer metóda−B z platných párov | Deskriptívny priemer metóda−B zo všetkých číselných párov | "
                   "Priemerná zmena akvizícií | Priemerná zmena času (s) | Záver |",
-                  "|---|---:|---:|---:|---:|---:|---:|---|"]
+                  "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|"]
         for method, item in state.get("paired_summary", {}).items():
             def show(value: Any) -> str:
                 return "—" if value is None else str(value)
             lines.append("| " + " | ".join((method,
                      show(item.get("matched_block_channel_pairs", 0)),
                      show(item.get("independent_block_channel_pairs", 0)),
+                     show(item.get("valid_target_pairs", 0)),
                      f"{item.get('method_target_reached',0)}/{item.get('classical_target_reached',0)}",
+                     show(item.get("paired_valid_heldout_error_difference_mean")),
                      show(item.get("paired_heldout_error_difference_mean")),
                      show(item.get("paired_acquisition_difference_mean")),
                      show(item.get("paired_total_time_difference_mean_s")),
                      str(item.get("conclusion")))) + " |")
         if not state.get("paired_summary"):
-            lines.append("| — | 0 | 0 | 0/0 | — | — | — | Zatiaľ bez párov |")
+            lines.append("| — | 0 | 0 | 0 | 0/0 | — | — | — | — | Zatiaľ bez párov |")
+        if state.get("profile") == "quick":
+            lines += ["", "### Jednotlivé predbežné páry B verzus D", "",
+                      "Záporný rozdiel znamená nižšiu kontrolnú chybu D. "
+                      "Neplatný pár zostáva viditeľný, ale nesmie podporiť tvrdenie o výhode.", "",
+                      "| Blok | B chyba | D chyba | D − B | B stav | D stav | Platný pár |",
+                      "|---:|---:|---:|---:|---|---|---|"]
+            for row in state.get("paired_summary", {}).get("D_adaptive_bayes", {}).get("per_block", []):
+                lines.append("| " + " | ".join(str(row.get(name, "—")) for name in
+                    ("block", "classical_heldout_error", "method_heldout_error",
+                     "paired_error_difference", "classical_status", "method_status",
+                     "valid_for_advantage_claim")) + " |")
         lines += ["", "## Schopnosti a obmedzenia", ""]
         for name, item in state.get("capabilities", {}).items():
             lines.append(f"- {name}: {item}")
@@ -285,8 +310,8 @@ class RunArtifacts:
         return target
 
 
-def publish(repo: Path, out: Path, branch: str) -> dict:
-    """Push only this run's artifacts from a temporary Git worktree."""
+def publish(repo: Path, out: Path, branch: str, *, summary_only: bool = False) -> dict:
+    """Push this run's report, with the raw archive only for the full profile."""
     if not branch.startswith("benchmark/01_bayes_online/"):
         raise ValueError("Result branch is outside this experiment")
     import re
@@ -296,10 +321,11 @@ def publish(repo: Path, out: Path, branch: str) -> dict:
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GCM_INTERACTIVE"] = "never"
 
-    def git(*args: str, cwd: Path = repo, timeout: int = 900) -> str:
+    def git(*args: str, cwd: Path = repo, timeout: int | None = None) -> str:
         proc = subprocess.run(["git", *args], cwd=cwd, env=env,
                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE, text=True, timeout=timeout)
+                              stderr=subprocess.PIPE, text=True,
+                              timeout=timeout or (120 if summary_only else 900))
         if proc.returncode:
             raise RuntimeError(f"git {args[0]} failed: {(proc.stderr or proc.stdout)[-800:]}")
         return proc.stdout.strip()
@@ -355,26 +381,31 @@ def publish(repo: Path, out: Path, branch: str) -> dict:
                 source = out / name
                 if source.is_file():
                     shutil.copy2(source, work / name)
-            archive = out / "results.zip"
-            with archive.open("rb") as incoming:
-                for index in range(1, 10000):
-                    chunk = incoming.read(PART_BYTES)
-                    if not chunk:
-                        break
-                    filename = "results.zip" if archive.stat().st_size <= PART_BYTES else \
-                        f"results.zip.part{index:04d}"
-                    (work / filename).write_bytes(chunk)
-            if archive.stat().st_size > PART_BYTES:
-                (work / "HOW_TO_JOIN.txt").write_text(
-                    "PowerShell: $p=Get-ChildItem results.zip.part* | Sort-Object Name; "
-                    "$o=[IO.File]::Create('results.zip'); try { foreach($f in $p) "
-                    "{ $i=[IO.File]::OpenRead($f.FullName); try {$i.CopyTo($o)} "
-                    "finally {$i.Dispose()} } } finally {$o.Dispose()}\n",
-                    encoding="utf-8")
+            if not summary_only:
+                archive = out / "results.zip"
+                with archive.open("rb") as incoming:
+                    for index in range(1, 10000):
+                        chunk = incoming.read(PART_BYTES)
+                        if not chunk:
+                            break
+                        filename = "results.zip" if archive.stat().st_size <= PART_BYTES else \
+                            f"results.zip.part{index:04d}"
+                        (work / filename).write_bytes(chunk)
+                if archive.stat().st_size > PART_BYTES:
+                    (work / "HOW_TO_JOIN.txt").write_text(
+                        "PowerShell: $p=Get-ChildItem results.zip.part* | Sort-Object Name; "
+                        "$o=[IO.File]::Create('results.zip'); try { foreach($f in $p) "
+                        "{ $i=[IO.File]::OpenRead($f.FullName); try {$i.CopyTo($o)} "
+                        "finally {$i.Dispose()} } } finally {$o.Dispose()}\n",
+                        encoding="utf-8")
+            description = ("Quick profile: REPORT.md, comparison.csv and results.json "
+                           "are uploaded. Original FID data and results.zip remain "
+                           "on the Windows computer.\n" if summary_only else
+                           "REPORT.md and comparison.csv are summaries. Join ZIP parts "
+                           "if necessary; results.zip contains original exported FID, "
+                           "sanitized events and source snapshot.\n")
             (work / "README.md").write_text(
-                "# 01_bayes_online results\n\nREPORT.md and comparison.csv are "
-                "summaries. Join ZIP parts if necessary; results.zip contains "
-                "original exported FID, sanitized events and source snapshot.\n",
+                "# 01_bayes_online results\n\n" + description,
                 encoding="utf-8")
             git("add", "-A", cwd=work)
             if git("status", "--porcelain", cwd=work):

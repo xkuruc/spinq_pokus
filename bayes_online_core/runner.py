@@ -98,6 +98,28 @@ def validate_config(config: dict[str, Any]) -> dict[str, Any]:
     return config
 
 
+def quick_task_plan(config: dict[str, Any]) -> dict[str, Any]:
+    """Count every planned physical FID in the bounded H-only B/D protocol."""
+    config = validate_config(config)
+    if config["channels"] != ["H"] or config["blocks"] != 3 or \
+            config["calibration_acquisitions_per_method"] != 10:
+        raise ValueError("Quick protocol requires H, three blocks and ten B/D acquisitions")
+    counts = {"shared_anchor": len(config["pilot_widths_us"])*config["pilot_repeats"],
+              "fresh_nominal_references": 2*config["blocks"],
+              "B_and_D_training": 2*config["calibration_acquisitions_per_method"]*config["blocks"],
+              "heldout_controls": 2*2*config["blocks"],
+              "hidden_perturbation_probes": config["blocks"]-1,
+              "pre_between_post_drift_checks": 3*config["blocks"]}
+    total = sum(counts.values())
+    if total > config["max_tasks"]:
+        raise ValueError("Quick plan exceeds configured physical-task budget")
+    return {"profile": "quick", "channel": "H", "methods": ["B_classical", "D_adaptive_bayes"],
+            "scenarios": ["neutral", "positive_command_error", "negative_command_error"],
+            "counts": counts, "planned_physical_tasks": total,
+            "max_physical_tasks": config["max_tasks"],
+            "comparison_scope": "three paired exploratory H-only blocks; no PPS/Bell or universal advantage claim"}
+
+
 def numeric_preflight() -> dict:
     """No network, tablet, RF task or old benchmark is touched."""
     checks = {"spinqlablink": importlib.metadata.version("spinqlablink"),
@@ -279,11 +301,18 @@ class FrozenEvaluator:
 class OnlineRun:
     def __init__(self, repo: Path, out: Path, config: dict,
                  task: str, exclusive_use_confirmed: bool = False,
-                 resume: bool = False):
+                 resume: bool = False, quick: bool = False):
         self.repo = Path(repo).resolve()
         self.artifacts = RunArtifacts(out)
         self.config = validate_config(config)
         self.task = task
+        self.quick = bool(quick)
+        if self.quick:
+            quick_task_plan(self.config)
+            if task not in ("rabi", "frequency"):
+                raise ValueError("Quick protocol is only for frequency/Rabi calibration")
+        self._started_monotonic = time.monotonic()
+        self._quick_wall_limit_s = 3000 if self.quick else None
         self.resume = resume
         self.exclusive_use_confirmed = exclusive_use_confirmed
         self.transport: PhysicalTransport | None = None
@@ -294,7 +323,9 @@ class OnlineRun:
             if not resume:
                 raise ValueError("Run directory exists; use --resume")
             self.state = json.loads(saved.read_text(encoding="utf-8"))
-            if self.state.get("config") != config or self.state.get("task_requested") != task:
+            if (self.state.get("config") != config or
+                    self.state.get("task_requested") != task or
+                    self.state.get("profile", "full") != ("quick" if self.quick else "full")):
                 raise ValueError("Resume config/task differs from original run")
             if self.state.get("status") == "STOPPED_UNCERTAIN":
                 raise TaskUncertain("A prior task may still run; manual reconciliation required")
@@ -308,12 +339,17 @@ class OnlineRun:
         else:
             self.state = {"experiment": EXPERIMENT, "run_id": out.name,
                           "started_utc": utc_now(), "status": "RUNNING",
+                          "profile": "quick" if self.quick else "full",
                           "task_requested": task, "config": config,
                           "acquisitions": {}, "anchors": {}, "scenarios": {},
                           "methods": {}, "capabilities": {}, "comparison": [],
                           "errors": [], "task_count": 0, "requested_rf_us": 0.,
                           "learner_input_provenance": "exported complex FID only; vendor FFT excluded"}
             self.save()
+        atomic_json(self.artifacts.path / "profiles" / "effective_config.json",
+                    {"profile": self.state.get("profile", "full"),
+                     "task": task, "config": config,
+                     "quick_plan": quick_task_plan(config) if self.quick else None})
 
     def log(self, message: str, *, kind: str = "INFO") -> None:
         print(f"01 ONLINE {kind}: {message}", flush=True)
@@ -337,6 +373,8 @@ class OnlineRun:
                     initialize_state=initialize_state)
 
     def _check_budget(self, request: AcquisitionRequest) -> float:
+        if self.quick and time.monotonic() - self._started_monotonic > self._quick_wall_limit_s:
+            raise BudgetExhausted("Quick protocol reached 50-minute active runtime cap")
         low, high = self.config["software_pulse_width_envelope_us"]
         for pulse in request.pulses:
             if not 0 < pulse.width_us or (pulse.amplitude_pct > 0 and
@@ -590,6 +628,12 @@ class OnlineRun:
             if previous is not None:
                 self.log(f"{label}: completed result reused on resume")
                 return previous
+        # A previous interrupted attempt may have left a status-only row.
+        # Keep its error in the event log, but replace the row on a retry.
+        self.state["comparison"] = [row for row in self.state["comparison"]
+            if not (row.get("block") == block and row.get("channel") == channel
+                    and row.get("method") == method and row.get("status") in
+                    ("BUDGET_EXHAUSTED", "INCOMPLETE_DATA"))]
         started = time.monotonic()
         start_tasks = self.task_count
         pool = self._candidate_pool(anchor)
@@ -692,14 +736,22 @@ class OnlineRun:
                  f"physical acquisitions={row['total_acquisitions']}; total={total_s:.1f} s")
         return row
 
-    def _drift_check(self, block: int, channel: str, anchor: ReferenceAnchor) -> dict:
+    def _drift_check(self, block: int, channel: str, anchor: ReferenceAnchor,
+                     stage: str = "after") -> dict:
+        if stage not in ("pre", "between", "after"):
+            raise ValueError("Unknown nominal drift-check stage")
         width = self.config["pilot_widths_us"][1]
-        key = f"b{block}_{channel}_return_to_nominal"
+        suffix = f"_{stage}" if self.quick else ""
+        key = f"b{block}_{channel}_return_to_nominal{suffix}"
         candidate = Candidate(channel, width, anchor.nominal_amplitude_pct,
                               0., 0., anchor.full_cycle_s)
         self.acquire(self._request(key, candidate), controller=None,
                      role="nominal_drift_check", channel=channel, block=block)
-        before = self._feature(f"b{block}_{channel}_anchor_w{width}_r0", anchor)
+        original_key = next((pilot for pilot in anchor.pilot_keys
+                             if pilot.endswith(f"_w{width}_r0")), None)
+        if original_key is None:
+            raise ValueError("Measured anchor lacks drift reference width")
+        before = self._feature(original_key, anchor)
         after = self._feature(key, anchor)
         numerator = abs(before.value-after.value)
         denom = math.sqrt(float(np.trace(before.covariance_ri+after.covariance_ri)))
@@ -707,47 +759,61 @@ class OnlineRun:
         result = {"status": "STABLE_WITHIN_REPEAT_NOISE" if ratio <= 3 else "DRIFT_WARNING",
                   "difference_over_joint_noise": ratio,
                   "acquisition_key": key}
-        self.state["capabilities"][f"b{block}_{channel}_drift"] = result
+        self.state["capabilities"][f"b{block}_{channel}_drift{suffix}"] = result
         self.save()
-        self.log(f"Block {block} {channel} return-to-nominal: {result['status']} ({ratio:.2f} sigma)")
+        self.log(f"Block {block} {channel} {stage} return-to-nominal: "
+                 f"{result['status']} ({ratio:.2f} sigma)")
         return result
 
     def run_calibration(self) -> dict[str, ReferenceAnchor]:
         latest: dict[str, ReferenceAnchor] = {}
+        shared_anchor: dict[str, ReferenceAnchor] | None = None
         for block in range(self.config["blocks"]):
             anchors: dict[str, ReferenceAnchor] = {}
-            for channel in self.config["channels"]:
-                try:
-                    anchors[channel] = self._pilot(block, channel)
-                except TaskUncertain:
-                    raise
-                except BudgetExhausted:
-                    raise
-                except Exception as exc:
-                    self.log(f"Block {block} {channel} pilot: {type(exc).__name__}: {exc}", kind="ERROR")
-                    self.state["errors"].append({"block": block, "channel": channel,
-                                                  "stage": "pilot", "error": str(exc),
-                                                  "trace": traceback.format_exc()})
-                    self.save()
+            if self.quick and block > 0:
+                if shared_anchor is None:
+                    break
+                anchors = shared_anchor
+                self.log(f"Block {block}: using the same paid H anchor; "
+                         "fresh reference and drift FIDs follow")
+            else:
+                for channel in self.config["channels"]:
+                    try:
+                        anchors[channel] = self._pilot(block, channel)
+                    except TaskUncertain:
+                        raise
+                    except BudgetExhausted:
+                        raise
+                    except Exception as exc:
+                        self.log(f"Block {block} {channel} pilot: {type(exc).__name__}: {exc}", kind="ERROR")
+                        self.state["errors"].append({"block": block, "channel": channel,
+                                                      "stage": "pilot", "error": str(exc),
+                                                      "trace": traceback.format_exc()})
+                        self.save()
             if not anchors:
                 continue
+            if self.quick and block == 0:
+                shared_anchor = anchors
             latest = anchors
             references = self._nominal_references(block, anchors)
             controller = PerturbationController(self._scenario(block, anchors),
                             self.config["software_amplitude_ceiling_pct"])
             probes = {channel: self._probe(block, channel, anchor, controller,
                                           references[channel]) for channel, anchor in anchors.items()}
-            # Seeded Latin rotations yield each method once/twice per position
-            # over the six default block-channel sequences (perfect balance
-            # would require a multiple of four sequences).
-            base = list(METHODS)
+            # Quick compares only B and D; their order alternates across
+            # neutral/+/- blocks. Full protocol retains its four-arm rotations.
+            base = list(("B_classical", "D_adaptive_bayes") if self.quick else METHODS)
             random.Random(self.config["seed"]).shuffle(base)
             self.state["scenarios"][str(block)]["method_order_by_channel"] = {}
             for channel_index, (channel, anchor) in enumerate(anchors.items()):
-                shift = (2*block + channel_index) % 4
+                shift = ((block + channel_index) % 2 if self.quick else
+                         (2*block + channel_index) % 4)
                 order = base[shift:] + base[:shift]
                 self.state["scenarios"][str(block)]["method_order_by_channel"][channel] = order
                 self.save()
+                drift_checks = []
+                if self.quick:
+                    drift_checks.append(self._drift_check(block, channel, anchor, "pre"))
                 for position, method in enumerate(order):
                     try:
                         self._measure_arm(block, channel, method, anchor, controller,
@@ -776,7 +842,41 @@ class OnlineRun:
                             "reason": f"{type(exc).__name__}: {exc}"})
                         self.save()
                         self.artifacts.comparison_csv(self.state["comparison"])
-                self._drift_check(block, channel, anchor)
+                    if self.quick and position == 0:
+                        drift_checks.append(self._drift_check(block, channel, anchor, "between"))
+                drift_checks.append(self._drift_check(block, channel, anchor, "after"))
+                if self.quick and any(item["status"] == "DRIFT_WARNING" for item in drift_checks):
+                    self.log(f"Block {block} {channel}: paired comparison invalidated by "
+                             "nominal drift warning", kind="WARNING")
+                    for row in self.state["comparison"]:
+                        if (row.get("block") == block and row.get("channel") == channel
+                                and row.get("method") in order):
+                            row["status"] = "PILOT_INCONCLUSIVE"
+                            row["reason"] = "Nominal drift changed beyond repeat-derived uncertainty"
+                            label = f"b{block}_{channel}_{row['method']}"
+                            if label in self.state["methods"]:
+                                self.state["methods"][label]["score"]["status"] = "PILOT_INCONCLUSIVE"
+                                self.state["methods"][label]["score"]["reason"] = row["reason"]
+                    self.state["capabilities"][f"b{block}_{channel}_paired_validity"] = {
+                        "status": "PILOT_INCONCLUSIVE", "reason": "Nominal drift warning"}
+                    self.save()
+                    self.artifacts.comparison_csv(self.state["comparison"])
+                if self.quick:
+                    paired = {row.get("method"): row for row in self.state["comparison"]
+                              if row.get("block") == block and row.get("channel") == channel
+                              and row.get("method") in order}
+                    classical = paired.get("B_classical", {})
+                    adaptive = paired.get("D_adaptive_bayes", {})
+                    b_error = classical.get("heldout_complex_error")
+                    d_error = adaptive.get("heldout_complex_error")
+                    difference = (f"{d_error-b_error:+.4f}" if
+                                  isinstance(b_error, (int, float)) and
+                                  isinstance(d_error, (int, float)) else "unavailable")
+                    self.log(f"QUICK PAIR block={block} scenario="
+                             f"{self.state['scenarios'][str(block)]['label']} "
+                             f"B={classical.get('status', 'MISSING')} "
+                             f"D={adaptive.get('status', 'MISSING')} "
+                             f"heldout_D_minus_B={difference}")
             self.artifacts.report(self.state)
         return latest
 
@@ -795,32 +895,53 @@ class OnlineRun:
         for row in rows:
             by_pair[(row["block"], row["channel"])][row["method"]] = row
         summary = {}
-        for method in (METHODS[0], METHODS[2], METHODS[3]):
-            delta, acquisition_delta, time_delta = [], [], []
+        compared_methods = ("D_adaptive_bayes",) if self.quick else \
+            (METHODS[0], METHODS[2], METHODS[3])
+        for method in compared_methods:
+            delta, acquisition_delta, time_delta, valid_delta = [], [], [], []
             matched, method_target, classical_target = 0, 0, 0
-            for pair in by_pair.values():
+            valid_pairs = 0
+            per_block = []
+            for (block, channel), pair in sorted(by_pair.items()):
                 if method not in pair or "B_classical" not in pair:
                     continue
                 test, classic = pair[method], pair["B_classical"]
                 matched += 1
                 method_target += int(test.get("status") == "TARGET_REACHED")
                 classical_target += int(classic.get("status") == "TARGET_REACHED")
+                valid = (test.get("status") == "TARGET_REACHED" and
+                         classic.get("status") == "TARGET_REACHED")
+                valid_pairs += int(valid)
+                comparison = {"block": block, "channel": channel,
+                              "method_status": test.get("status"),
+                              "classical_status": classic.get("status"),
+                              "valid_for_advantage_claim": valid,
+                              "method_heldout_error": test.get("heldout_complex_error"),
+                              "classical_heldout_error": classic.get("heldout_complex_error")}
+                per_block.append(comparison)
                 if not all(isinstance(row.get("heldout_complex_error"), (int, float))
                            for row in (test, classic)):
                     continue
                 delta.append(test["heldout_complex_error"] - classic["heldout_complex_error"])
+                comparison["paired_error_difference"] = delta[-1]
+                if valid:
+                    valid_delta.append(delta[-1])
                 acquisition_delta.append(test["total_acquisitions"] - classic["total_acquisitions"])
                 time_delta.append(test["end_to_end_seconds"] - classic["end_to_end_seconds"])
             summary[method] = {"matched_block_channel_pairs": matched,
                 "independent_block_channel_pairs": len(delta),
+                "valid_target_pairs": valid_pairs,
+                "per_block": per_block,
                 "method_target_reached": method_target,
                 "classical_target_reached": classical_target,
                 "paired_heldout_error_difference_mean": float(np.mean(delta)) if delta else None,
                 "paired_heldout_error_difference_sd": float(np.std(delta, ddof=1)) if len(delta)>1 else None,
+                "paired_valid_heldout_error_difference_mean":
+                    float(np.mean(valid_delta)) if valid_delta else None,
                 "paired_acquisition_difference_mean": float(np.mean(acquisition_delta)) if delta else None,
                 "paired_total_time_difference_mean_s": float(np.mean(time_delta)) if delta else None,
-                "conclusion": "INSUFFICIENT_PAIRED_EVIDENCE" if len(delta) < 3 else
-                    "OBSERVED_EQUAL_BUDGET_COMPARISON_NO_GENERAL_ADVANTAGE_CLAIM"}
+                "conclusion": "INSUFFICIENT_VALID_PAIRED_EVIDENCE" if valid_pairs < 3 else
+                    "PRELIMINARY_EQUAL_BUDGET_COMPARISON_NO_GENERAL_ADVANTAGE_CLAIM"}
         return summary
 
     def _quantum_anchors(self, latest: dict[str, ReferenceAnchor]) -> dict:
@@ -1039,6 +1160,13 @@ class OnlineRun:
                 if self.task in ("coupling", "pps", "bell", "all"):
                     self._run_quantum_tasks(latest)
                 self.state["paired_summary"] = self._paired_summary()
+                if self.quick:
+                    paired = self.state["paired_summary"].get("D_adaptive_bayes", {})
+                    self.log(f"QUICK SUMMARY valid_pairs="
+                             f"{paired.get('valid_target_pairs', 0)}/3 "
+                             f"valid_mean_D_minus_B="
+                             f"{paired.get('paired_valid_heldout_error_difference_mean')} "
+                             f"conclusion={paired.get('conclusion')}")
                 self.state["status"] = ("COMPLETED_WITH_EXPLICIT_LIMITATIONS"
                     if self.state["comparison"] or self.state["capabilities"]
                     else "PILOT_INCONCLUSIVE")
@@ -1064,6 +1192,10 @@ class OnlineRun:
             self.log(traceback.format_exc(), kind="ERROR")
         finally:
             self.transport = None
+            if self.state["comparison"]:
+                # A timed stop still leaves the already measured paired arms
+                # inspectable; recompute after every resume to avoid stale rows.
+                self.state["paired_summary"] = self._paired_summary()
             self.state["ended_utc"] = utc_now()
             self.save()
             self.artifacts.comparison_csv(self.state["comparison"])
