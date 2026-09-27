@@ -1,0 +1,728 @@
+{
+  "experiment": "01_bayes_online",
+  "run_id": "quick_20260927_101248_UTC",
+  "started_utc": "2026-09-27T10:12:48+00:00",
+  "status": "PILOT_INCONCLUSIVE",
+  "profile": "quick",
+  "task_requested": "rabi",
+  "config": {
+    "host": "172.19.20.100",
+    "port": 8181,
+    "channels": [
+      "H"
+    ],
+    "blocks": 3,
+    "seed": 27092026,
+    "sample_frequency_hz": 10000,
+    "sample_count": 16000,
+    "pilot_widths_us": [
+      20,
+      40,
+      80,
+      120,
+      160,
+      200
+    ],
+    "pilot_repeats": 3,
+    "nominal_amplitude_pct": 70,
+    "calibration_acquisitions_per_method": 10,
+    "heldout_controls_per_method": 2,
+    "reference_acquisitions_per_block": 5,
+    "particle_count": 512,
+    "design_mc_samples": 8,
+    "max_tasks": 120,
+    "max_requested_rf_us": 30000,
+    "timeout_seconds": 180,
+    "pause_seconds": 1,
+    "software_pulse_width_envelope_us": [
+      20,
+      200
+    ],
+    "software_amplitude_ceiling_pct": 100,
+    "allow_unverified_multisegment": false
+  },
+  "acquisitions": {
+    "b0_H_anchor_w20_r0": {
+      "key": "b0_H_anchor_w20_r0",
+      "task_id": "5dbf3b4e-7bc6-4337-acdb-ee8741491428",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 6.15168510004878,
+      "requested_rf_us": 20.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w20_r0",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 20.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w20_r0.npz",
+      "completed_utc": "2026-09-27T10:12:56+00:00"
+    },
+    "b0_H_anchor_w40_r0": {
+      "key": "b0_H_anchor_w40_r0",
+      "task_id": "4d6de5ae-11ee-4b4f-8e61-1334a06bd16f",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 14.254495599772781,
+      "requested_rf_us": 40.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w40_r0",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 40.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w40_r0.npz",
+      "completed_utc": "2026-09-27T10:13:12+00:00"
+    },
+    "b0_H_anchor_w80_r0": {
+      "key": "b0_H_anchor_w80_r0",
+      "task_id": "dc0a46ec-3272-4714-a6a8-8cbee126fa19",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 17.033729300368577,
+      "requested_rf_us": 80.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w80_r0",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 80.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w80_r0.npz",
+      "completed_utc": "2026-09-27T10:13:30+00:00"
+    },
+    "b0_H_anchor_w120_r0": {
+      "key": "b0_H_anchor_w120_r0",
+      "task_id": "eee52fad-a262-46f7-816b-16e65937235e",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.42834069998935,
+      "requested_rf_us": 120.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w120_r0",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 120.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w120_r0.npz",
+      "completed_utc": "2026-09-27T10:13:48+00:00"
+    },
+    "b0_H_anchor_w160_r0": {
+      "key": "b0_H_anchor_w160_r0",
+      "task_id": "51b0726d-7d4c-4186-9bd9-b2bf1a242ba1",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.22276009991765,
+      "requested_rf_us": 160.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w160_r0",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 160.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w160_r0.npz",
+      "completed_utc": "2026-09-27T10:14:06+00:00"
+    },
+    "b0_H_anchor_w200_r0": {
+      "key": "b0_H_anchor_w200_r0",
+      "task_id": "d66b9648-005a-43bb-b875-3583dca09a50",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.58802289981395,
+      "requested_rf_us": 200.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w200_r0",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 200.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w200_r0.npz",
+      "completed_utc": "2026-09-27T10:14:24+00:00"
+    },
+    "b0_H_anchor_w20_r1": {
+      "key": "b0_H_anchor_w20_r1",
+      "task_id": "7be7c94a-2f0e-4959-a153-d935451a27be",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.377919899765402,
+      "requested_rf_us": 20.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w20_r1",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 20.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w20_r1.npz",
+      "completed_utc": "2026-09-27T10:14:42+00:00"
+    },
+    "b0_H_anchor_w40_r1": {
+      "key": "b0_H_anchor_w40_r1",
+      "task_id": "06a00624-8733-47d0-8272-008efdec891c",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.626291200052947,
+      "requested_rf_us": 40.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w40_r1",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 40.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w40_r1.npz",
+      "completed_utc": "2026-09-27T10:15:00+00:00"
+    },
+    "b0_H_anchor_w80_r1": {
+      "key": "b0_H_anchor_w80_r1",
+      "task_id": "464c85fd-23ee-4e4c-a996-ac8f860630c3",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.639973000157624,
+      "requested_rf_us": 80.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w80_r1",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 80.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w80_r1.npz",
+      "completed_utc": "2026-09-27T10:15:18+00:00"
+    },
+    "b0_H_anchor_w120_r1": {
+      "key": "b0_H_anchor_w120_r1",
+      "task_id": "f7208775-d872-4e74-ad10-ae54b707352e",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 17.03808069974184,
+      "requested_rf_us": 120.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w120_r1",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 120.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w120_r1.npz",
+      "completed_utc": "2026-09-27T10:15:36+00:00"
+    },
+    "b0_H_anchor_w160_r1": {
+      "key": "b0_H_anchor_w160_r1",
+      "task_id": "84ff6703-2e3b-41a9-9a60-73b07046dda3",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.4428777997382,
+      "requested_rf_us": 160.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w160_r1",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 160.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w160_r1.npz",
+      "completed_utc": "2026-09-27T10:15:54+00:00"
+    },
+    "b0_H_anchor_w200_r1": {
+      "key": "b0_H_anchor_w200_r1",
+      "task_id": "9391524c-81c4-419c-904c-b89c47e2ef08",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.580827600322664,
+      "requested_rf_us": 200.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w200_r1",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 200.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w200_r1.npz",
+      "completed_utc": "2026-09-27T10:16:12+00:00"
+    },
+    "b0_H_anchor_w20_r2": {
+      "key": "b0_H_anchor_w20_r2",
+      "task_id": "06f14e9e-7213-4cb3-8929-03f5632c76c9",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.184953100048006,
+      "requested_rf_us": 20.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w20_r2",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 20.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w20_r2.npz",
+      "completed_utc": "2026-09-27T10:16:30+00:00"
+    },
+    "b0_H_anchor_w40_r2": {
+      "key": "b0_H_anchor_w40_r2",
+      "task_id": "9796603f-78a6-4901-a566-5ca0b05af7fd",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.442700299900025,
+      "requested_rf_us": 40.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w40_r2",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 40.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w40_r2.npz",
+      "completed_utc": "2026-09-27T10:16:48+00:00"
+    },
+    "b0_H_anchor_w80_r2": {
+      "key": "b0_H_anchor_w80_r2",
+      "task_id": "c455189d-e29a-4730-ad36-400a4feddde7",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.631052299868315,
+      "requested_rf_us": 80.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w80_r2",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 80.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w80_r2.npz",
+      "completed_utc": "2026-09-27T10:17:06+00:00"
+    },
+    "b0_H_anchor_w120_r2": {
+      "key": "b0_H_anchor_w120_r2",
+      "task_id": "6dd82384-5985-4db5-aa16-a786a4761293",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.630169099662453,
+      "requested_rf_us": 120.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w120_r2",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 120.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w120_r2.npz",
+      "completed_utc": "2026-09-27T10:17:24+00:00"
+    },
+    "b0_H_anchor_w160_r2": {
+      "key": "b0_H_anchor_w160_r2",
+      "task_id": "dbdda758-f8a3-4119-863b-f90227b89203",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.434911699965596,
+      "requested_rf_us": 160.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w160_r2",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 160.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w160_r2.npz",
+      "completed_utc": "2026-09-27T10:17:42+00:00"
+    },
+    "b0_H_anchor_w200_r2": {
+      "key": "b0_H_anchor_w200_r2",
+      "task_id": "426244c0-c4e5-4c90-b5f4-9f1632ae2ca3",
+      "role": "nominal_anchor",
+      "channel": "H",
+      "block": 0,
+      "method": null,
+      "elapsed_s": 16.585978399962187,
+      "requested_rf_us": 200.0,
+      "logical_request": {
+        "key": "b0_H_anchor_w200_r2",
+        "pulses": [
+          {
+            "path": 0,
+            "start_us": 0,
+            "width_us": 200.0,
+            "amplitude_pct": 70.0,
+            "phase_deg": 0.0,
+            "detuning_hz": 0.0,
+            "role": "dut"
+          }
+        ],
+        "sample_path": 0,
+        "sample_count": 16000,
+        "sample_frequency_hz": 10000,
+        "sample_delay_us": 0,
+        "relaxation_delay_s": 15,
+        "h_frequency_shift_hz": 0,
+        "p_frequency_shift_hz": 0,
+        "h_demodulation_hz": 0,
+        "p_demodulation_hz": 0,
+        "initialize_state": true
+      },
+      "data_file": "data/b0_H_anchor_w200_r2.npz",
+      "completed_utc": "2026-09-27T10:18:00+00:00"
+    }
+  },
+  "anchors": {},
+  "scenarios": {},
+  "methods": {},
+  "capabilities": {},
+  "comparison": [],
+  "errors": [
+    {
+      "block": 0,
+      "channel": "H",
+      "stage": "pilot",
+      "error": "PILOT_INCONCLUSIVE: no connected early coherent FID",
+      "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\runner.py\", line 782, in run_calibration\n    anchors[channel] = self._pilot(block, channel)\n                       ~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\runner.py\", line 452, in _pilot\n    readout = estimate_anchor(np.asarray(fids), base, np.asarray(actual_widths), amplitude)\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\inference.py\", line 212, in estimate_anchor\n    coherence = detect_coherent_window(data, axis)\n  File \"C:\\Users\\kuruc\\spinq_lab\\spinq_pokus\\bayes_online_core\\inference.py\", line 161, in detect_coherent_window\n    raise ValueError(\"PILOT_INCONCLUSIVE: no connected early coherent FID\")\nValueError: PILOT_INCONCLUSIVE: no connected early coherent FID\n"
+    }
+  ],
+  "task_count": 18,
+  "requested_rf_us": 1860.0,
+  "learner_input_provenance": "exported complex FID only; vendor FFT excluded",
+  "paired_summary": {
+    "D_adaptive_bayes": {
+      "matched_block_channel_pairs": 0,
+      "independent_block_channel_pairs": 0,
+      "valid_target_pairs": 0,
+      "per_block": [],
+      "method_target_reached": 0,
+      "classical_target_reached": 0,
+      "paired_heldout_error_difference_mean": null,
+      "paired_heldout_error_difference_sd": null,
+      "paired_valid_heldout_error_difference_mean": null,
+      "paired_acquisition_difference_mean": null,
+      "paired_total_time_difference_mean_s": null,
+      "conclusion": "INSUFFICIENT_VALID_PAIRED_EVIDENCE"
+    }
+  },
+  "ended_utc": "2026-09-27T10:18:02+00:00"
+}
