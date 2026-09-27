@@ -17,9 +17,12 @@ Mac launcher používa už existujúce lokálne prostredie `.bench-test`, predvo
 V PowerShelli v priečinku repozitára:
 
 ```powershell
-git pull origin main
+git fetch origin codex/01-bayes-online
+git switch --detach FETCH_HEAD
 .\run_01_bayes_online.cmd --task all --exclusive-use-confirmed
 ```
+
+Aktuálna implementácia je vo vetve `codex/01-bayes-online`; predvolená vetva `main` zostáva bez tejto zmeny do jej prijatia.
 
 ### Kratšie porovnanie na jednom kanáli
 
